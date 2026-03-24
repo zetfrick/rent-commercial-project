@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <title>Каталог помещений в аренду</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        a { text-decoration: none; }
+
+        /* ВЕРХНЯЯ ПАНЕЛЬ */
+        .top-bar {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .location {
+            font-weight: 600;
+            color: #ff5722;
+            font-size: 18px;
+        }
+        .back-home {
+            background: #ff5722;
+            color: white;
+            padding: 10px 28px;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .back-home:hover { background: #e64a19; }
+        .top-icons a { color: #ff5722; font-size: 26px; }
+
+        /* ФИЛЬТРЫ */
+        .filters {
+            background: white;
+            padding: 25px;
+            margin: 20px auto;
+            max-width: 1400px;
+            border-radius: 16px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 18px;
+            align-items: end;
+        }
+        .filter-group label { font-size: 13px; color: #666; margin-bottom: 6px; }
+        .filter-group input, .filter-group select {
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 15px;
+            outline: none;
+        }
+        .filter-group input:focus, .filter-group select:focus { border-color: #ff5722; }
+        .search-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .search-btn:hover { background: #e64a19; }
+
+        /* КАТАЛОГ */
+        .catalog-grid {
+            max-width: 1400px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+        }
+
+        .premise-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .premise-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(255,152,0,0.2);
+        }
+
+        .photos-slider {
+            position: relative;
+            height: 260px;
+            overflow: hidden;
+            cursor: grab;
+            background: #f0f0f0;
+        }
+        .photos-slider:active { cursor: grabbing; }
+        .photos-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s ease;
+        }
+        .photo-item {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .area-badge, .capacity-badge {
+            position: absolute;
+            top: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 10;
+        }
+        .area-badge { left: 15px; }
+        .capacity-badge { right: 15px; }
+
+        .info { padding: 20px; }
+        .type {
+            font-size: 22px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0 0 12px 0;
+            color: #ff9800;
+        }
+        .amenities {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .owner {
+            font-size: 18px;
+            margin: 15px 0 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .address {
+            color: #777;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        .prices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 16px;
+            margin: 15px 0;
+        }
+        .price-label { color: #777; }
+        .price-value { font-weight: bold; color: #ff9800; }
+        .details-btn {
+            display: block;
+            text-align: right;
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .details-btn:hover { text-decoration: underline; }
+
+        .no-photo {
+            height: 260px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="location">Нижний Новгород</div>
+    <a href="/" class="back-home">Вернуться на главную страницу</a>
+    <div class="top-icons">
+        <a href="#">♥</a>
+        <a href="tel:+79991234567">☎</a>
+    </div>
+</div>
+
+<div class="filters">
+    <div class="filter-group">
+        <label>Цена</label>
+        <input type="number" placeholder="от, ₽">
+    </div>
+    <div class="filter-group">
+        <label>Заезд</label>
+        <input type="date">
+    </div>
+    <div class="filter-group">
+        <label>Выезд</label>
+        <input type="date">
+    </div>
+    <div class="filter-group">
+        <label>Площадь</label>
+        <input type="text" placeholder="м²">
+    </div>
+    <div class="filter-group">
+        <label>Тип помещения</label>
+        <select>
+            <option>Любой</option>
+            <option>Офис</option>
+            <option>Торговое</option>
+            <option>Склад</option>
+            <option>Производство</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Опции</label>
+        <select>
+            <option>Любые</option>
+            <option>Wi-Fi</option>
+            <option>Кондиционер</option>
+            <option>Парковка</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Кол-во человек</label>
+        <input type="number" placeholder="чел.">
+    </div>
+    <div class="filter-group">
+        <button class="search-btn">Поиск</button>
+    </div>
+</div>
+
+<div class="catalog-grid" th:unless="${premises == null || premises.isEmpty()}">
+    <div class="premise-card" th:each="p : ${premises}">
+        <!-- Фото -->
+        <div class="photos-slider" th:if="${!p.photoPaths.isEmpty()}">
+            <div class="photos-container">
+                <img th:each="photo : ${p.photoPaths}"
+                     th:src="@{'/uploads/' + ${photo}}"
+                     class="photo-item"
+                     alt="Фото помещения"
+                     onclick="openFullscreen(this.src)"
+                     onerror="this.onerror=null; this.src='/images/no-photo.jpg';">
+            </div>
+        </div>
+        <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">
+            <div style="height:260px; background:#e0e0e0; display:flex; align-items:center; justify-content:center; color:#999; font-size:18px;">
+                Нет фото
+            </div>
+        </div>
+
+        <div class="area-badge" th:text="${p.area} + ' м²'"></div>
+        <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
+
+        <div class="info">
+            <div class="type" th:text="${p.typeInRussian}">Офисное</div>
+
+            <div class="amenities" th:if="${!p.amenities.isEmpty()}">
+                <span th:each="a : ${p.amenities}" th:text="${p.getAmenityInRussian(a)}">Кондиционер</span>
+            </div>
+
+            <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}">Фёдор Соменков</div>
+
+            <div class="address">
+                <span th:text="${p.region}"></span>,
+                <span th:text="${p.city}"></span>,
+                <span th:text="${p.street} + ' ' + ${p.building}"></span>
+                <span th:if="${p.floor != null && p.floor.trim() != ''}">, этаж <span th:text="${p.floor}"></span></span>
+                <span th:if="${p.apartment != null && p.apartment.trim() != ''}">, <span th:text="${p.apartment}"></span></span>
+            </div>
+
+            <div class="prices">
+                <div><span class="price-label">Будни:</span> <span class="price-value" th:text="${p.priceWeekday} + ' ₽/сутки'"></span></div>
+                <div th:if="${p.priceWeekend != null}"><span class="price-label">Выходные:</span> <span class="price-value" th:text="${p.priceWeekend} + ' ₽'"></span></div>
+                <div th:if="${p.priceHoliday != null}"><span class="price-label">Праздники:</span> <span class="price-value" th:text="${p.priceHoliday} + ' ₽'"></span></div>
+            </div>
+
+            <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
+        </div>
+    </div>
+</div>
+
+<div th:if="${premises == null || premises.isEmpty()}" style="text-align:center;padding:120px;font-size:24px;color:#999;">
+    По вашему запросу ничего не найдено
+</div>
+
+<!-- Полноэкранный просмотр -->
+<div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;"
+     onclick="this.style.display='none'">
+    <img id="fullImg" src="" alt="Полноэкранное фото" style="max-width:95%; max-height:95%; object-fit:contain;">
+</div>
+
+<script>
+    // Свайп фото
+    document.querySelectorAll('.photos-slider').forEach(slider => {
+        let isDown = false, startX, scrollLeft;
+        slider.addEventListener('mousedown', e => {
+            isDown = true;
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+        slider.addEventListener('mouseleave', () => isDown = false);
+        slider.addEventListener('mouseup', () => isDown = false);
+        slider.addEventListener('mousemove', e => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2;
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    });
+
+    function openFullscreen(src) {
+        document.getElementById('fullImg').src = src;
+        document.getElementById('fullscreen').style.display = 'flex';
+    }
+</script>
+</body>
+</html>

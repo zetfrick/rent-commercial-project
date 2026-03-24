@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; font-family: Arial, sans-serif; }
+        .auth-form { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        .auth-form h2 { color: #d32f2f; }
+        .auth-form input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .auth-form button { width: 100%; background: #ff9800; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .auth-form a { display: block; margin-top: 10px; color: #ff9800; text-decoration: none; }
+        .error { color: red; margin: 10px 0; }
+    </style>
+</head>
+<body>
+<div class="auth-form">
+    <h2>Вход</h2>
+    <div th:if="${param.error}" class="error">Неверный логин или пароль. Попробуйте снова.</div>
+    <form th:action="@{/login}" method="post">  <!-- POST на /login для Security -->
+        <input type="text" placeholder="Логин" name="username" required>  <!-- username = login -->
+        <input type="password" placeholder="Пароль" name="password" required>
+        <button type="submit">Войти</button>
+    </form>
+    <a href="/auth/register">Нет аккаунта? Регистрация</a>
+</div>
+</body>
+</html>

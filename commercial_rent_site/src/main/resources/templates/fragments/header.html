@@ -1,0 +1,32 @@
+<header class="header" th:fragment="header(currentCity, currentUri)" xmlns:th="http://www.w3.org/1999/xhtml">
+    <div class="nav-left">
+        <a href="/profile">Финансы</a> | <a href="/about">О нас</a>
+        <!-- Выбор города справа от "О нас" -->
+        <div class="city-dropdown">
+            <span class="current-city" th:text="${currentCity}">Нижний Новгород</span>
+            <ul class="city-list">
+                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
+                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
+                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
+                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
+                <li class="selected"><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="nav-center">
+        <h1>Аренда коммерческих помещений</h1>
+        <p>для вашего бизнеса в вашем городе</p>
+        <!-- Кнопка Каталог по центру под надписями -->
+        <a href="/catalog" class="catalog-btn">Каталог</a>
+    </div>
+    <div class="nav-right">
+        <!-- Логин и выход только после авторизации, справа -->
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-login">
+            <a th:href="@{/profile}" th:text="${#authentication.name}">User</a> |
+            <!-- Выход как POST-form -->
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" style="background: none; border: none; color: #ff9800; cursor: pointer; text-decoration: underline;">Выход</button>
+            </form>
+        </div>
+    </div>
+</header>

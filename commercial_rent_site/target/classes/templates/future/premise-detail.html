@@ -1,0 +1,23 @@
+<!-- src/main/resources/templates/future/premise-detail.html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${premise.type} + ' — подробнее'">Офис — подробнее</title>
+    style
+        body { font-family: Arial, sans-serif; background: #111; color: white; padding: 40px; }
+        .back { color: #ff9800; text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <a href="/catalog" class="back">← Назад к каталогу</a>
+    <h1 th:text="${premise.type}">ОФИС</h1>
+    <p>Площадь: <span th:text="${premise.area} + ' м²'"></span></p>
+    <p>Вместимость: <span th:text="${premise.capacity} + ' чел.'"></span></p>
+    <p>Цена: <span th:text="${premise.priceWeekday} + ' ₽/сутки'"></span></p>
+
+    <!-- Здесь будет полное описание, большая карта, календарь бронирования и т.д. -->
+<p>Подробная страница в разработке...</p>
+</body>
+</html>

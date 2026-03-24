@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProfileController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">ProfileController.java</span></div><h1>ProfileController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.dto.PremiseForm;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.FileStorageService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Controller
+<span class="nc" id="L21">public class ProfileController {</span>
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private CatalogClient catalogClient;  // Клиент для вызова catalog-service
+
+    // ==================== ПРОФИЛЬ ====================
+
+    @GetMapping(&quot;/profile&quot;)
+    public String profile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+<span class="nc" id="L36">        User user = getCurrentUser(userDetails);</span>
+<span class="nc" id="L37">        model.addAttribute(&quot;currentUser&quot;, user);</span>
+<span class="nc" id="L38">        model.addAttribute(&quot;editMode&quot;, false);</span>
+<span class="nc" id="L39">        return &quot;future/profile&quot;;</span>
+    }
+
+    @GetMapping(&quot;/profile/edit&quot;)
+    public String editProfile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+<span class="nc" id="L44">        User user = getCurrentUser(userDetails);</span>
+<span class="nc" id="L45">        model.addAttribute(&quot;currentUser&quot;, user);</span>
+<span class="nc" id="L46">        model.addAttribute(&quot;editMode&quot;, true);</span>
+<span class="nc" id="L47">        return &quot;future/profile&quot;;</span>
+    }
+
+    @PostMapping(&quot;/profile/edit&quot;)
+    public String saveProfile(@AuthenticationPrincipal UserDetails userDetails,
+                              @ModelAttribute User updatedUser) {
+<span class="nc" id="L53">        User currentUser = getCurrentUser(userDetails);</span>
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (!currentUser.getId().equals(updatedUser.getId())) {</span>
+<span class="nc" id="L56">            return &quot;redirect:/profile?error&quot;;</span>
+        }
+
+<span class="nc" id="L59">        currentUser.setFirstName(updatedUser.getFirstName());</span>
+<span class="nc" id="L60">        currentUser.setLastName(updatedUser.getLastName());</span>
+<span class="nc" id="L61">        currentUser.setMiddleName(updatedUser.getMiddleName());</span>
+<span class="nc" id="L62">        currentUser.setPhone(updatedUser.getPhone());</span>
+
+<span class="nc" id="L64">        userService.save(currentUser);</span>
+<span class="nc" id="L65">        return &quot;redirect:/profile?success&quot;;</span>
+    }
+
+    // ==================== ДОБАВЛЕНИЕ ПОМЕЩЕНИЯ ====================
+
+    @GetMapping(&quot;/premise/add&quot;)
+    public String addPremiseForm(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+<span class="nc" id="L72">        User owner = getCurrentUser(userDetails);</span>
+
+<span class="nc" id="L74">        PremiseForm form = new PremiseForm();</span>
+        // Автозаполнение контактов из профиля пользователя
+<span class="nc" id="L76">        form.setOwnerFirstName(owner.getFirstName());</span>
+<span class="nc" id="L77">        form.setOwnerLastName(owner.getLastName());</span>
+<span class="nc" id="L78">        form.setOwnerMiddleName(owner.getMiddleName());</span>
+<span class="nc" id="L79">        form.setOwnerPhone(owner.getPhone());</span>
+<span class="nc" id="L80">        form.setOwnerEmail(owner.getEmail());</span>
+
+<span class="nc" id="L82">        model.addAttribute(&quot;premiseForm&quot;, form);</span>
+<span class="nc" id="L83">        return &quot;future/add-premise&quot;;</span>
+    }
+
+    @PostMapping(&quot;/premise/add&quot;)
+    public String addPremise(@AuthenticationPrincipal UserDetails userDetails,
+                             @ModelAttribute PremiseForm form,
+                             @RequestParam(value = &quot;photos&quot;, required = false) List&lt;MultipartFile&gt; photos) {
+
+<span class="nc" id="L91">        User owner = getCurrentUser(userDetails);</span>
+
+<span class="nc" id="L93">        PremiseDto premiseDto = new PremiseDto();</span>
+<span class="nc" id="L94">        premiseDto.setOwnerId(owner.getId());</span>
+
+<span class="nc" id="L96">        premiseDto.setType(form.getType());</span>
+<span class="nc" id="L97">        premiseDto.setArea(form.getArea());</span>
+<span class="nc" id="L98">        premiseDto.setCapacity(form.getCapacity());</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        premiseDto.setAmenities(form.getAmenities() != null ? form.getAmenities() : new ArrayList&lt;&gt;());</span>
+
+<span class="nc" id="L101">        premiseDto.setPriceWeekday(form.getPriceWeekday());</span>
+<span class="nc" id="L102">        premiseDto.setPriceWeekend(form.getPriceWeekend());</span>
+<span class="nc" id="L103">        premiseDto.setPriceHoliday(form.getPriceHoliday());</span>
+
+<span class="nc" id="L105">        premiseDto.setAvailableFrom(form.getAvailableFrom());</span>
+<span class="nc" id="L106">        premiseDto.setAvailableTo(form.getAvailableTo());</span>
+
+<span class="nc" id="L108">        premiseDto.setRegion(form.getRegion());</span>
+<span class="nc" id="L109">        premiseDto.setCity(form.getCity());</span>
+<span class="nc" id="L110">        premiseDto.setStreet(form.getStreet());</span>
+<span class="nc" id="L111">        premiseDto.setBuilding(form.getBuilding());</span>
+<span class="nc" id="L112">        premiseDto.setFloor(form.getFloor());</span>
+<span class="nc" id="L113">        premiseDto.setApartment(form.getApartment());</span>
+
+<span class="nc" id="L115">        premiseDto.setDescription(form.getDescription());</span>
+<span class="nc" id="L116">        premiseDto.setExtraFees(form.getExtraFees());</span>
+<span class="nc" id="L117">        premiseDto.setImportantInfo(form.getImportantInfo());</span>
+
+        // Контакты — приоритет у формы, иначе из профиля
+<span class="nc" id="L120">        premiseDto.setContactFirstName(getOrDefault(form.getOwnerFirstName(), owner.getFirstName()));</span>
+<span class="nc" id="L121">        premiseDto.setContactLastName(getOrDefault(form.getOwnerLastName(), owner.getLastName()));</span>
+<span class="nc" id="L122">        premiseDto.setContactMiddleName(getOrDefault(form.getOwnerMiddleName(), owner.getMiddleName()));</span>
+<span class="nc" id="L123">        premiseDto.setContactPhone(getOrDefault(form.getOwnerPhone(), owner.getPhone()));</span>
+<span class="nc" id="L124">        premiseDto.setContactEmail(getOrDefault(form.getOwnerEmail(), owner.getEmail()));</span>
+
+        // Фото
+<span class="nc bnc" id="L127" title="All 6 branches missed.">        if (photos != null &amp;&amp; !photos.isEmpty() &amp;&amp; !photos.stream().allMatch(MultipartFile::isEmpty)) {</span>
+<span class="nc" id="L128">            List&lt;String&gt; paths = fileStorageService.savePhotos(photos);</span>
+<span class="nc" id="L129">            premiseDto.setPhotoPaths(paths);</span>
+        }
+
+        // Отправляем помещение в catalog-service
+<span class="nc" id="L133">        catalogClient.addPremise(premiseDto);</span>
+
+<span class="nc" id="L135">        return &quot;redirect:/premise/add?success&quot;;</span>
+    }
+
+    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
+
+    private User getCurrentUser(UserDetails userDetails) {
+<span class="nc" id="L141">        return userService.findByLogin(userDetails.getUsername())</span>
+<span class="nc" id="L142">                .orElseThrow(() -&gt; new RuntimeException(&quot;Пользователь не найден&quot;));</span>
+    }
+
+    private String getOrDefault(String value, String defaultValue) {
+<span class="nc bnc" id="L146" title="All 4 branches missed.">        return (value != null &amp;&amp; !value.trim().isEmpty()) ? value.trim() : defaultValue;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

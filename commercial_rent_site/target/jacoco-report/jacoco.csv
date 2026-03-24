@@ -1,0 +1,16 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+rent-commercial-app,com.example.rentapp,RentAppApplication,8,0,0,0,3,0,2,0,2,0
+rent-commercial-app,com.example.rentapp.entity,User.Role,0,21,0,0,0,4,0,1,0,1
+rent-commercial-app,com.example.rentapp.config,SwaggerConfig,17,0,0,0,6,0,2,0,2,0
+rent-commercial-app,com.example.rentapp.config,DataInitializer,36,0,2,0,10,0,3,0,2,0
+rent-commercial-app,com.example.rentapp.config,SecurityConfig,149,0,0,0,23,0,7,0,7,0
+rent-commercial-app,com.example.rentapp.config,WebConfig,20,0,0,0,4,0,2,0,2,0
+rent-commercial-app,com.example.rentapp.controller,FuturePagesController,37,0,4,0,7,0,5,0,3,0
+rent-commercial-app,com.example.rentapp.controller,AuthController,61,0,6,0,19,0,7,0,4,0
+rent-commercial-app,com.example.rentapp.controller,ProfileController,288,0,14,0,61,0,16,0,9,0
+rent-commercial-app,com.example.rentapp.controller,WebCatalogController,26,0,0,0,7,0,3,0,3,0
+rent-commercial-app,com.example.rentapp.controller,MainController,78,0,12,0,15,0,11,0,5,0
+rent-commercial-app,com.example.rentapp.dto,PremiseDto,59,0,20,0,20,0,18,0,2,0
+rent-commercial-app,com.example.rentapp.controller.api,ApiAuthController,40,0,4,0,9,0,4,0,2,0
+rent-commercial-app,com.example.rentapp.service,UserService,0,86,0,0,0,19,0,8,0,8
+rent-commercial-app,com.example.rentapp.service,FileStorageService,15,62,0,4,4,16,0,4,0,2

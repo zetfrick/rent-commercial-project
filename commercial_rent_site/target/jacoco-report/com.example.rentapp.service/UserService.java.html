@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.example.rentapp.service;
+
+import com.example.rentapp.entity.User;
+import com.example.rentapp.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L17">public class UserService implements UserDetailsService {</span>
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    // Поиск пользователя по логину (для личного кабинета)
+    public Optional&lt;User&gt; findByLogin(String login) {
+<span class="fc" id="L27">        return userRepository.findByLogin(login);</span>
+    }
+
+    // Проверка, занят ли логин
+    public boolean existsByLogin(String login) {
+<span class="fc" id="L32">        return userRepository.existsByLogin(login);</span>
+    }
+
+    // Проверка, занят ли email
+    public boolean existsByEmail(String email) {
+<span class="fc" id="L37">        return userRepository.existsByEmail(email);</span>
+    }
+
+    // Регистрация нового пользователя (с именем и фамилией)
+    public User registerUser(String login, String email, String rawPassword,
+                             String firstName, String lastName) {
+<span class="fc" id="L43">        User user = new User();</span>
+<span class="fc" id="L44">        user.setLogin(login);</span>
+<span class="fc" id="L45">        user.setEmail(email);</span>
+<span class="fc" id="L46">        user.setPassword(passwordEncoder.encode(rawPassword));</span>
+<span class="fc" id="L47">        user.setFirstName(firstName);</span>
+<span class="fc" id="L48">        user.setLastName(lastName);</span>
+<span class="fc" id="L49">        user.setRole(User.Role.USER);</span>
+<span class="fc" id="L50">        return userRepository.save(user);</span>
+    }
+
+    // Сохранение изменений в профиле (редактирование)
+    public User save(User user) {
+<span class="fc" id="L55">        return userRepository.save(user);</span>
+    }
+
+    // Загрузка пользователя для Spring Security
+    @Override
+    public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
+<span class="fc" id="L61">        User user = userRepository.findByLogin(login)</span>
+<span class="fc" id="L62">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;Пользователь не найден: &quot; + login));</span>
+
+<span class="fc" id="L64">        return new org.springframework.security.core.userdetails.User(</span>
+<span class="fc" id="L65">                user.getLogin(),</span>
+<span class="fc" id="L66">                user.getPassword(),</span>
+<span class="fc" id="L67">                Collections.singletonList(new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name()))</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
