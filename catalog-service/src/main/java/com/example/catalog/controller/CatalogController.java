@@ -1,6 +1,6 @@
 package com.example.catalog.controller;
 
-import com.example.catalog.dto.PremiseDto;
+import com.example.catalog.dto.PremiseDto;        // ← ВАЖНО: свой DTO из catalog
 import com.example.catalog.entity.Premise;
 import com.example.catalog.repository.PremiseRepository;
 import org.springframework.beans.BeanUtils;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")  // ← Изменено: убрали /catalog из базового пути
+@RequestMapping("/api")
 public class CatalogController {
 
     @Autowired
@@ -30,12 +30,23 @@ public class CatalogController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/premise/add")  // ← Теперь полный путь: /api/premise/add
+    @PostMapping("/premise/add")
     public ResponseEntity<Premise> addPremise(@RequestBody PremiseDto premiseDto) {
         Premise premise = new Premise();
         BeanUtils.copyProperties(premiseDto, premise, "id", "createdAt");
 
+        premise.setLatitude(premiseDto.getLatitude());
+        premise.setLongitude(premiseDto.getLongitude());
+
         Premise saved = premiseRepository.save(premise);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @GetMapping("/premises/latest")
+    public ResponseEntity<List<Premise>> getLatestPremises(
+            @RequestParam(value = "limit", defaultValue = "6") int limit) {
+
+        List<Premise> latest = premiseRepository.findTop6ByActiveTrueOrderByCreatedAtDesc();
+        return ResponseEntity.ok(latest);
     }
 }

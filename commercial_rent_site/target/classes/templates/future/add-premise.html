@@ -25,11 +25,9 @@
         input, select, textarea { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; background: rgba(255,255,255,0.96); color: #333; box-sizing: border-box; }
         textarea { height: 120px; resize: vertical; }
 
-        /* Чекбоксы вплотную к тексту */
         .checkbox-inline { display: flex; align-items: center; gap: 10px; font-size: 17px; margin: 25px 0; cursor: pointer; user-select: none; }
         .checkbox-inline input[type="checkbox"] { width: 20px; height: 20px; margin: 0; cursor: pointer; }
 
-        /* Дополнительные удобства — таблица 2 столбца */
         .amenities-table {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -58,6 +56,165 @@
 
         .success { color: #8f8; text-align: center; font-size: 24px; margin: 30px 0; font-weight: bold; }
         .required::after { content: " *"; color: #ff5722; font-weight: bold; }
+
+        .map-hint {
+            color: #ffcc80;
+            font-size: 13px;
+            margin-top: 8px;
+            text-align: center;
+            background: rgba(0,0,0,0.5);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .auto-center-badge {
+            background: #4caf50;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .auto-center-badge:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
+
+        .address-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            max-width: 350px;
+            animation: slideIn 0.3s ease-out, fadeOut 4s ease-in 2s forwards;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .notification.warning {
+            background: #ff5722;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        .region-auto-fill {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 3px solid #4caf50;
+            padding: 5px 10px;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #a5d6a7;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .region-auto-fill.loading {
+            background: rgba(255, 152, 0, 0.3);
+            border-left-color: #ff9800;
+        }
+
+        .region-auto-fill.error {
+            background: rgba(255, 87, 34, 0.3);
+            border-left-color: #ff5722;
+        }
+
+        /* Стили для выпадающего списка подсказок */
+        .suggest-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            z-index: 999999;
+            max-height: 320px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 4px;
+        }
+
+        .suggestions-dropdown.active {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #f8f9fa;
+        }
+
+        .suggestion-item.selected {
+            background: #e3f2fd;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-address {
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.3;
+        }
+
+        .highlight {
+            background-color: #ffeb3b;
+            font-weight: bold;
+            color: #1a1a1a;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .suggest-wrapper input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255,87,34,0.3);
+        }
     </style>
 </head>
 <body>
@@ -93,12 +250,9 @@
                         <label class="required">Тип помещения</label>
                         <select th:field="*{type}" required>
                             <option value="">— Выберите тип —</option>
-                            <option value="OFFICE">Офисное</option>
-                            <option value="TRADING">Торговое</option>
-                            <option value="WAREHOUSE">Складское</option>
-                            <option value="PRODUCTION">Производственное</option>
-                            <option value="HOSPITALITY">Гостиничное</option>
-                            <option value="UNIVERSAL">Универсальное</option>
+                            <option th:each="t : ${types}"
+                                    th:value="${t}"
+                                    th:text="${typeInRussian.get(t)}">Офисное</option>
                         </select>
                     </div>
                     <div class="col">
@@ -115,40 +269,15 @@
                     </div>
                 </div>
 
-                <!-- Дополнительные удобства — таблица 2 столбца -->
+                <!-- Дополнительные удобства -->
                 <label>Дополнительные удобства</label>
                 <div class="amenities-table">
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="CONDITIONER" id="cond">
-                        <label for="cond">Кондиционер</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="WI_FI" id="wifi">
-                        <label for="wifi">Wi-Fi</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="FURNITURE" id="furn">
-                        <label for="furn">Мебель</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="PARKING" id="park">
-                        <label for="park">Парковка</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="SECURITY" id="sec">
-                        <label for="sec">Охрана</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="ELEVATOR" id="elev">
-                        <label for="elev">Лифт</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="KITCHEN" id="kit">
-                        <label for="kit">Кухня</label>
-                    </div>
-                    <div class="amenity-item">
-                        <input type="checkbox" name="amenities" value="CONFERENCE" id="conf">
-                        <label for="conf">Конференц-зал</label>
+                    <div class="amenity-item" th:each="amenity : ${amenities}">
+                        <input type="checkbox"
+                               name="amenities"
+                               th:value="${amenity}"
+                               th:id="${amenity}">
+                        <label th:for="${amenity}" th:text="${amenityInRussian.get(amenity)}">Кондиционер</label>
                     </div>
                 </div>
 
@@ -184,40 +313,71 @@
                 </div>
 
                 <!-- АДРЕС + КАРТА -->
-                <div class="checkbox-inline">
-                    <input type="checkbox" id="wholeBuilding">
-                    <label for="wholeBuilding">Сдаётся всё здание целиком</label>
-                </div>
-
                 <div id="addressSection">
                     <div style="display:flex; gap:35px; flex-wrap:wrap; margin-top:25px;">
                         <div style="flex:1; min-width:340px;">
+                            <div class="address-header">
+                                <label class="required" style="margin-bottom: 0;">Адрес помещения</label>
+                                <span id="autoCenterStatus" class="auto-center-badge">
+                                    🎯 Автоцентровка активна
+                                </span>
+                            </div>
+
                             <div class="row">
                                 <div class="col">
                                     <label class="required">Область / Регион</label>
-                                    <input type="text" id="region" th:field="*{region}" placeholder="Например: Московская область" required>
+                                    <input type="text" id="region" th:field="*{region}" placeholder="Автоматически определится по городу" required>
+                                    <div id="regionHint" class="region-auto-fill" style="display: none;"></div>
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-50"><label class="required">Город</label><input type="text" id="city" th:field="*{city}" required></div>
-                                <div class="col-50"><label class="required">Улица</label><input type="text" id="street" th:field="*{street}" required></div>
+                                <div class="col-50">
+                                    <label class="required">Город</label>
+                                    <div class="suggest-wrapper">
+                                        <input type="text" id="city" th:field="*{city}" placeholder="Начните вводить город" required autocomplete="off">
+                                        <div id="cityDropdown" class="suggestions-dropdown"></div>
+                                    </div>
+                                </div>
+                                <div class="col-50">
+                                    <label class="required">Улица</label>
+                                    <div class="suggest-wrapper">
+                                        <input type="text" id="street" th:field="*{street}" placeholder="Начните вводить улицу" required autocomplete="off">
+                                        <div id="streetDropdown" class="suggestions-dropdown"></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="row">
-                                <div class="col-50"><label class="required">Номер дома</label><input type="text" id="building" th:field="*{building}" required></div>
+                                <div class="col-50">
+                                    <label class="required">Номер дома</label>
+                                    <div class="suggest-wrapper">
+                                        <input type="text" id="building" th:field="*{building}" placeholder="Начните вводить номер дома" required autocomplete="off">
+                                        <div id="buildingDropdown" class="suggestions-dropdown"></div>
+                                    </div>
+                                </div>
                                 <div class="col-50"><label>Этаж</label><input type="text" id="floor" th:field="*{floor}"></div>
                             </div>
                             <div class="row">
                                 <div class="col-50"><label>Квартира / офис</label><input type="text" id="apartment" th:field="*{apartment}"></div>
                             </div>
 
-                            <p style="color:#ffcc80; font-size:15px; margin-top:15px; line-height:1.5;">
-                                Кликните на карту → адрес и область заполнятся автоматически<br>
-                                Или вводите вручную — метка переместится сама
+                            <p style="color:#ffcc80; font-size:14px; margin-top:15px; line-height:1.5; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;">
+                                📍 <strong>Как это работает:</strong><br>
+                                • Начните вводить город → появится выпадающий список с городами<br>
+                                • Начните вводить улицу → появятся подсказки улиц (без слова "улица")<br>
+                                • Начните вводить номер дома → появятся подсказки домов (только номер)<br>
+                                • Выберите нужный вариант из списка → карта переместится к выбранному адресу
                             </p>
+
+                            <button type="button" id="searchByAddressBtn" style="background: #ff5722; color: white; padding: 12px 24px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%;">
+                                🔍 Найти на карте (принудительно)
+                            </button>
                         </div>
 
                         <div style="flex:1; min-width:420px; height:460px; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.8);">
                             <div id="osmMap" style="width:100%; height:100%;"></div>
+                            <div class="map-hint">
+                                ⚡ Кликните по карте, чтобы выбрать точное местоположение помещения
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -259,227 +419,585 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let map, placemark, clickTimer;
-    let isProcessing = false;
+    let map, placemark;
+    let isGeocodingInProgress = false;
     let ymapsReady = false;
+    let autoCenterEnabled = true;
+    let addressInputTimer = null;
+    let cityInputTimer = null;
+    let buildingInputTimer = null;
+
     const YANDEX_API_KEY = '4a02e3e8-33bf-4c35-ab01-4edcc2923896';
+    const SUGGEST_API_KEY = 'd0e13191-0ae5-4ab0-a027-108a9ca538e4';
 
-    document.addEventListener('DOMContentLoaded', () => {
-        ymaps.ready(init);
-    });
-
-    function init() {
-        ymapsReady = true;
-
-        map = new ymaps.Map('osmMap', {
-            center: [55.7558, 37.6176],
-            zoom: 11,
-            controls: ['zoomControl', 'fullscreenControl']
-        });
-
-        map.events.add('click', function(e) {
-            if (isProcessing) return;
-            isProcessing = true;
-            setTimeout(() => isProcessing = false, 1000);
-
-            const coords = e.get('coords');
-            const lat = coords[0].toFixed(8);
-            const lng = coords[1].toFixed(8);
-
-            document.getElementById('lat').value = lat;
-            document.getElementById('lng').value = lng;
-
-            // Обновление или создание метки
-            if (placemark) {
-                placemark.geometry.setCoordinates(coords);
-            } else {
-                placemark = new ymaps.Placemark(coords, {
-                    hintContent: 'Помещение здесь',
-                    balloonContent: 'Выбранное местоположение'
-                }, {
-                    preset: 'islands#redIcon',
-                    draggable: true
-                });
-
-                // Добавляем обработчик перетаскивания метки
-                placemark.events.add('dragend', function(e) {
-                    const coords = e.get('target').geometry.getCoordinates();
-                    const lat = coords[0].toFixed(8);
-                    const lng = coords[1].toFixed(8);
-
-                    document.getElementById('lat').value = lat;
-                    document.getElementById('lng').value = lng;
-
-                    reverseGeocode(lat, lng);
-                });
-
-                map.geoObjects.add(placemark);
-            }
-
-            reverseGeocode(lat, lng);
-        });
+    function showNotification(message, isWarning = false) {
+        const notification = document.createElement('div');
+        notification.className = 'notification' + (isWarning ? ' warning' : '');
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 4500);
     }
 
-    async function reverseGeocode(lat, lng) {
-        if (!ymapsReady) return;
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Функция для очистки названия улицы (убираем "улица", "проспект" и т.д. если нужно)
+    function cleanStreetName(streetFull) {
+        if (!streetFull) return '';
+        // Убираем распространённые префиксы
+        const prefixes = ['улица ', 'ул. ', 'проспект ', 'пр. ', 'переулок ', 'пер. ', 'бульвар ', 'б-р ', 'набережная ', 'наб. ', 'шоссе ', 'площадь ', 'пл. '];
+        let cleaned = streetFull;
+        for (const prefix of prefixes) {
+            if (cleaned.toLowerCase().startsWith(prefix.toLowerCase())) {
+                cleaned = cleaned.substring(prefix.length);
+                break;
+            }
+        }
+        return cleaned.trim();
+    }
+
+    // Функция для извлечения только номера дома из полного адреса
+    function extractBuildingNumber(fullBuilding) {
+        if (!fullBuilding) return '';
+        // Пытаемся извлечь номер дома (цифры и возможные буквы)
+        const match = fullBuilding.match(/(\d+[А-Яа-я]?)/);
+        return match ? match[1] : fullBuilding;
+    }
+
+    // Функция для получения области через геокодер
+    async function getRegionByCityFromGeocoder(cityName) {
+        if (!cityName || cityName.trim().length < 3) return null;
 
         try {
-            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${lng},${lat}&kind=house`);
+            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(cityName)}&results=1`);
             const data = await response.json();
 
             const featureMember = data.response?.GeoObjectCollection?.featureMember;
             if (featureMember && featureMember.length > 0) {
                 const geoObject = featureMember[0].GeoObject;
                 const metaData = geoObject.metaDataProperty?.GeocoderMetaData;
+                const fullAddress = metaData?.Address?.formatted || geoObject.name || '';
+                const components = metaData?.Address?.Components || [];
 
+                let region = '';
+                for (const comp of components) {
+                    if (comp.kind === 'province') {
+                        region = comp.name;
+                        break;
+                    }
+                }
+
+                if (cityName.includes('Москва') || fullAddress.includes('Москва')) return 'Московская область';
+                if (cityName.includes('Санкт-Петербург') || fullAddress.includes('Санкт-Петербург')) return 'Ленинградская область';
+                if (region && !region.includes('округ')) return region;
+
+                const regionMatch = fullAddress.match(/([А-Яа-я\s]+?область)/);
+                if (regionMatch) return regionMatch[1];
+
+                const cityToRegion = {
+                    'Нижний Новгород': 'Нижегородская область',
+                    'Казань': 'Республика Татарстан',
+                    'Екатеринбург': 'Свердловская область',
+                    'Новосибирск': 'Новосибирская область',
+                    'Челябинск': 'Челябинская область',
+                    'Омск': 'Омская область',
+                    'Самара': 'Самарская область',
+                    'Ростов-на-Дону': 'Ростовская область',
+                    'Уфа': 'Республика Башкортостан',
+                    'Красноярск': 'Красноярский край',
+                    'Пермь': 'Пермский край',
+                    'Воронеж': 'Воронежская область',
+                    'Волгоград': 'Волгоградская область',
+                    'Краснодар': 'Краснодарский край'
+                };
+
+                for (const [city, regionName] of Object.entries(cityToRegion)) {
+                    if (cityName.includes(city)) return regionName;
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка получения области:', error);
+        }
+        return null;
+    }
+
+    // Функция для получения подсказок от API Геосаджеста
+    async function getSuggestions(query, type = 'city', city = '', street = '') {
+        if (!query || query.length < 1) return [];
+
+        try {
+            let types = '';
+            if (type === 'city') {
+                types = 'locality';
+            } else if (type === 'street') {
+                types = 'street';
+            } else if (type === 'building') {
+                types = 'house';
+            }
+
+            let searchQuery = query;
+            if (type === 'street' && city) {
+                searchQuery = `${city}, ${query}`;
+            } else if (type === 'building' && city && street) {
+                searchQuery = `${city}, ${street}, ${query}`;
+            }
+
+            const url = `https://suggest-maps.yandex.ru/v1/suggest?apikey=${SUGGEST_API_KEY}&text=${encodeURIComponent(searchQuery)}&types=${types}&results=10&lang=ru_RU`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.results && Array.isArray(data.results)) {
+                return data.results;
+            }
+            return [];
+        } catch (error) {
+            console.error('Ошибка получения подсказок:', error);
+            return [];
+        }
+    }
+
+    // Отображение выпадающего списка для города
+    async function showCityDropdown(query) {
+        const dropdown = document.getElementById('cityDropdown');
+        if (!dropdown) return;
+
+        if (!query || query.length < 2) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        const suggestions = await getSuggestions(query, 'city');
+
+        if (!suggestions || suggestions.length === 0) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        dropdown.innerHTML = '';
+        suggestions.forEach((suggestion, index) => {
+            let titleText = suggestion.title || suggestion.text || '';
+            if (typeof titleText === 'object') titleText = titleText.text || '';
+            if (!titleText || titleText === '[object Object]') return;
+
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+
+            const title = document.createElement('div');
+            title.className = 'suggestion-title';
+            title.textContent = titleText;
+
+            item.appendChild(title);
+
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('city').value = titleText;
+                dropdown.classList.remove('active');
+                setTimeout(() => updateRegionAndCenterFromCity(), 100);
+            });
+
+            dropdown.appendChild(item);
+        });
+
+        if (dropdown.children.length > 0) dropdown.classList.add('active');
+    }
+
+    // Отображение выпадающего списка для улицы (очищаем название)
+    async function showStreetDropdown(query) {
+        const city = document.getElementById('city').value.trim();
+        const dropdown = document.getElementById('streetDropdown');
+        if (!dropdown) return;
+
+        if (!query || query.length < 2) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        const suggestions = await getSuggestions(query, 'street', city);
+
+        if (!suggestions || suggestions.length === 0) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        dropdown.innerHTML = '';
+        suggestions.forEach((suggestion, index) => {
+            let titleText = suggestion.title || suggestion.text || '';
+            if (typeof titleText === 'object') titleText = titleText.text || '';
+            if (!titleText || titleText === '[object Object]') return;
+
+            // Очищаем название улицы от префиксов (улица, проспект и т.д.)
+            const cleanedStreet = cleanStreetName(titleText);
+
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+
+            const title = document.createElement('div');
+            title.className = 'suggestion-title';
+            title.textContent = cleanedStreet;
+
+            const address = document.createElement('div');
+            address.className = 'suggestion-address';
+            if (suggestion.address?.formatted_address) {
+                address.textContent = suggestion.address.formatted_address;
+            }
+
+            item.appendChild(title);
+            if (address.textContent) item.appendChild(address);
+
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Сохраняем очищенное название улицы
+                document.getElementById('street').value = cleanedStreet;
+                dropdown.classList.remove('active');
+                setTimeout(() => {
+                    if (autoCenterEnabled) forwardGeocode(false);
+                }, 100);
+            });
+
+            dropdown.appendChild(item);
+        });
+
+        if (dropdown.children.length > 0) dropdown.classList.add('active');
+    }
+
+    // Отображение выпадающего списка для дома (извлекаем только номер)
+    async function showBuildingDropdown(query) {
+        const city = document.getElementById('city').value.trim();
+        const street = document.getElementById('street').value.trim();
+        const dropdown = document.getElementById('buildingDropdown');
+        if (!dropdown) return;
+
+        if (!query || query.length < 1) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        if (!city || !street) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        const suggestions = await getSuggestions(query, 'building', city, street);
+
+        if (!suggestions || suggestions.length === 0) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        dropdown.innerHTML = '';
+        suggestions.forEach((suggestion, index) => {
+            let titleText = suggestion.title || suggestion.text || '';
+            if (typeof titleText === 'object') titleText = titleText.text || '';
+            if (!titleText || titleText === '[object Object]') return;
+
+            // Извлекаем только номер дома
+            const buildingNumber = extractBuildingNumber(titleText);
+
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+
+            const title = document.createElement('div');
+            title.className = 'suggestion-title';
+            title.textContent = buildingNumber;
+
+            const address = document.createElement('div');
+            address.className = 'suggestion-address';
+            if (suggestion.address?.formatted_address) {
+                address.textContent = suggestion.address.formatted_address;
+            } else {
+                address.textContent = titleText;
+            }
+
+            item.appendChild(title);
+            if (address.textContent) item.appendChild(address);
+
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Сохраняем только номер дома
+                document.getElementById('building').value = buildingNumber;
+                dropdown.classList.remove('active');
+                setTimeout(() => {
+                    if (autoCenterEnabled) forwardGeocode(false);
+                }, 100);
+            });
+
+            dropdown.appendChild(item);
+        });
+
+        if (dropdown.children.length > 0) dropdown.classList.add('active');
+    }
+
+    function closeAllDropdowns() {
+        const cityDropdown = document.getElementById('cityDropdown');
+        const streetDropdown = document.getElementById('streetDropdown');
+        const buildingDropdown = document.getElementById('buildingDropdown');
+        if (cityDropdown) cityDropdown.classList.remove('active');
+        if (streetDropdown) streetDropdown.classList.remove('active');
+        if (buildingDropdown) buildingDropdown.classList.remove('active');
+    }
+
+    async function getCityCoordinates(cityName) {
+        if (!cityName || cityName.trim().length < 3) return null;
+        try {
+            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(cityName)}&results=1`);
+            const data = await response.json();
+            const featureMember = data.response?.GeoObjectCollection?.featureMember;
+            if (featureMember && featureMember.length > 0) {
+                const geoObject = featureMember[0].GeoObject;
+                const pos = geoObject.Point.pos.split(' ');
+                return {
+                    lat: parseFloat(pos[1]),
+                    lng: parseFloat(pos[0])
+                };
+            }
+        } catch (error) {
+            console.error('Ошибка получения координат города:', error);
+        }
+        return null;
+    }
+
+    async function updateRegionAndCenterFromCity() {
+        const cityInput = document.getElementById('city');
+        const regionInput = document.getElementById('region');
+        const regionHint = document.getElementById('regionHint');
+        const city = cityInput.value.trim();
+
+        if (!city || city.length < 3) {
+            if (regionHint) regionHint.style.display = 'none';
+            return;
+        }
+
+        if (regionHint) {
+            regionHint.style.display = 'block';
+            regionHint.className = 'region-auto-fill loading';
+            regionHint.innerHTML = '⏳ Определяем область...';
+        }
+
+        const coords = await getCityCoordinates(city);
+        const region = await getRegionByCityFromGeocoder(city);
+
+        if (region && region.length > 0 && !region.includes('округ')) {
+            regionInput.value = region;
+            if (regionHint) {
+                regionHint.className = 'region-auto-fill';
+                regionHint.innerHTML = `✅ Область автоматически определена: ${region}`;
+                setTimeout(() => { if (regionHint) regionHint.style.display = 'none'; }, 3000);
+            }
+        } else if (regionHint) {
+            regionHint.className = 'region-auto-fill error';
+            regionHint.innerHTML = `⚠️ Не удалось определить область для города "${city}"`;
+            setTimeout(() => { if (regionHint) regionHint.style.display = 'none'; }, 3000);
+        }
+
+        const street = document.getElementById('street')?.value.trim();
+        if (coords && autoCenterEnabled && (!street || street.length < 2)) {
+            if (placemark) {
+                placemark.geometry.setCoordinates([coords.lat, coords.lng]);
+            } else {
+                placemark = new ymaps.Placemark([coords.lat, coords.lng], { hintContent: 'Помещение здесь' }, {
+                    preset: 'islands#redIcon',
+                    draggable: true
+                });
+                placemark.events.add('dragend', function(e) {
+                    const coords = e.get('target').geometry.getCoordinates();
+                    document.getElementById('lat').value = coords[0].toFixed(8);
+                    document.getElementById('lng').value = coords[1].toFixed(8);
+                    reverseGeocode(coords[0], coords[1]);
+                });
+                map.geoObjects.add(placemark);
+            }
+            map.setCenter([coords.lat, coords.lng], 12);
+            document.getElementById('lat').value = coords.lat;
+            document.getElementById('lng').value = coords.lng;
+            showNotification(`📍 Карта перемещена к городу: ${city}`, false);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ymaps.ready(init);
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.suggest-wrapper')) closeAllDropdowns();
+        });
+
+        document.getElementById("diffPrice")?.addEventListener("change", function () {
+            document.getElementById("extraPrices").style.display = this.checked ? "block" : "none";
+        });
+
+        // Город
+        const cityInput = document.getElementById('city');
+        let citySuggestTimer = null;
+        cityInput.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const query = cityInput.value.trim();
+            clearTimeout(citySuggestTimer);
+            citySuggestTimer = setTimeout(() => showCityDropdown(query), 300);
+            clearTimeout(cityInputTimer);
+            cityInputTimer = setTimeout(() => {
+                if (cityInput.value.trim().length >= 3) updateRegionAndCenterFromCity();
+            }, 800);
+        });
+        cityInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const query = cityInput.value.trim();
+            if (query.length >= 2) showCityDropdown(query);
+        });
+
+        // Улица
+        const streetInput = document.getElementById('street');
+        let streetSuggestTimer = null;
+        streetInput.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const query = streetInput.value.trim();
+            clearTimeout(streetSuggestTimer);
+            streetSuggestTimer = setTimeout(() => showStreetDropdown(query), 300);
+            if (!autoCenterEnabled) return;
+            clearTimeout(addressInputTimer);
+            addressInputTimer = setTimeout(() => {
+                const city = cityInput.value.trim();
+                const street = streetInput.value.trim();
+                if (city && street.length > 2) forwardGeocode(false);
+            }, 800);
+        });
+        streetInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const query = streetInput.value.trim();
+            if (query.length >= 2) showStreetDropdown(query);
+        });
+
+        // Дом
+        const buildingInput = document.getElementById('building');
+        let buildingSuggestTimer = null;
+        buildingInput.addEventListener('input', (e) => {
+            e.stopPropagation();
+            const query = buildingInput.value.trim();
+            clearTimeout(buildingSuggestTimer);
+            buildingSuggestTimer = setTimeout(() => showBuildingDropdown(query), 300);
+
+            if (!autoCenterEnabled) return;
+            clearTimeout(buildingInputTimer);
+            buildingInputTimer = setTimeout(() => {
+                const city = cityInput.value.trim();
+                const street = streetInput.value.trim();
+                const building = buildingInput.value.trim();
+                if (city && street && street.length > 2 && building && building.length > 0) {
+                    forwardGeocode(false);
+                }
+            }, 600);
+        });
+        buildingInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const query = buildingInput.value.trim();
+            if (query.length >= 1 && document.getElementById('city').value.trim() && document.getElementById('street').value.trim()) {
+                showBuildingDropdown(query);
+            }
+        });
+
+        document.getElementById("searchByAddressBtn")?.addEventListener("click", () => forwardGeocode(true));
+
+        const statusBadge = document.getElementById("autoCenterStatus");
+        statusBadge?.addEventListener("click", () => {
+            autoCenterEnabled = !autoCenterEnabled;
+            statusBadge.style.background = autoCenterEnabled ? "#4caf50" : "#ff5722";
+            statusBadge.innerHTML = autoCenterEnabled ? "🎯 Автоцентровка активна" : "⛔ Автоцентровка отключена";
+            showNotification(autoCenterEnabled ? "✅ Автоцентровка включена" : "⚠️ Автоцентровка отключена", !autoCenterEnabled);
+        });
+    });
+
+    function init() {
+        ymapsReady = true;
+        map = new ymaps.Map('osmMap', {
+            center: [55.7558, 37.6176],
+            zoom: 11,
+            controls: ['zoomControl', 'fullscreenControl']
+        });
+        map.events.add('click', function(e) {
+            if (isGeocodingInProgress) return;
+            const coords = e.get('coords');
+            const lat = coords[0].toFixed(8);
+            const lng = coords[1].toFixed(8);
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+            if (placemark) {
+                placemark.geometry.setCoordinates(coords);
+            } else {
+                placemark = new ymaps.Placemark(coords, { hintContent: 'Помещение здесь' }, {
+                    preset: 'islands#redIcon',
+                    draggable: true
+                });
+                placemark.events.add('dragend', function(e) {
+                    const coords = e.get('target').geometry.getCoordinates();
+                    document.getElementById('lat').value = coords[0].toFixed(8);
+                    document.getElementById('lng').value = coords[1].toFixed(8);
+                    reverseGeocode(coords[0], coords[1]);
+                });
+                map.geoObjects.add(placemark);
+            }
+            reverseGeocode(lat, lng);
+        });
+    }
+
+    async function reverseGeocode(lat, lng) {
+        if (!ymapsReady || isGeocodingInProgress) return;
+        isGeocodingInProgress = true;
+        try {
+            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${lng},${lat}&kind=house`);
+            const data = await response.json();
+            const featureMember = data.response?.GeoObjectCollection?.featureMember;
+            if (featureMember && featureMember.length > 0) {
+                const geoObject = featureMember[0].GeoObject;
+                const metaData = geoObject.metaDataProperty?.GeocoderMetaData;
                 if (metaData) {
                     const address = metaData.Address;
                     const components = address.Components || [];
-
-                    // Получаем полный адрес
-                    const fullAddress = address.formatted || geoObject.name || '';
-
-                    // Парсинг компонентов адреса
                     let region = '', city = '', street = '', building = '';
-                    let foundCity = '';
-
                     components.forEach(comp => {
-                        const kind = comp.kind;
-                        const name = comp.name;
-
-                        // Для области ищем province или area
-                        if (kind === 'province') {
-                            region = name;
-                        } else if (kind === 'area') {
-                            region = name;
-                        }
-
-                        // Город ищем в locality или city
-                        if (kind === 'locality' || kind === 'city') {
-                            city = name;
-                            foundCity = name;
-                        }
-
-                        // Улица
-                        if (kind === 'street') {
-                            street = name;
-                        }
-
-                        // Дом
-                        if (kind === 'house') {
-                            building = name;
-                        }
+                        if (comp.kind === 'province') region = comp.name;
+                        if (comp.kind === 'area' && !region) region = comp.name;
+                        if (comp.kind === 'locality' || comp.kind === 'city') city = comp.name;
+                        if (comp.kind === 'street') street = cleanStreetName(comp.name);
+                        if (comp.kind === 'house') building = extractBuildingNumber(comp.name);
                     });
-
-                    // СПЕЦИАЛЬНАЯ ОБРАБОТКА ДЛЯ ВСЕХ НАСЕЛЕННЫХ ПУНКТОВ В ЗОНЕ САНКТ-ПЕТЕРБУРГА
-                    // Список городов и районов, входящих в состав Санкт-Петербурга
-                    const spbDistrictsAndTowns = [
-                        'Пушкин', 'Павловск', 'Колпино', 'Кронштадт', 'Петергоф',
-                        'Ломоносов', 'Сестрорецк', 'Зеленогорск', 'Красное Село',
-                        'Пушкинский', 'Колпинский', 'Кронштадтский', 'Петродворцовый',
-                        'Курортный', 'Красносельский'
-                    ];
-
-                    // Проверяем, относится ли найденный город или район к СПб
-                    const isSpbArea = spbDistrictsAndTowns.some(place =>
-                        fullAddress.includes(place) || (foundCity && foundCity.includes(place))
-                    );
-
-                    // Если это Москва
-                    if (city === 'Москва' || fullAddress.includes('Москва') && !fullAddress.includes('Московская область')) {
-                        region = 'Московская область';
-                    }
-                    // Если это Санкт-Петербург или любой город в его составе
-                    else if (city === 'Санкт-Петербург' ||
-                             fullAddress.includes('Санкт-Петербург') ||
-                             isSpbArea) {
-                        region = 'Ленинградская область';
-                    }
-                    // Если не сработало, пробуем найти в полном адресе
-                    else if (!region && fullAddress) {
-                        const parts = fullAddress.split(',').map(p => p.trim());
-
-                        // Ищем часть, содержащую "область", "край", "республика"
-                        for (const part of parts) {
-                            if (part.includes('область') || part.includes('край') || part.includes('республика')) {
-                                region = part;
-                                break;
-                            }
-                        }
-                    }
-
-                    // Заполнение полей
-                    if (region) {
-                        document.getElementById('region').value = region;
-                    } else {
-                        document.getElementById('region').value = '';
-                    }
-
-                    if (city) {
-                        document.getElementById('city').value = city;
-                    } else if (foundCity) {
-                        document.getElementById('city').value = foundCity;
-                    }
-
-                    if (street) {
-                        document.getElementById('street').value = street;
-                    }
-
-                    if (building) {
-                        document.getElementById('building').value = building;
-                    }
-
-                    // Триггерим события input
-                    ['region', 'city', 'street', 'building'].forEach(id => {
-                        const input = document.getElementById(id);
-                        if (input) {
-                            const event = new Event('input', { bubbles: true });
-                            input.dispatchEvent(event);
-                        }
-                    });
+                    if (region && !region.includes('округ')) document.getElementById('region').value = region;
+                    if (city) document.getElementById('city').value = city;
+                    if (street) document.getElementById('street').value = street;
+                    if (building) document.getElementById('building').value = building;
                 }
             }
         } catch (error) {
             console.error('Ошибка геокодирования:', error);
+        } finally {
+            isGeocodingInProgress = false;
         }
     }
 
-    // Поиск по адресу при вводе
-    ['city', 'street', 'building', 'region'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('input', () => {
-                clearTimeout(clickTimer);
-                clickTimer = setTimeout(forwardGeocode, 1000);
-            });
-        }
-    });
-
-    async function forwardGeocode() {
-        if (!ymapsReady) return;
-
+    async function forwardGeocode(forceCenter = false) {
+        if (!ymapsReady || isGeocodingInProgress) return;
         const region = document.getElementById('region')?.value.trim() || '';
         const city = document.getElementById('city')?.value.trim() || '';
         const street = document.getElementById('street')?.value.trim() || '';
         const building = document.getElementById('building')?.value.trim() || '';
 
-        if (!city && !street) return;
+        if (!city && !street) {
+            if (forceCenter) showNotification('Введите город или улицу', true);
+            return;
+        }
 
-        // Формируем адрес для поиска
+        isGeocodingInProgress = true;
         let address = '';
         if (street) address += street;
         if (building) address += (address ? ', ' : '') + building;
         if (city) address += (address ? ', ' : '') + city;
-        if (region) address += (address ? ', ' : '') + region;
-
-        if (!address.toLowerCase().includes('росси')) {
-            address += ', Россия';
-        }
+        if (region && !region.includes('округ')) address += (address ? ', ' : '') + region;
+        if (!address.toLowerCase().includes('росси')) address += ', Россия';
 
         try {
             const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(address)}&results=1`);
             const data = await response.json();
-
             const featureMember = data.response?.GeoObjectCollection?.featureMember;
             if (featureMember && featureMember.length > 0) {
                 const geoObject = featureMember[0].GeoObject;
@@ -487,7 +1005,6 @@
                 const lng = parseFloat(pos[0]);
                 const lat = parseFloat(pos[1]);
 
-                // Обновляем или создаем метку
                 if (placemark) {
                     placemark.geometry.setCoordinates([lat, lng]);
                 } else {
@@ -495,60 +1012,35 @@
                         preset: 'islands#redIcon',
                         draggable: true
                     });
-
                     placemark.events.add('dragend', function(e) {
                         const coords = e.get('target').geometry.getCoordinates();
-                        const lat = coords[0].toFixed(8);
-                        const lng = coords[1].toFixed(8);
-
-                        document.getElementById('lat').value = lat;
-                        document.getElementById('lng').value = lng;
-
-                        reverseGeocode(lat, lng);
+                        document.getElementById('lat').value = coords[0].toFixed(8);
+                        document.getElementById('lng').value = coords[1].toFixed(8);
+                        reverseGeocode(coords[0], coords[1]);
                     });
-
                     map.geoObjects.add(placemark);
                 }
 
-                // 👇 УБИРАЕМ ЭТУ СТРОКУ - больше никакого центрирования
-                // map.setCenter([lat, lng], 18);
-
+                if (forceCenter || autoCenterEnabled) {
+                    const zoom = building ? 18 : (street ? 17 : 14);
+                    map.setCenter([lat, lng], zoom);
+                    if (!forceCenter && autoCenterEnabled) {
+                        showNotification(`📍 Карта перемещена к адресу: ${building ? city + ', ' + street + ', ' + building : (street || city)}`, false);
+                    }
+                }
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
-
-                // Получаем и заполняем полный адрес
                 await reverseGeocode(lat, lng);
+            } else if (forceCenter) {
+                showNotification('Адрес не найден', true);
             }
         } catch (error) {
-            console.error('Ошибка поиска адреса:', error);
+            console.error('Ошибка поиска:', error);
+            if (forceCenter) showNotification('Ошибка поиска адреса', true);
+        } finally {
+            isGeocodingInProgress = false;
         }
     }
-
-    // Показ/скрытие полей разной цены
-    document.getElementById("diffPrice")?.addEventListener("change", function () {
-        document.getElementById("extraPrices").style.display = this.checked ? "block" : "none";
-    });
-
-    // Скрытие адреса при сдаче всего здания
-    document.getElementById("wholeBuilding")?.addEventListener("change", function () {
-        const show = !this.checked;
-        document.getElementById("addressSection").style.display = show ? "block" : "none";
-        if (!show && placemark) {
-            map.geoObjects.remove(placemark);
-            placemark = null;
-            document.getElementById('lat').value = '';
-            document.getElementById('lng').value = '';
-
-            ['region', 'city', 'street', 'building'].forEach(id => {
-                const input = document.getElementById(id);
-                if (input) {
-                    input.value = '';
-                    const event = new Event('input', { bubbles: true });
-                    input.dispatchEvent(event);
-                }
-            });
-        }
-    });
 </script>
 </body>
 </html>

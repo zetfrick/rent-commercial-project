@@ -50,6 +50,9 @@ public class Premise {
     private String contactPhone;
     private String contactEmail;
 
+    private Double latitude;
+    private Double longitude;
+
     @ElementCollection
     private List<String> photoPaths = new ArrayList<>();
 

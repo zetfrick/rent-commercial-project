@@ -1,7 +1,8 @@
 <header class="header" th:fragment="header(currentCity, currentUri)" xmlns:th="http://www.w3.org/1999/xhtml">
     <div class="nav-left">
-        <a href="/profile">Финансы</a> | <a href="/about">О нас</a>
-        <!-- Выбор города справа от "О нас" -->
+        <a href="/about">О нас</a>
+
+        <!-- Выбор города -->
         <div class="city-dropdown">
             <span class="current-city" th:text="${currentCity}">Нижний Новгород</span>
             <ul class="city-list">
@@ -13,20 +14,20 @@
             </ul>
         </div>
     </div>
-    <div class="nav-center">
-        <h1>Аренда коммерческих помещений</h1>
-        <p>для вашего бизнеса в вашем городе</p>
-        <!-- Кнопка Каталог по центру под надписями -->
-        <a href="/catalog" class="catalog-btn">Каталог</a>
-    </div>
+
     <div class="nav-right">
-        <!-- Логин и выход только после авторизации, справа -->
+        <!-- Если пользователь авторизован -->
         <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-login">
-            <a th:href="@{/profile}" th:text="${#authentication.name}">User</a> |
-            <!-- Выход как POST-form -->
+            <a th:href="@{/profile}" th:text="${#authentication.name}">Профиль</a> |
             <form th:action="@{/logout}" method="post" style="display: inline;">
                 <button type="submit" style="background: none; border: none; color: #ff9800; cursor: pointer; text-decoration: underline;">Выход</button>
             </form>
+        </div>
+
+        <!-- Если пользователь не авторизован -->
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
+            <a href="/auth/login" class="login-link">Вход</a>
+            <a href="/auth/register" class="register-link">Регистрация</a>
         </div>
     </div>
 </header>

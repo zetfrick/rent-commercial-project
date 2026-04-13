@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,4 +21,10 @@ public interface CatalogClient {
 
     @PostMapping("/api/premise/add")
     PremiseDto addPremise(@RequestBody PremiseDto premiseDto);
+
+    /**
+     * Новый метод: получение последних добавленных помещений
+     */
+    @GetMapping("/api/premises/latest")
+    List<PremiseDto> getLatestPremises(@RequestParam(value = "limit", defaultValue = "6") int limit);
 }

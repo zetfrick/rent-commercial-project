@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аренда коммерческих помещений</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* ====================== HERO СЕКЦИЯ (полноэкранная) ====================== */
+        .hero-section {
+            height: 100vh;
+            min-height: 700px;
+            background: url('/images/background.jpeg') center center no-repeat;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: white;
+            text-align: center;
+            text-shadow: 0 3px 15px rgba(0,0,0,0.7);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1000px;
+            padding: 0 20px;
+        }
+
+        .hero-content h1 {
+            font-size: 4.6rem;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+            line-height: 1.05;
+        }
+
+        .hero-content p {
+            font-size: 1.8rem;
+            margin: 0 0 50px 0;
+            color: #ffddaa;
+        }
+
+        .rent-btn {
+            background: #ff5722;
+            color: white;
+            padding: 18px 50px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .rent-btn:hover {
+            background: #e64a19;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255,87,34,0.5);
+        }
+
+        /* ====================== НОВОЕ В КАТАЛОГЕ ====================== */
+        .new-section {
+            padding: 90px 20px 70px;
+            background: #f5f5f5;
+            text-align: center;
+        }
+
+        .new-section h2 {
+            font-size: 2.9rem;
+            color: #d32f2f;
+            margin-bottom: 55px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 30px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .card-placeholder {
+            height: 280px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: #777;
+        }
+
+        .to-catalog-btn {
+            margin-top: 65px;
+            background: #ff9800;
+            color: white;
+            padding: 16px 42px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .to-catalog-btn:hover {
+            background: #f57c00;
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 3.3rem; }
+            .hero-content p { font-size: 1.45rem; }
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Подключаем header БЕЗ дублирующегося заголовка -->
+<div th:insert="~{fragments/header :: header(currentCity = ${currentCity}, currentUri = ${currentUri})}"></div>
+
+<!-- Полноэкранная hero-секция -->
+<div class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Аренда коммерческих помещений</h1>
+        <p>Сдавайте и арендуйте офисы, склады, торговые площади быстро и выгодно</p>
+
+        <button class="rent-btn"
+                th:onclick="'javascript:window.location.href=\'' +
+                @{${#authentication.principal != null ? '/premise/add' : '/auth/register'}} + '\''">
+            Сдать помещение в аренду
+        </button>
+    </div>
+</div>
+
+<!-- Новое в каталоге -->
+<section class="new-section">
+    <h2>Новое в каталоге</h2>
+    <div class="cards-grid">
+        <div class="card-placeholder">Новое помещение 1</div>
+        <div class="card-placeholder">Новое помещение 2</div>
+        <div class="card-placeholder">Новое помещение 3</div>
+        <div class="card-placeholder">Новое помещение 4</div>
+        <div class="card-placeholder">Новое помещение 5</div>
+        <div class="card-placeholder">Новое помещение 6</div>
+    </div>
+
+    <button class="to-catalog-btn" onclick="window.location.href='/catalog'">
+        Перейти в полный каталог
+    </button>
+</section>
+
+<div th:insert="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
+Почему: О нас
+Нижний Новгород
+
+Москва
+Ростов на Дону
+Владимир
+Владивосток
+Нижний Новгород
+
+Вход Регистрация
+ 
+не встроены в основную страницу?
+ 
+text<header class="header" th:fragment="header(currentCity, currentUri)" xmlns:th="http://www.w3.org/1999/xhtml">
+    <div class="nav-left">
+        <a href="/about">О нас</a>
+
+        <!-- Выбор города -->
+        <div class="city-dropdown">
+            <span class="current-city" th:text="${currentCity}">Нижний Новгород</span>
+            <ul class="city-list">
+                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
+                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
+                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
+                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
+                <li class="selected"><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Правая часть с ссылками для авторизованных и неавторизованных пользователей -->
+    <div class="nav-right">
+        <!-- Если пользователь ЗАЛОГИНЕН -->
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-login">
+            <a th:href="@{/profile}" th:text="${#authentication.name}">Профиль</a> |
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" style="background: none; border: none; color: #ff9800; cursor: pointer; text-decoration: underline;">Выход</button>
+            </form>
+        </div>
+
+        <!-- Если пользователь НЕ ЗАЛОГИНЕН -->
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
+            <a href="/auth/login" class="login-link">Вход</a>
+            <a href="/auth/register" class="register-link">Регистрация</a>
+        </div>
+    </div>
+</header>
+
+<style>
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 25px;
+    }
+
+    .nav-left a {
+        color: #333;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .nav-left a:hover {
+        color: #ff5722;
+    }
+
+    .city-dropdown {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .current-city {
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #f9f9f9;
+    }
+
+    .city-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        list-style: none;
+        padding: 8px 0;
+        margin: 5px 0 0 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: none;
+        min-width: 180px;
+        z-index: 10;
+    }
+
+    .city-dropdown:hover .city-list {
+        display: block;
+    }
+
+    .city-list li a {
+        padding: 10px 16px;
+        display: block;
+        color: #333;
+        text-decoration: none;
+    }
+
+    .city-list li a:hover {
+        background: #ff9800;
+        color: white;
+    }
+
+    /* Правая часть */
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .login-link, .register-link {
+        color: #ff5722;
+        text-decoration: none;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+
+    .login-link:hover {
+        background: #fff0e6;
+    }
+
+    .register-link {
+        background: #ff5722;
+        color: white !important;
+    }
+
+    .register-link:hover {
+        background: #e64a19;
+    }
+
+    .user-login {
+        font-weight: 500;
+    }
+</style>

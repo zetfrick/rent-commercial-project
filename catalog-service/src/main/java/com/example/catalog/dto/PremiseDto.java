@@ -42,13 +42,18 @@ public class PremiseDto {
     private String contactPhone;
     private String contactEmail;
 
+    // Новые поля — очень важны для карточек на главной странице
+    private Double latitude;
+    private Double longitude;
+
     private List<String> photoPaths = new ArrayList<>();
 
     private boolean active = true;
 
     private LocalDate createdAt;
 
-    // Методы перевода (необязательно, но полезно для будущего)
+    // ==================== Методы перевода ====================
+
     public String getTypeInRussian() {
         if (type == null) return "";
         return switch (type) {

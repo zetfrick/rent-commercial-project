@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class ProfileController {
@@ -72,12 +73,29 @@ public class ProfileController {
         User owner = getCurrentUser(userDetails);
 
         PremiseForm form = new PremiseForm();
-        // Автозаполнение контактов из профиля пользователя
+        // Автозаполнение контактов
         form.setOwnerFirstName(owner.getFirstName());
         form.setOwnerLastName(owner.getLastName());
         form.setOwnerMiddleName(owner.getMiddleName());
         form.setOwnerPhone(owner.getPhone());
         form.setOwnerEmail(owner.getEmail());
+
+        // === ДИНАМИЧЕСКИЕ СПИСКИ ===
+        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
+
+        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING",
+                "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
+
+        model.addAttribute("typeInRussian", Map.of(
+                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
+                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
+        ));
+
+        model.addAttribute("amenityInRussian", Map.of(
+                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
+                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
+                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
+        ));
 
         model.addAttribute("premiseForm", form);
         return "future/add-premise";
@@ -86,7 +104,9 @@ public class ProfileController {
     @PostMapping("/premise/add")
     public String addPremise(@AuthenticationPrincipal UserDetails userDetails,
                              @ModelAttribute PremiseForm form,
-                             @RequestParam(value = "photos", required = false) List<MultipartFile> photos) {
+                             @RequestParam(value = "photos", required = false) List<MultipartFile> photos,
+                             @RequestParam("latitude") String latitudeStr,
+                             @RequestParam("longitude") String longitudeStr)   {
 
         User owner = getCurrentUser(userDetails);
 
@@ -127,6 +147,15 @@ public class ProfileController {
         if (photos != null && !photos.isEmpty() && !photos.stream().allMatch(MultipartFile::isEmpty)) {
             List<String> paths = fileStorageService.savePhotos(photos);
             premiseDto.setPhotoPaths(paths);
+        }
+
+        // Координаты
+        try {
+            premiseDto.setLatitude(Double.parseDouble(latitudeStr));
+            premiseDto.setLongitude(Double.parseDouble(longitudeStr));
+        } catch (Exception e) {
+            premiseDto.setLatitude(null);
+            premiseDto.setLongitude(null);
         }
 
         // Отправляем помещение в catalog-service

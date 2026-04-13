@@ -14,4 +14,12 @@ public interface PremiseRepository extends JpaRepository<Premise, Long> {
     List<Premise> findByActiveTrue();
 
     List<Premise> findAllByActiveTrueOrderByCreatedAtDesc();
+
+    /**
+     * Последние активные помещения, отсортированные по дате создания (убираем TopN)
+     */
+    List<Premise> findTop6ByActiveTrueOrderByCreatedAtDesc();
+
+    // Универсальный вариант с параметром (рекомендуется)
+    // List<Premise> findTopNByActiveTrueOrderByCreatedAtDesc(int limit);  ← этот не работает
 }

@@ -42,6 +42,9 @@ public class PremiseDto {
     private String contactPhone;
     private String contactEmail;
 
+    private Double latitude;
+    private Double longitude;
+
     private List<String> photoPaths = new ArrayList<>();
 
     private boolean active = true;
