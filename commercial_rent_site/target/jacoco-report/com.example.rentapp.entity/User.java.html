@@ -2,6 +2,7 @@
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Table(name = &quot;users&quot;)
@@ -21,20 +22,26 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // === Личные данные (для личного кабинета) ===
-    private String firstName;      // Имя
-    private String lastName;       // Фамилия
-    private String middleName;     // Отчество (может быть null)
-    private String phone;          // Телефон (может быть null)
+    private String firstName;
+    private String lastName;
+    private String middleName;
+    private String phone;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
-<span class="fc" id="L34">    public enum Role {</span>
-<span class="fc" id="L35">        USER,</span>
-<span class="fc" id="L36">        ADMIN,</span>
-<span class="fc" id="L37">        SUPER_ADMIN</span>
+<span class="fc" id="L34">    @Getter</span>
+    public enum Role {
+<span class="fc" id="L36">        USER(&quot;Арендодатель&quot;),</span>
+<span class="fc" id="L37">        ADMIN(&quot;Админ&quot;),</span>
+<span class="fc" id="L38">        SUPER_ADMIN(&quot;Суперадмин&quot;);</span>
+
+        private final String displayName;
+
+<span class="fc" id="L42">        Role(String displayName) {</span>
+<span class="fc" id="L43">            this.displayName = displayName;</span>
+<span class="fc" id="L44">        }</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

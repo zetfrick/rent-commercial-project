@@ -18,8 +18,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 30px;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(12px);
             position: absolute;
             top: 0;
             left: 0;
@@ -32,12 +32,7 @@
         .nav-left a { color: white; text-decoration: none; font-weight: 500; }
         .nav-left a:hover { color: #ffcc80; }
 
-        /* ========== ИСПРАВЛЕННЫЙ ДРОПДАУН ГОРОДА ========== */
-        .city-dropdown {
-            position: relative;
-            cursor: pointer;
-        }
-
+        .city-dropdown { position: relative; cursor: pointer; }
         .current-city {
             padding: 6px 14px;
             border: 1px solid rgba(255,255,255,0.4);
@@ -45,7 +40,6 @@
             background: rgba(255,255,255,0.15);
             white-space: nowrap;
         }
-
         .city-list {
             position: absolute;
             top: calc(100% + 5px);
@@ -62,32 +56,88 @@
             display: none;
             backdrop-filter: blur(10px);
         }
-
-        .city-dropdown:hover .city-list {
-            display: block;
-        }
-
-        .city-list li {
-            margin: 0;
-            padding: 0;
-        }
-
+        .city-dropdown:hover .city-list { display: block; }
         .city-list li a {
             padding: 10px 16px;
             display: block;
             color: white;
             text-decoration: none;
-            transition: all 0.2s;
-            font-size: 14px;
+        }
+        .city-list li a:hover { background: #ff5722; }
+
+        /* ==================== ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ ==================== */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.12);
+            padding: 6px 8px 6px 6px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.25);
         }
 
-        .city-list li a:hover {
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: white;
+            padding: 4px 14px 4px 8px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .user-info:hover { background: rgba(255,255,255,0.18); }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(255,87,34,0.4);
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 15.5px;
+            max-width: 170px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logout-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 30px;
+            font-size: 14.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+            transform: translateY(-1px);
+        }
+
+        .auth-links a {
+            color: white;
+            text-decoration: none;
+            padding: 9px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .register-link {
             background: #ff5722;
         }
-
-        .nav-right { display: flex; align-items: center; gap: 20px; }
-        .login-link, .register-link { color: white; text-decoration: none; padding: 8px 18px; border-radius: 6px; }
-        .register-link { background: #ff5722; }
         .register-link:hover { background: #e64a19; }
 
         /* ====================== HERO ====================== */
@@ -104,23 +154,42 @@
             text-align: center;
             text-shadow: 0 3px 15px rgba(0,0,0,0.7);
         }
+
         .hero-overlay {
             position: absolute;
             inset: 0;
             pointer-events: none;
         }
 
-        .hero-content h1 { font-size: 4.5rem; margin: 0 0 20px 0; font-weight: 700; line-height: 1.1; }
-        .hero-content p { font-size: 1.75rem; margin: 0 0 50px 0; color: #ffddaa; }
+        .hero-content h1 {
+            font-size: 4.5rem;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .hero-content p {
+            font-size: 1.75rem;
+            margin: 0 0 50px 0;
+            color: #ffddaa;
+        }
 
         .rent-btn {
-            background: #ff5722; color: white; padding: 18px 52px; border: none;
-            border-radius: 50px; font-size: 1.35rem; font-weight: bold; cursor: pointer;
+            background: #ff5722;
+            color: white;
+            padding: 18px 52px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.35rem;
+            font-weight: bold;
+            cursor: pointer;
             transition: all 0.3s;
         }
-        .rent-btn:hover { background: #e64a19; transform: translateY(-5px); }
+        .rent-btn:hover {
+            background: #e64a19;
+            transform: translateY(-5px);
+        }
 
-        /* ====================== НОВОЕ В КАТАЛОГЕ ====================== */
+        /* ====================== НОВОЕ В КАТАЛОГЕ (полностью как в каталоге) ====================== */
         .new-section {
             padding: 100px 20px 80px;
             background: #f8f9fa;
@@ -132,46 +201,206 @@
             margin-bottom: 60px;
         }
 
-        .premises-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
-            max-width: 1300px;
+        /* Сетка каталога — идентичная catalog-grid */
+        .catalog-grid {
+            max-width: 1400px;
             margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
         }
 
+        /* ====================== КАРТОЧКА ПОМЕЩЕНИЯ (улучшенная с навигационными стрелками при ховере) ====================== */
         .premise-card {
             background: white;
-            border-radius: 16px;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
         }
-        .premise-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
 
-        .premise-card img {
+        .premise-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(255,152,0,0.2);
+        }
+
+        /* Слайдер с поддержкой стрелок при ховере (как в catalog.html) */
+        .photos-slider {
+            position: relative;
+            height: 260px;
+            overflow: hidden;
+            cursor: grab;
+            background: #f0f0f0;
+            user-select: none;
+        }
+
+        .photos-slider:active {
+            cursor: grabbing;
+        }
+
+        .photos-container {
+            display: flex;
             width: 100%;
-            height: 200px;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            will-change: transform;
+        }
+
+        .photo-item {
+            min-width: 100%;
+            height: 100%;
             object-fit: cover;
+            pointer-events: auto;
+            cursor: pointer;
         }
 
-        .card-body { padding: 18px; }
-        .card-body h3 { margin: 0 0 8px 0; font-size: 1.35rem; color: #333; }
-        .card-body .info { color: #666; font-size: 0.95rem; margin: 4px 0; }
-        .price { font-size: 1.4rem; font-weight: bold; color: #d32f2f; margin: 12px 0 15px 0; }
-
-        .btn-detail {
-            display: inline-block;
-            background: #ff9800;
+        /* Полупрозрачные стрелки навигации (появляются при наведении на слайдер) */
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s ease;
+            opacity: 0;
+            visibility: hidden;
             color: white;
-            padding: 10px 24px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: monospace;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        .btn-detail:hover { background: #f57c00; }
 
-        /* ====================== FULLSCREEN (ИСПРАВЛЕНО) ====================== */
+        .photos-slider:hover .slider-arrow {
+            opacity: 0.85;
+            visibility: visible;
+        }
+
+        .slider-arrow:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-50%) scale(1.05);
+            opacity: 1;
+        }
+
+        .arrow-left {
+            left: 12px;
+        }
+
+        .arrow-right {
+            right: 12px;
+        }
+
+        /* Счетчик фото */
+        .photo-counter {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 20;
+            pointer-events: none;
+            font-family: monospace;
+        }
+
+        .no-photo {
+            height: 260px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 18px;
+        }
+
+        .area-badge, .capacity-badge {
+            position: absolute;
+            top: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 15;
+        }
+        .area-badge { left: 15px; }
+        .capacity-badge { right: 15px; }
+
+        .info {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .type {
+            font-size: 22px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0 0 12px 0;
+            color: #ff9800;
+        }
+        .amenities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #555;
+        }
+        .amenities span {
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .owner {
+            font-size: 18px;
+            margin: 15px 0 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .address {
+            color: #777;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        .prices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 16px;
+            margin: 15px 0;
+        }
+        .price-label { color: #777; }
+        .price-value { font-weight: bold; color: #ff9800; }
+        .details-btn {
+            display: block;
+            text-align: right;
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: auto;
+        }
+        .details-btn:hover { text-decoration: underline; }
+
+        /* Полноэкранный режим */
         #fullscreen {
             display: none;
             position: fixed;
@@ -182,7 +411,6 @@
             align-items: center;
             justify-content: center;
         }
-
         #fullImg {
             max-width: 95%;
             max-height: 95%;
@@ -191,11 +419,11 @@
 
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 3.2rem; }
-            .premises-grid { grid-template-columns: 1fr; }
-            .city-list {
-                min-width: 150px;
-                right: 0;
-                left: auto;
+            .catalog-grid { grid-template-columns: 1fr; }
+            .slider-arrow {
+                width: 34px;
+                height: 34px;
+                font-size: 24px;
             }
         }
     </style>
@@ -219,20 +447,59 @@
     </div>
 </div>
 
-<!-- Новое в каталоге -->
+<!-- Новое в каталоге — карточки идентичны каталогу (со стрелками, слайдером и всеми функциями) -->
 <section class="new-section">
     <h2>Новое в каталоге</h2>
 
-    <div th:if="${latestPremises != null and !latestPremises.isEmpty()}" class="premises-grid">
-        <div th:each="premise : ${latestPremises}" class="premise-card">
-            <img th:src="${premise.photoPaths != null and !premise.photoPaths.isEmpty() ?
-                          '/uploads/' + premise.photoPaths[0] : '/images/no-image.jpg'}"
-                 alt="Фото помещения">
-            <div class="card-body">
-                <h3 th:text="${premise.getTypeInRussian()}"></h3>
-                <div class="info" th:text="${premise.city}"></div>
-                <div class="price" th:text="${premise.priceWeekday} + ' ₽ / сутки'"></div>
-                <a th:href="@{/premise/{id}(id=${premise.id})}" class="btn-detail">Подробнее →</a>
+    <div th:if="${latestPremises != null and !latestPremises.isEmpty()}" class="catalog-grid">
+        <div class="premise-card" th:each="p : ${latestPremises}">
+            <!-- Слайдер с фото и навигацией (полностью как в catalog) -->
+            <div th:if="${!p.photoPaths.isEmpty()}" class="photos-slider" th:attr="data-slider-id=${p.id}">
+                <div class="photos-container">
+                    <img th:each="photo : ${p.photoPaths}"
+                         th:src="@{'/uploads/' + ${photo}}"
+                         class="photo-item"
+                         alt="Фото помещения"
+                         onclick="openFullscreen(this.src)"
+                         onerror="this.onerror=null; this.src='/images/no-photo.jpg';">
+                </div>
+                <!-- Стрелки навигации (появляются при ховере) -->
+                <div class="slider-arrow arrow-left" data-direction="prev">‹</div>
+                <div class="slider-arrow arrow-right" data-direction="next">›</div>
+                <div class="photo-counter"></div>
+            </div>
+            <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">
+                Нет фото
+            </div>
+
+            <div class="area-badge" th:text="${p.area} + ' м²'"></div>
+            <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
+
+            <div class="info">
+                <div class="type" th:text="${p.getTypeInRussian() != null ? p.getTypeInRussian() : p.type}">Офисное</div>
+
+                <div class="amenities" th:if="${!p.amenities.isEmpty()}">
+                    <span th:each="a : ${p.amenities}" th:text="${p.getAmenityInRussian(a)}"></span>
+                </div>
+
+                <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
+
+                <div class="address">
+                    <span th:text="${p.city}"></span>,
+                    <span th:text="${p.street} + ' ' + ${p.building}"></span>
+                </div>
+
+                <div class="prices">
+                    <div><span class="price-label">Будни:</span>
+                        <span class="price-value" th:text="${p.priceWeekday} + ' ₽/сутки'"></span>
+                    </div>
+                    <div th:if="${p.priceWeekend != null}">
+                        <span class="price-label">Выходные:</span>
+                        <span class="price-value" th:text="${p.priceWeekend} + ' ₽/сутки'"></span>
+                    </div>
+                </div>
+
+                <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
             </div>
         </div>
     </div>
@@ -254,11 +521,186 @@
 <div th:insert="~{fragments/footer :: footer}"></div>
 
 <script>
+    // Функция полноэкранного просмотра
     function openFullscreen(src) {
-        document.getElementById('fullImg').src = src;
-        document.getElementById('fullscreen').style.display = 'flex';
+        const fullDiv = document.getElementById('fullscreen');
+        const fullImg = document.getElementById('fullImg');
+        fullImg.src = src;
+        fullDiv.style.display = 'flex';
     }
-</script>
 
+    // Инициализация всех слайдеров на странице (включая "Новое в каталоге")
+    (function() {
+        function initSlider(sliderElement) {
+            const container = sliderElement.querySelector('.photos-container');
+            if (!container) return;
+            const images = container.querySelectorAll('.photo-item');
+            const totalSlides = images.length;
+            if (totalSlides <= 1) {
+                const arrows = sliderElement.querySelectorAll('.slider-arrow');
+                arrows.forEach(arrow => arrow.style.display = 'none');
+                const counter = sliderElement.querySelector('.photo-counter');
+                if (counter) counter.style.display = 'none';
+                return;
+            }
+
+            let currentIndex = 0;
+            if (sliderElement.hasAttribute('data-current-idx')) {
+                currentIndex = parseInt(sliderElement.getAttribute('data-current-idx')) || 0;
+                if (currentIndex >= totalSlides) currentIndex = totalSlides - 1;
+                if (currentIndex < 0) currentIndex = 0;
+            }
+
+            const arrowLeft = sliderElement.querySelector('.arrow-left');
+            const arrowRight = sliderElement.querySelector('.arrow-right');
+            const counterDiv = sliderElement.querySelector('.photo-counter');
+
+            function updatePosition(animate = true) {
+                const shiftPercent = -(currentIndex * 100);
+                if (!animate) {
+                    container.style.transition = 'none';
+                    container.style.transform = `translateX(${shiftPercent}%)`;
+                    void container.offsetHeight;
+                    container.style.transition = '';
+                } else {
+                    container.style.transform = `translateX(${shiftPercent}%)`;
+                }
+                if (counterDiv) {
+                    counterDiv.textContent = `${currentIndex+1} / ${totalSlides}`;
+                }
+                sliderElement.setAttribute('data-current-idx', currentIndex);
+            }
+
+            function nextSlide() {
+                currentIndex = (currentIndex + 1) % totalSlides;
+                updatePosition(true);
+            }
+
+            function prevSlide() {
+                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                updatePosition(true);
+            }
+
+            // Обработчики для стрелок (с предотвращением всплытия)
+            if (arrowLeft) {
+                const newLeft = arrowLeft.cloneNode(true);
+                arrowLeft.parentNode.replaceChild(newLeft, arrowLeft);
+                newLeft.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    prevSlide();
+                });
+            }
+            if (arrowRight) {
+                const newRight = arrowRight.cloneNode(true);
+                arrowRight.parentNode.replaceChild(newRight, arrowRight);
+                newRight.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    nextSlide();
+                });
+            }
+
+            // Drag & drop (перетаскивание мышью) для слайдера
+            let isDragging = false;
+            let startX = 0;
+            let startTranslate = 0;
+            let currentTranslateDrag = 0;
+
+            function getCurrentTranslatePercent() {
+                const transform = container.style.transform;
+                if (!transform || transform === 'none') return -(currentIndex * 100);
+                const match = transform.match(/translateX\((-?\d+(?:\.\d+)?)%\)/);
+                if (match) return parseFloat(match[1]);
+                return -(currentIndex * 100);
+            }
+
+            container.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.slider-arrow')) return;
+                isDragging = true;
+                startX = e.pageX;
+                startTranslate = getCurrentTranslatePercent();
+                container.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const dx = e.pageX - startX;
+                const sliderWidth = sliderElement.clientWidth;
+                if (sliderWidth === 0) return;
+                let deltaPercent = (dx / sliderWidth) * 100;
+                let newPercent = startTranslate + deltaPercent;
+                const maxLeft = -(totalSlides - 1) * 100;
+                const minLeft = 0;
+                if (newPercent > minLeft) newPercent = minLeft;
+                if (newPercent < maxLeft) newPercent = maxLeft;
+                container.style.transform = `translateX(${newPercent}%)`;
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const finalPercent = getCurrentTranslatePercent();
+                let targetIndex = Math.round(Math.abs(finalPercent / 100));
+                if (targetIndex >= totalSlides) targetIndex = totalSlides - 1;
+                if (targetIndex < 0) targetIndex = 0;
+                currentIndex = targetIndex;
+                container.style.transition = 'transform 0.3s ease';
+                updatePosition(true);
+                setTimeout(() => {
+                    container.style.transition = '';
+                }, 350);
+            });
+
+            // Запрещаем drag изображений
+            images.forEach(img => {
+                img.addEventListener('dragstart', (e) => e.preventDefault());
+            });
+
+            updatePosition(false);
+        }
+
+        // Инициализация всех .photos-slider на странице
+        function initAllSliders() {
+            const sliders = document.querySelectorAll('.photos-slider');
+            sliders.forEach(slider => {
+                if (slider.dataset.sliderFinal === 'true') return;
+                initSlider(slider);
+                slider.dataset.sliderFinal = 'true';
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAllSliders);
+        } else {
+            initAllSliders();
+        }
+
+        // Для динамических изменений (если контент подгружается позже — но в данном случае статика)
+        // Также обрабатываем ресайз для корректировки позиции (без сброса индекса)
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const sliders = document.querySelectorAll('.photos-slider');
+                sliders.forEach(slider => {
+                    const container = slider.querySelector('.photos-container');
+                    if (!container) return;
+                    const currentIdxAttr = slider.getAttribute('data-current-idx');
+                    if (currentIdxAttr !== null) {
+                        let idx = parseInt(currentIdxAttr);
+                        const total = slider.querySelectorAll('.photo-item').length;
+                        if (!isNaN(idx) && total > 0 && idx < total) {
+                            container.style.transition = 'none';
+                            container.style.transform = `translateX(${-(idx * 100)}%)`;
+                            void container.offsetHeight;
+                            container.style.transition = '';
+                        }
+                    }
+                });
+            }, 150);
+        });
+    })();
+</script>
 </body>
 </html>

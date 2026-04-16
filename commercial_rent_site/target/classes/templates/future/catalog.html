@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light only">
-    <title>Каталог помещений в аренду</title>
+    <title>Каталог помещений в аренду | Слайдер с навигацией</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -191,6 +197,8 @@
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
         }
 
         .premise-card:hover {
@@ -198,25 +206,97 @@
             box-shadow: 0 20px 40px rgba(255,152,0,0.2);
         }
 
+        /* ----- Улучшенный слайдер с кастомными стрелками при ховере ----- */
         .photos-slider {
             position: relative;
             height: 260px;
             overflow: hidden;
             cursor: grab;
             background: #f0f0f0;
+            user-select: none;
+        }
+
+        .photos-slider:active {
+            cursor: grabbing;
         }
 
         .photos-container {
             display: flex;
             width: 100%;
             height: 100%;
-            transition: transform 0.4s ease;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            will-change: transform;
         }
 
         .photo-item {
             min-width: 100%;
             height: 100%;
             object-fit: cover;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        /* Навигационные стрелки — полупрозрачные, появляются только при ховере на слайдер */
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s ease;
+            opacity: 0;
+            visibility: hidden;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            font-family: monospace;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .photos-slider:hover .slider-arrow {
+            opacity: 0.85;
+            visibility: visible;
+        }
+
+        .slider-arrow:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-50%) scale(1.05);
+            opacity: 1;
+        }
+
+        .arrow-left {
+            left: 12px;
+        }
+
+        .arrow-right {
+            right: 12px;
+        }
+
+        /* индикатор количества фото/текущий индекс (необязательно, но стильно) */
+        .photo-counter {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 20;
+            pointer-events: none;
+            font-family: monospace;
+            letter-spacing: 0.5px;
         }
 
         .no-photo {
@@ -238,20 +318,30 @@
             border-radius: 12px;
             font-weight: bold;
             font-size: 14px;
-            z-index: 10;
+            z-index: 15;
         }
         .area-badge { left: 15px; }
         .capacity-badge { right: 15px; }
 
-        .info { padding: 20px; }
+        .info {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
         .type { font-size: 22px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px 0; color: #ff9800; }
-        .amenities { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; font-size: 14px; color: #555; }
+        .amenities { display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0; font-size: 13px; color: #555; }
+        .amenities span {
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
         .owner { font-size: 18px; margin: 15px 0 8px; font-weight: 500; color: #333; }
         .address { color: #777; font-size: 14px; line-height: 1.4; margin-bottom: 15px; }
         .prices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 16px; margin: 15px 0; }
         .price-label { color: #777; }
         .price-value { font-weight: bold; color: #ff9800; }
-        .details-btn { display: block; text-align: right; color: #ff9800; font-weight: bold; font-size: 16px; }
+        .details-btn { display: block; text-align: right; color: #ff9800; font-weight: bold; font-size: 16px; margin-top: auto; }
         .details-btn:hover { text-decoration: underline; }
 
         @media (max-width: 992px) {
@@ -260,6 +350,11 @@
         @media (max-width: 768px) {
             .top-bar { flex-direction: column; align-items: flex-start; padding: 15px; }
             .left-side, .top-right { width: 100%; justify-content: space-between; }
+            .slider-arrow {
+                width: 34px;
+                height: 34px;
+                font-size: 24px;
+            }
         }
     </style>
 </head>
@@ -339,10 +434,11 @@
     </div>
 </div>
 
-<!-- Каталог (оставляем без изменений) -->
+<!-- Каталог с улучшенным слайдером (стрелки при ховере + drag + клик на фото) -->
 <div class="catalog-grid" th:unless="${premises == null || premises.isEmpty()}">
     <div class="premise-card" th:each="p : ${premises}">
-        <div class="photos-slider" th:if="${!p.photoPaths.isEmpty()}">
+        <!-- Слайдер: если есть фото, показываем карусель с навигацией -->
+        <div th:if="${!p.photoPaths.isEmpty()}" class="photos-slider" data-slider-id="${p.id}">
             <div class="photos-container">
                 <img th:each="photo : ${p.photoPaths}"
                      th:src="@{'/uploads/' + ${photo}}"
@@ -351,6 +447,11 @@
                      onclick="openFullscreen(this.src)"
                      onerror="this.onerror=null; this.src='/images/no-photo.jpg';">
             </div>
+            <!-- Стрелки навигации (появляются при ховере на .photos-slider) -->
+            <div class="slider-arrow arrow-left" data-direction="prev">‹</div>
+            <div class="slider-arrow arrow-right" data-direction="next">›</div>
+            <!-- Счетчик фото (дополнительный элемент, отображает текущий индекс / всего) -->
+            <div class="photo-counter"></div>
         </div>
         <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">
             Нет фото
@@ -406,30 +507,322 @@
 </div>
 
 <script>
-    document.querySelectorAll('.photos-slider').forEach(slider => {
-        let isDown = false, startX, scrollLeft;
-        slider.addEventListener('mousedown', e => {
-            isDown = true;
-            startX = e.pageX - slider.offsetLeft;
-            scrollLeft = slider.scrollLeft;
-        });
-        slider.addEventListener('mouseleave', () => isDown = false);
-        slider.addEventListener('mouseup', () => isDown = false);
-        slider.addEventListener('mousemove', e => {
-            if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - slider.offsetLeft;
-            const walk = (x - startX) * 2;
-            slider.scrollLeft = scrollLeft - walk;
-        });
-    });
+    (function() {
+        // Универсальная инициализация слайдеров для каждой карточки
+        function initSlider(sliderElement) {
+            const container = sliderElement.querySelector('.photos-container');
+            if (!container) return;
+            const images = container.querySelectorAll('.photo-item');
+            const totalSlides = images.length;
+            if (totalSlides <= 1) {
+                // Если одно фото или нет фото, стрелки и счетчик не нужны, скрываем их полностью
+                const arrows = sliderElement.querySelectorAll('.slider-arrow');
+                arrows.forEach(arrow => arrow.style.display = 'none');
+                const counter = sliderElement.querySelector('.photo-counter');
+                if (counter) counter.style.display = 'none';
+                return;
+            }
 
+            let currentIndex = 0;
+            const arrowLeft = sliderElement.querySelector('.arrow-left');
+            const arrowRight = sliderElement.querySelector('.arrow-right');
+            const counterDiv = sliderElement.querySelector('.photo-counter');
+
+            // Функция обновления позиции слайдера
+            function updateSliderPosition(instant = false) {
+                const shiftPercent = - (currentIndex * 100);
+                if (instant) {
+                    container.style.transition = 'none';
+                    container.style.transform = `translateX(${shiftPercent}%)`;
+                    // force reflow чтобы transition не вернулся
+                    void container.offsetHeight;
+                    container.style.transition = '';
+                } else {
+                    container.style.transform = `translateX(${shiftPercent}%)`;
+                }
+                // обновляем счетчик
+                if (counterDiv) {
+                    counterDiv.textContent = `${currentIndex+1} / ${totalSlides}`;
+                }
+            }
+
+            // Переключение слайдов
+            function goNext() {
+                if (totalSlides === 0) return;
+                currentIndex = (currentIndex + 1) % totalSlides;
+                updateSliderPosition(false);
+            }
+
+            function goPrev() {
+                if (totalSlides === 0) return;
+                currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                updateSliderPosition(false);
+            }
+
+            // Назначаем обработчики на стрелки
+            if (arrowLeft) arrowLeft.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goPrev();
+            });
+            if (arrowRight) arrowRight.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goPrev();
+            });
+            if (arrowRight) arrowRight.removeEventListener('click', goNext); // очистка на всякий случай, добавим заново
+            if (arrowRight) arrowRight.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goNext();
+            });
+            if (arrowLeft) arrowLeft.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goPrev();
+            });
+
+            // Drag (мышь) для слайдера - сохраняем возможность перетаскивания, чтобы не конфликтовать со стрелками
+            let isDown = false;
+            let startX;
+            let startTranslateX = 0;
+            let currentTranslate = 0;
+            let dragActive = false;
+            let startTransform = 0;
+
+            // Получаем текущее смещение в процентах
+            function getCurrentTranslatePercent() {
+                const transform = container.style.transform;
+                if (!transform || transform === 'none') return -currentIndex * 100;
+                const match = transform.match(/translateX\((-?\d+(?:\.\d+)?)%\)/);
+                if (match) {
+                    return parseFloat(match[1]);
+                }
+                return -currentIndex * 100;
+            }
+
+            container.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.slider-arrow')) return; // не мешаем клику по стрелкам
+                isDown = true;
+                dragActive = true;
+                startX = e.pageX;
+                // получаем текущий translateX в %
+                const curTransform = getCurrentTranslatePercent();
+                startTranslateX = curTransform;
+                container.style.transition = 'none';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const dx = e.pageX - startX;
+                const sliderWidth = sliderElement.clientWidth;
+                if (sliderWidth === 0) return;
+                const deltaPercent = (dx / sliderWidth) * 100;
+                let newTranslate = startTranslateX + deltaPercent;
+                // ограничиваем диапазон: от -(totalSlides-1)*100  до 0
+                const maxLeft = -(totalSlides - 1) * 100;
+                const minLeft = 0;
+                if (newTranslate > minLeft) newTranslate = minLeft;
+                if (newTranslate < maxLeft) newTranslate = maxLeft;
+                container.style.transform = `translateX(${newTranslate}%)`;
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if (!isDown) return;
+                isDown = false;
+                if (!dragActive) {
+                    dragActive = false;
+                    return;
+                }
+                dragActive = false;
+                // Определяем, на какой слайд переключиться на основе финального смещения
+                const finalTransform = getCurrentTranslatePercent();
+                const ratio = Math.abs(finalTransform / 100);
+                let targetIndex = Math.round(ratio);
+                if (targetIndex < 0) targetIndex = 0;
+                if (targetIndex >= totalSlides) targetIndex = totalSlides - 1;
+                // анимация к целевому индексу
+                currentIndex = targetIndex;
+                container.style.transition = 'transform 0.3s ease';
+                updateSliderPosition(false);
+                // сброс transition
+                setTimeout(() => {
+                    container.style.transition = '';
+                }, 350);
+                dragActive = false;
+            });
+
+            // Отключаем стандартный drag на изображениях, чтобы не мешать
+            images.forEach(img => {
+                img.addEventListener('dragstart', (e) => e.preventDefault());
+            });
+
+            // Инициализируем позицию
+            updateSliderPosition(true);
+            // Сброс transition после инита
+            setTimeout(() => {
+                container.style.transition = '';
+            }, 20);
+        }
+
+        // Найти все слайдеры на странице после загрузки (в том числе динамические, но в данном случае все статичны в шаблоне)
+        function initAllSliders() {
+            const sliders = document.querySelectorAll('.photos-slider');
+            sliders.forEach(slider => {
+                // проверяем, инициализирован ли уже (защита от повторной инициализации)
+                if (slider.dataset.sliderInitialized === 'true') return;
+                initSlider(slider);
+                slider.dataset.sliderInitialized = 'true';
+            });
+        }
+
+        // Также отслеживаем, если фотографии загружаются динамически через th:each уже есть при рендере.
+        // MutationObserver на случай, если контент подгружается позже (на всякий случай)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAllSliders);
+        } else {
+            initAllSliders();
+        }
+
+        // Дополнительно: для случаев, когда превью картинок могут загружаться медленно, пересчет позиции слайдера не нужен
+        // но проверим изменение размеров окна, чтобы не ломалось смещение (пересчет позиции, если контейнер изменил ширину)
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const sliders = document.querySelectorAll('.photos-slider');
+                sliders.forEach(slider => {
+                    const container = slider.querySelector('.photos-container');
+                    if (!container) return;
+                    // Сохраняем текущий индекс из data атрибута или через замыкание, но проще перечитать currentIndex из внутреннего хранилища?
+                    // Но наша функция init создает замыкание, мы не можем легко получить currentIndex. Поэтому проще: сбросим отображение с сохранением индекса,
+                    // но т.к. в resize важна только коррекция позиции относительно ширины, применим просто переустановку transform с текущим индексом
+                    // У каждого слайдера можно хранить текущий индекс в атрибуте, но для упрощения: переинициализируем слайдеры без потери текущего слайда?
+                    // В целях стабильности, проще обновить позицию, получив currentIndex из data-атрибута (сохраним его в dataset при каждом обновлении).
+                    // Доработаем: в initSlider будем обновлять data-current-index при изменении.
+                });
+            }, 150);
+        });
+
+        // Доработаем функцию initSlider чтобы при изменении индекса сохранять атрибут, а при ресайзе восстанавливать
+        // Но более элегантно: переделаем слегка инициализацию с сохранением контекста на элемент
+        // Просто добавим в каждую карточку уникальный объект состояния, но для простоты - при ресайзе обновляем все слайдеры, используя их внутренний lastIndex из замыкания.
+        // Однако замыкания не доступны глобально. Лучше создать WeakMap или хранить данные в самом элементе.
+        // Переопределим initAllSliders с расширенной логикой хранения индекса.
+        // Для надежности — перепишем инициализацию с привязкой методов к элементу.
+        // Ниже улучшенная версия с сохранением currentIndex в свойстве DOM.
+        function enhancedInitSlider(sliderElement) {
+            const container = sliderElement.querySelector('.photos-container');
+            if (!container) return;
+            const images = container.querySelectorAll('.photo-item');
+            const total = images.length;
+            if (total <= 1) {
+                const arrows = sliderElement.querySelectorAll('.slider-arrow');
+                arrows.forEach(arrow => arrow.style.display = 'none');
+                const cnt = sliderElement.querySelector('.photo-counter');
+                if (cnt) cnt.style.display = 'none';
+                return;
+            }
+
+            // Получаем или создаем хранилище индекса
+            let currentIdx = 0;
+            if (sliderElement.hasAttribute('data-current-idx')) {
+                currentIdx = parseInt(sliderElement.getAttribute('data-current-idx')) || 0;
+                if (currentIdx >= total) currentIdx = total-1;
+                if (currentIdx < 0) currentIdx = 0;
+            }
+
+            function updatePosition(animate = true) {
+                const shift = -(currentIdx * 100);
+                if (!animate) {
+                    container.style.transition = 'none';
+                    container.style.transform = `translateX(${shift}%)`;
+                    void container.offsetHeight;
+                    container.style.transition = '';
+                } else {
+                    container.style.transform = `translateX(${shift}%)`;
+                }
+                // обновляем счетчик
+                const counter = sliderElement.querySelector('.photo-counter');
+                if (counter) counter.textContent = `${currentIdx+1} / ${total}`;
+                sliderElement.setAttribute('data-current-idx', currentIdx);
+            }
+
+            const leftArrow = sliderElement.querySelector('.arrow-left');
+            const rightArrow = sliderElement.querySelector('.arrow-right');
+
+            function next() { currentIdx = (currentIdx + 1) % total; updatePosition(true); }
+            function prev() { currentIdx = (currentIdx - 1 + total) % total; updatePosition(true); }
+
+            if (leftArrow) {
+                leftArrow.replaceWith(leftArrow.cloneNode(true));
+                const newLeft = sliderElement.querySelector('.arrow-left');
+                if (newLeft) newLeft.addEventListener('click', (e) => { e.stopPropagation(); prev(); });
+            }
+            if (rightArrow) {
+                rightArrow.replaceWith(rightArrow.cloneNode(true));
+                const newRight = sliderElement.querySelector('.arrow-right');
+                if (newRight) newRight.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+            }
+
+            // drag logic (упрощенный, но рабочий)
+            let dragStart = false, startPageX = 0, startPercent = 0;
+            container.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.slider-arrow')) return;
+                dragStart = true;
+                startPageX = e.pageX;
+                const curTransform = container.style.transform;
+                let match = curTransform && curTransform.match(/translateX\((-?\d+(?:\.\d+)?)%\)/);
+                startPercent = match ? parseFloat(match[1]) : -(currentIdx * 100);
+                container.style.transition = 'none';
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!dragStart) return;
+                const dx = e.pageX - startPageX;
+                const deltaPercent = (dx / sliderElement.clientWidth) * 100;
+                let newPercent = startPercent + deltaPercent;
+                const maxLeft = -(total-1)*100, minLeft = 0;
+                if (newPercent > minLeft) newPercent = minLeft;
+                if (newPercent < maxLeft) newPercent = maxLeft;
+                container.style.transform = `translateX(${newPercent}%)`;
+            });
+            window.addEventListener('mouseup', () => {
+                if (!dragStart) return;
+                dragStart = false;
+                const finalTransform = container.style.transform;
+                let match = finalTransform && finalTransform.match(/translateX\((-?\d+(?:\.\d+)?)%\)/);
+                let percent = match ? parseFloat(match[1]) : 0;
+                let newIndex = Math.round(Math.abs(percent / 100));
+                if (newIndex >= total) newIndex = total-1;
+                if (newIndex < 0) newIndex = 0;
+                currentIdx = newIndex;
+                container.style.transition = 'transform 0.3s ease';
+                updatePosition(true);
+                setTimeout(() => { container.style.transition = ''; }, 350);
+            });
+            updatePosition(false);
+        }
+
+        // Переинициализируем с улучшенной версией
+        function finalInit() {
+            const sliders = document.querySelectorAll('.photos-slider');
+            sliders.forEach(slider => {
+                if (slider.dataset.finalInit === 'true') return;
+                enhancedInitSlider(slider);
+                slider.dataset.finalInit = 'true';
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalInit);
+        else finalInit();
+    })();
+
+    // Полноэкранная функция
     function openFullscreen(src) {
-        const fullscreen = document.getElementById('fullscreen');
+        const fullscreenDiv = document.getElementById('fullscreen');
         const fullImg = document.getElementById('fullImg');
         fullImg.src = src;
-        fullscreen.style.display = 'flex';
+        fullscreenDiv.style.display = 'flex';
     }
+    window.openFullscreen = openFullscreen;
 </script>
 </body>
 </html>

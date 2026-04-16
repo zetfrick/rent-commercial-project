@@ -1,44 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MainController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">MainController.java</span></div><h1>MainController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
 
+import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
-<span class="nc" id="L11">public class MainController {</span>
+public class MainController {
+
+    private final CatalogClient catalogClient;
+    private final UserService userService;
+
+<span class="nc" id="L24">    public MainController(CatalogClient catalogClient, UserService userService) {</span>
+<span class="nc" id="L25">        this.catalogClient = catalogClient;</span>
+<span class="nc" id="L26">        this.userService = userService;</span>
+<span class="nc" id="L27">    }</span>
 
     @GetMapping(&quot;/&quot;)
-    public String index(HttpServletRequest request, @RequestParam(required = false) String city, Authentication auth, Model model) {
-<span class="nc bnc" id="L15" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
-<span class="nc" id="L16">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
-<span class="nc bnc" id="L17" title="All 4 branches missed.">        if (auth != null &amp;&amp; auth.isAuthenticated()) {</span>
-<span class="nc" id="L18">            return &quot;redirect:/main/landing-logged&quot;;</span>
+    public String index(HttpServletRequest request,
+                        @RequestParam(required = false) String city,
+                        Authentication auth,
+                        Model model) {
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L36">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+
+<span class="nc bnc" id="L38" title="All 4 branches missed.">        if (auth != null &amp;&amp; auth.isAuthenticated()) {</span>
+<span class="nc" id="L39">            return &quot;redirect:/main/landing-logged&quot;;</span>
         }
-<span class="nc" id="L20">        return &quot;redirect:/main/landing-unlogged&quot;;</span>
+<span class="nc" id="L41">        return &quot;redirect:/main/landing-unlogged&quot;;</span>
     }
 
     @GetMapping(&quot;/main/landing-logged&quot;)
-    public String landingLogged(HttpServletRequest request, @RequestParam(required = false) String city, Model model) {
-<span class="nc bnc" id="L25" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
-<span class="nc" id="L26">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
-<span class="nc" id="L27">        return &quot;main/landing-logged&quot;;</span>
+    public String landingLogged(HttpServletRequest request,
+                                @RequestParam(required = false) String city,
+                                @AuthenticationPrincipal UserDetails userDetails,
+                                Model model) {
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L51">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+
+        // Загружаем пользователя для отображения роли
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        if (userDetails != null) {</span>
+<span class="nc" id="L55">            userService.findByLogin(userDetails.getUsername())</span>
+<span class="nc" id="L56">                    .ifPresent(user -&gt; model.addAttribute(&quot;currentUser&quot;, user));</span>
+        }
+
+        // Загружаем 6 последних помещений
+        try {
+<span class="nc" id="L61">            List&lt;PremiseDto&gt; latestPremises = catalogClient.getLatestPremises(6);</span>
+<span class="nc" id="L62">            model.addAttribute(&quot;latestPremises&quot;, latestPremises);</span>
+<span class="nc" id="L63">        } catch (Exception e) {</span>
+<span class="nc" id="L64">            model.addAttribute(&quot;latestPremises&quot;, List.of());</span>
+<span class="nc" id="L65">        }</span>
+
+<span class="nc" id="L67">        return &quot;main/landing-logged&quot;;</span>
     }
 
     @GetMapping(&quot;/main/landing-unlogged&quot;)
-    public String landingUnlogged(HttpServletRequest request, @RequestParam(required = false) String city, Model model) {
-<span class="nc bnc" id="L32" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
-<span class="nc" id="L33">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
-<span class="nc" id="L34">        return &quot;main/landing-unlogged&quot;;</span>
+    public String landingUnlogged(HttpServletRequest request,
+                                  @RequestParam(required = false) String city,
+                                  Model model) {
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L76">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+
+        try {
+<span class="nc" id="L79">            List&lt;PremiseDto&gt; latestPremises = catalogClient.getLatestPremises(6);</span>
+<span class="nc" id="L80">            model.addAttribute(&quot;latestPremises&quot;, latestPremises);</span>
+<span class="nc" id="L81">        } catch (Exception e) {</span>
+<span class="nc" id="L82">            model.addAttribute(&quot;latestPremises&quot;, List.of());</span>
+<span class="nc" id="L83">        }</span>
+
+<span class="nc" id="L85">        return &quot;main/landing-unlogged&quot;;</span>
     }
 
     @GetMapping(&quot;/catalog/preview&quot;)
-    public String catalogPreview(HttpServletRequest request, @RequestParam(required = false) String city, Model model) {
-<span class="nc bnc" id="L39" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
-<span class="nc" id="L40">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
-<span class="nc" id="L41">        return &quot;catalog/preview&quot;;</span>
+    public String catalogPreview(HttpServletRequest request,
+                                 @RequestParam(required = false) String city,
+                                 Model model) {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L93">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+<span class="nc" id="L94">        return &quot;catalog/preview&quot;;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

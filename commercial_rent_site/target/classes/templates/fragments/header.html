@@ -17,10 +17,13 @@
 
     <div class="nav-right">
         <!-- Если пользователь авторизован -->
-        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-login">
-            <a th:href="@{/profile}" th:text="${#authentication.name}">Профиль</a> |
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
+            <a th:href="@{/profile}" class="user-info">
+                <span class="user-avatar">👤</span>
+                <span class="user-name" th:text="${#authentication.name}"></span>
+            </a>
             <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" style="background: none; border: none; color: #ff9800; cursor: pointer; text-decoration: underline;">Выход</button>
+                <button type="submit" class="logout-btn">Выйти</button>
             </form>
         </div>
 

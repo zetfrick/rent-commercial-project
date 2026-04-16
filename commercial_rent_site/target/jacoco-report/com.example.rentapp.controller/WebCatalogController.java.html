@@ -9,25 +9,54 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
-<span class="nc" id="L14">public class WebCatalogController {</span>
+<span class="nc" id="L15">public class WebCatalogController {</span>
 
     @Autowired
     private CatalogClient catalogClient;
 
     @GetMapping(&quot;/catalog&quot;)
     public String catalog(Model model) {
-<span class="nc" id="L21">        List&lt;PremiseDto&gt; premises = catalogClient.getAllPremises();</span>
-<span class="nc" id="L22">        model.addAttribute(&quot;premises&quot;, premises);</span>
-<span class="nc" id="L23">        return &quot;future/catalog&quot;;  // или твой шаблон catalog.html</span>
+<span class="nc" id="L22">        List&lt;PremiseDto&gt; premises = catalogClient.getAllPremises();</span>
+<span class="nc" id="L23">        model.addAttribute(&quot;premises&quot;, premises);</span>
+
+        // Передаём списки для фильтров
+<span class="nc" id="L26">        model.addAttribute(&quot;types&quot;, List.of(&quot;OFFICE&quot;, &quot;TRADING&quot;, &quot;WAREHOUSE&quot;, &quot;PRODUCTION&quot;, &quot;HOSPITALITY&quot;, &quot;UNIVERSAL&quot;));</span>
+
+<span class="nc" id="L28">        model.addAttribute(&quot;amenities&quot;, List.of(&quot;CONDITIONER&quot;, &quot;WI_FI&quot;, &quot;FURNITURE&quot;, &quot;PARKING&quot;,</span>
+                &quot;SECURITY&quot;, &quot;ELEVATOR&quot;, &quot;KITCHEN&quot;, &quot;CONFERENCE&quot;));
+
+        // Для красивого отображения названий на русском
+<span class="nc" id="L32">        model.addAttribute(&quot;typeInRussian&quot;, Map.of(</span>
+                &quot;OFFICE&quot;, &quot;Офисное&quot;,
+                &quot;TRADING&quot;, &quot;Торговое&quot;,
+                &quot;WAREHOUSE&quot;, &quot;Складское&quot;,
+                &quot;PRODUCTION&quot;, &quot;Производственное&quot;,
+                &quot;HOSPITALITY&quot;, &quot;Гостиничное&quot;,
+                &quot;UNIVERSAL&quot;, &quot;Универсальное&quot;
+        ));
+
+<span class="nc" id="L41">        model.addAttribute(&quot;amenityInRussian&quot;, Map.of(</span>
+                &quot;CONDITIONER&quot;, &quot;Кондиционер&quot;,
+                &quot;WI_FI&quot;, &quot;Wi-Fi&quot;,
+                &quot;FURNITURE&quot;, &quot;Мебель&quot;,
+                &quot;PARKING&quot;, &quot;Парковка&quot;,
+                &quot;SECURITY&quot;, &quot;Охрана&quot;,
+                &quot;ELEVATOR&quot;, &quot;Лифт&quot;,
+                &quot;KITCHEN&quot;, &quot;Кухня&quot;,
+                &quot;CONFERENCE&quot;, &quot;Конференц-зал&quot;
+        ));
+
+<span class="nc" id="L52">        return &quot;future/catalog&quot;;   // или &quot;future/catalog&quot; — в зависимости от вашего пути</span>
     }
 
     @GetMapping(&quot;/premise/{id}&quot;)
     public String premiseDetail(@PathVariable Long id, Model model) {
-<span class="nc" id="L28">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
-<span class="nc" id="L29">        model.addAttribute(&quot;premise&quot;, premise);</span>
-<span class="nc" id="L30">        return &quot;future/premise-detail&quot;;</span>
+<span class="nc" id="L57">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
+<span class="nc" id="L58">        model.addAttribute(&quot;premise&quot;, premise);</span>
+<span class="nc" id="L59">        return &quot;future/premise-detail&quot;;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
