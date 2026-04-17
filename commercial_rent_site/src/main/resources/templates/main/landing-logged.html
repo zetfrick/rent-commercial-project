@@ -189,7 +189,7 @@
             transform: translateY(-5px);
         }
 
-        /* ====================== НОВОЕ В КАТАЛОГЕ (полностью как в каталоге) ====================== */
+        /* ====================== НОВОЕ В КАТАЛОГЕ ====================== */
         .new-section {
             padding: 100px 20px 80px;
             background: #f8f9fa;
@@ -211,7 +211,7 @@
             padding: 0 20px;
         }
 
-        /* ====================== КАРТОЧКА ПОМЕЩЕНИЯ (улучшенная с навигационными стрелками при ховере) ====================== */
+        /* ====================== КАРТОЧКА ПОМЕЩЕНИЯ (полностью как в каталоге) ====================== */
         .premise-card {
             background: white;
             border-radius: 20px;
@@ -227,18 +227,12 @@
             box-shadow: 0 20px 40px rgba(255,152,0,0.2);
         }
 
-        /* Слайдер с поддержкой стрелок при ховере (как в catalog.html) */
         .photos-slider {
             position: relative;
             height: 260px;
             overflow: hidden;
             cursor: grab;
             background: #f0f0f0;
-            user-select: none;
-        }
-
-        .photos-slider:active {
-            cursor: grabbing;
         }
 
         .photos-container {
@@ -246,78 +240,47 @@
             width: 100%;
             height: 100%;
             transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            will-change: transform;
         }
 
         .photo-item {
             min-width: 100%;
             height: 100%;
             object-fit: cover;
-            pointer-events: auto;
-            cursor: pointer;
         }
 
-        /* Полупрозрачные стрелки навигации (появляются при наведении на слайдер) */
         .slider-arrow {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
             width: 40px;
             height: 40px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
             cursor: pointer;
             z-index: 20;
-            transition: all 0.2s ease;
             opacity: 0;
-            visibility: hidden;
-            color: white;
-            font-size: 28px;
-            font-weight: bold;
-            font-family: monospace;
-            user-select: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            backdrop-filter: blur(2px);
         }
 
         .photos-slider:hover .slider-arrow {
-            opacity: 0.85;
-            visibility: visible;
+            opacity: 0.9;
         }
 
         .slider-arrow:hover {
-            background: rgba(0, 0, 0, 0.8);
-            transform: translateY(-50%) scale(1.05);
-            opacity: 1;
+            background: #ff5722;
+            transform: translateY(-50%) scale(1.1);
         }
 
-        .arrow-left {
-            left: 12px;
-        }
-
-        .arrow-right {
-            right: 12px;
-        }
-
-        /* Счетчик фото */
-        .photo-counter {
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(4px);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: white;
-            font-weight: 500;
-            z-index: 20;
-            pointer-events: none;
-            font-family: monospace;
-        }
+        .arrow-left { left: 12px; }
+        .arrow-right { right: 12px; }
 
         .no-photo {
             height: 260px;
@@ -381,15 +344,57 @@
             line-height: 1.4;
             margin-bottom: 15px;
         }
-        .prices {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 16px;
-            margin: 15px 0;
+
+        /* Блок доступности */
+        .availability {
+            background: #e8f5e9;
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin: 10px 0;
+            font-size: 13px;
+            border-left: 4px solid #4caf50;
         }
-        .price-label { color: #777; }
-        .price-value { font-weight: bold; color: #ff9800; }
+        .availability-label {
+            font-weight: 600;
+            color: #2e7d32;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        .availability-dates {
+            color: #1b5e20;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .prices {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 15px 0;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 12px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+        }
+        .price-label {
+            color: #777;
+            font-weight: normal;
+        }
+        .price-value {
+            font-weight: bold;
+            color: #ff9800;
+            font-size: 16px;
+        }
+        .price-value.highlight {
+            color: #ff5722;
+            font-size: 17px;
+        }
         .details-btn {
             display: block;
             text-align: right;
@@ -423,8 +428,10 @@
             .slider-arrow {
                 width: 34px;
                 height: 34px;
-                font-size: 24px;
+                font-size: 20px;
             }
+            .arrow-left { left: 8px; }
+            .arrow-right { right: 8px; }
         }
     </style>
 </head>
@@ -447,13 +454,13 @@
     </div>
 </div>
 
-<!-- Новое в каталоге — карточки идентичны каталогу (со стрелками, слайдером и всеми функциями) -->
+<!-- Новое в каталоге — карточки идентичны каталогу -->
 <section class="new-section">
     <h2>Новое в каталоге</h2>
 
     <div th:if="${latestPremises != null and !latestPremises.isEmpty()}" class="catalog-grid">
         <div class="premise-card" th:each="p : ${latestPremises}">
-            <!-- Слайдер с фото и навигацией (полностью как в catalog) -->
+            <!-- Слайдер с фото -->
             <div th:if="${!p.photoPaths.isEmpty()}" class="photos-slider" th:attr="data-slider-id=${p.id}">
                 <div class="photos-container">
                     <img th:each="photo : ${p.photoPaths}"
@@ -463,20 +470,16 @@
                          onclick="openFullscreen(this.src)"
                          onerror="this.onerror=null; this.src='/images/no-photo.jpg';">
                 </div>
-                <!-- Стрелки навигации (появляются при ховере) -->
                 <div class="slider-arrow arrow-left" data-direction="prev">‹</div>
                 <div class="slider-arrow arrow-right" data-direction="next">›</div>
-                <div class="photo-counter"></div>
             </div>
-            <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">
-                Нет фото
-            </div>
+            <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">📷 Нет фото</div>
 
             <div class="area-badge" th:text="${p.area} + ' м²'"></div>
             <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
 
             <div class="info">
-                <div class="type" th:text="${p.getTypeInRussian() != null ? p.getTypeInRussian() : p.type}">Офисное</div>
+                <div class="type" th:text="${p.getTypeInRussian()}"></div>
 
                 <div class="amenities" th:if="${!p.amenities.isEmpty()}">
                     <span th:each="a : ${p.amenities}" th:text="${p.getAmenityInRussian(a)}"></span>
@@ -484,18 +487,31 @@
 
                 <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
 
-                <div class="address">
-                    <span th:text="${p.city}"></span>,
-                    <span th:text="${p.street} + ' ' + ${p.building}"></span>
+                <!-- Адрес с областью и городом -->
+                <div class="address" th:text="${p.region} + ', ' + ${p.city} + ', ' + ${p.street} + ' ' + ${p.building}"></div>
+
+                <!-- Блок доступности -->
+                <div class="availability">
+                    <span class="availability-label">📅 Доступно для аренды:</span>
+                    <span class="availability-dates">
+                        <span th:text="${#temporals.format(p.availableFrom, 'dd.MM.yyyy')}"></span> —
+                        <span th:text="${#temporals.format(p.availableTo, 'dd.MM.yyyy')}"></span>
+                    </span>
                 </div>
 
+                <!-- Блок цен -->
                 <div class="prices">
-                    <div><span class="price-label">Будни:</span>
+                    <div class="price-row">
+                        <span class="price-label">📅 Будни:</span>
                         <span class="price-value" th:text="${p.priceWeekday} + ' ₽/сутки'"></span>
                     </div>
-                    <div th:if="${p.priceWeekend != null}">
-                        <span class="price-label">Выходные:</span>
-                        <span class="price-value" th:text="${p.priceWeekend} + ' ₽/сутки'"></span>
+                    <div class="price-row" th:if="${p.priceWeekend != null && p.priceWeekend > 0}">
+                        <span class="price-label">🎉 Выходные:</span>
+                        <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽/сутки'"></span>
+                    </div>
+                    <div class="price-row" th:if="${p.priceHoliday != null && p.priceHoliday > 0}">
+                        <span class="price-label">🌟 Праздники:</span>
+                        <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽/сутки'"></span>
                     </div>
                 </div>
 
@@ -529,18 +545,17 @@
         fullDiv.style.display = 'flex';
     }
 
-    // Инициализация всех слайдеров на странице (включая "Новое в каталоге")
+    // Инициализация всех слайдеров
     (function() {
         function initSlider(sliderElement) {
             const container = sliderElement.querySelector('.photos-container');
             if (!container) return;
             const images = container.querySelectorAll('.photo-item');
             const totalSlides = images.length;
+
             if (totalSlides <= 1) {
                 const arrows = sliderElement.querySelectorAll('.slider-arrow');
                 arrows.forEach(arrow => arrow.style.display = 'none');
-                const counter = sliderElement.querySelector('.photo-counter');
-                if (counter) counter.style.display = 'none';
                 return;
             }
 
@@ -553,7 +568,6 @@
 
             const arrowLeft = sliderElement.querySelector('.arrow-left');
             const arrowRight = sliderElement.querySelector('.arrow-right');
-            const counterDiv = sliderElement.querySelector('.photo-counter');
 
             function updatePosition(animate = true) {
                 const shiftPercent = -(currentIndex * 100);
@@ -564,9 +578,6 @@
                     container.style.transition = '';
                 } else {
                     container.style.transform = `translateX(${shiftPercent}%)`;
-                }
-                if (counterDiv) {
-                    counterDiv.textContent = `${currentIndex+1} / ${totalSlides}`;
                 }
                 sliderElement.setAttribute('data-current-idx', currentIndex);
             }
@@ -581,7 +592,7 @@
                 updatePosition(true);
             }
 
-            // Обработчики для стрелок (с предотвращением всплытия)
+            // Обработчики для стрелок
             if (arrowLeft) {
                 const newLeft = arrowLeft.cloneNode(true);
                 arrowLeft.parentNode.replaceChild(newLeft, arrowLeft);
@@ -599,11 +610,10 @@
                 });
             }
 
-            // Drag & drop (перетаскивание мышью) для слайдера
+            // Drag & drop для слайдера
             let isDragging = false;
             let startX = 0;
             let startTranslate = 0;
-            let currentTranslateDrag = 0;
 
             function getCurrentTranslatePercent() {
                 const transform = container.style.transform;
@@ -660,7 +670,6 @@
             updatePosition(false);
         }
 
-        // Инициализация всех .photos-slider на странице
         function initAllSliders() {
             const sliders = document.querySelectorAll('.photos-slider');
             sliders.forEach(slider => {
@@ -676,8 +685,6 @@
             initAllSliders();
         }
 
-        // Для динамических изменений (если контент подгружается позже — но в данном случае статика)
-        // Также обрабатываем ресайз для корректировки позиции (без сброса индекса)
         let resizeTimer;
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
