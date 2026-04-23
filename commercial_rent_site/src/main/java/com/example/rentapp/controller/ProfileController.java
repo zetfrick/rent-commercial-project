@@ -149,14 +149,23 @@ public class ProfileController {
             premiseDto.setPhotoPaths(paths);
         }
 
-        // Координаты
+        // ==================== ИСПРАВЛЕННАЯ ОБРАБОТКА КООРДИНАТ ====================
+        Double lat = null;
+        Double lng = null;
+
         try {
-            premiseDto.setLatitude(Double.parseDouble(latitudeStr));
-            premiseDto.setLongitude(Double.parseDouble(longitudeStr));
+            if (latitudeStr != null && !latitudeStr.trim().isEmpty()) {
+                lat = Double.parseDouble(latitudeStr.trim());
+            }
+            if (longitudeStr != null && !longitudeStr.trim().isEmpty()) {
+                lng = Double.parseDouble(longitudeStr.trim());
+            }
         } catch (Exception e) {
-            premiseDto.setLatitude(null);
-            premiseDto.setLongitude(null);
+            System.err.println("Ошибка парсинга координат: lat=" + latitudeStr + ", lng=" + longitudeStr);
         }
+
+        premiseDto.setLatitude(lat);
+        premiseDto.setLongitude(lng);
 
         // Отправляем помещение в catalog-service
         catalogClient.addPremise(premiseDto);

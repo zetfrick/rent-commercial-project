@@ -1,62 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebCatalogController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">WebCatalogController.java</span></div><h1>WebCatalogController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
 
 import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.CommentDto;
 import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @Controller
-<span class="nc" id="L15">public class WebCatalogController {</span>
+<span class="nc" id="L16">public class WebCatalogController {</span>
 
     @Autowired
     private CatalogClient catalogClient;
 
+    @Autowired
+    private CommentService commentService;
+
     @GetMapping(&quot;/catalog&quot;)
     public String catalog(Model model) {
-<span class="nc" id="L22">        List&lt;PremiseDto&gt; premises = catalogClient.getAllPremises();</span>
-<span class="nc" id="L23">        model.addAttribute(&quot;premises&quot;, premises);</span>
+<span class="nc" id="L26">        List&lt;PremiseDto&gt; premises = catalogClient.getAllPremises();</span>
+<span class="nc" id="L27">        model.addAttribute(&quot;premises&quot;, premises);</span>
 
-        // Передаём списки для фильтров
-<span class="nc" id="L26">        model.addAttribute(&quot;types&quot;, List.of(&quot;OFFICE&quot;, &quot;TRADING&quot;, &quot;WAREHOUSE&quot;, &quot;PRODUCTION&quot;, &quot;HOSPITALITY&quot;, &quot;UNIVERSAL&quot;));</span>
+<span class="nc" id="L29">        model.addAttribute(&quot;types&quot;, List.of(&quot;OFFICE&quot;, &quot;TRADING&quot;, &quot;WAREHOUSE&quot;, &quot;PRODUCTION&quot;, &quot;HOSPITALITY&quot;, &quot;UNIVERSAL&quot;));</span>
+<span class="nc" id="L30">        model.addAttribute(&quot;amenities&quot;, List.of(&quot;CONDITIONER&quot;, &quot;WI_FI&quot;, &quot;FURNITURE&quot;, &quot;PARKING&quot;, &quot;SECURITY&quot;, &quot;ELEVATOR&quot;, &quot;KITCHEN&quot;, &quot;CONFERENCE&quot;));</span>
 
-<span class="nc" id="L28">        model.addAttribute(&quot;amenities&quot;, List.of(&quot;CONDITIONER&quot;, &quot;WI_FI&quot;, &quot;FURNITURE&quot;, &quot;PARKING&quot;,</span>
-                &quot;SECURITY&quot;, &quot;ELEVATOR&quot;, &quot;KITCHEN&quot;, &quot;CONFERENCE&quot;));
-
-        // Для красивого отображения названий на русском
 <span class="nc" id="L32">        model.addAttribute(&quot;typeInRussian&quot;, Map.of(</span>
-                &quot;OFFICE&quot;, &quot;Офисное&quot;,
-                &quot;TRADING&quot;, &quot;Торговое&quot;,
-                &quot;WAREHOUSE&quot;, &quot;Складское&quot;,
-                &quot;PRODUCTION&quot;, &quot;Производственное&quot;,
-                &quot;HOSPITALITY&quot;, &quot;Гостиничное&quot;,
-                &quot;UNIVERSAL&quot;, &quot;Универсальное&quot;
+                &quot;OFFICE&quot;, &quot;Офисное&quot;, &quot;TRADING&quot;, &quot;Торговое&quot;, &quot;WAREHOUSE&quot;, &quot;Складское&quot;,
+                &quot;PRODUCTION&quot;, &quot;Производственное&quot;, &quot;HOSPITALITY&quot;, &quot;Гостиничное&quot;, &quot;UNIVERSAL&quot;, &quot;Универсальное&quot;
         ));
 
-<span class="nc" id="L41">        model.addAttribute(&quot;amenityInRussian&quot;, Map.of(</span>
-                &quot;CONDITIONER&quot;, &quot;Кондиционер&quot;,
-                &quot;WI_FI&quot;, &quot;Wi-Fi&quot;,
-                &quot;FURNITURE&quot;, &quot;Мебель&quot;,
-                &quot;PARKING&quot;, &quot;Парковка&quot;,
-                &quot;SECURITY&quot;, &quot;Охрана&quot;,
-                &quot;ELEVATOR&quot;, &quot;Лифт&quot;,
-                &quot;KITCHEN&quot;, &quot;Кухня&quot;,
-                &quot;CONFERENCE&quot;, &quot;Конференц-зал&quot;
+<span class="nc" id="L37">        model.addAttribute(&quot;amenityInRussian&quot;, Map.of(</span>
+                &quot;CONDITIONER&quot;, &quot;Кондиционер&quot;, &quot;WI_FI&quot;, &quot;Wi-Fi&quot;, &quot;FURNITURE&quot;, &quot;Мебель&quot;,
+                &quot;PARKING&quot;, &quot;Парковка&quot;, &quot;SECURITY&quot;, &quot;Охрана&quot;, &quot;ELEVATOR&quot;, &quot;Лифт&quot;,
+                &quot;KITCHEN&quot;, &quot;Кухня&quot;, &quot;CONFERENCE&quot;, &quot;Конференц-зал&quot;
         ));
 
-<span class="nc" id="L52">        return &quot;future/catalog&quot;;   // или &quot;future/catalog&quot; — в зависимости от вашего пути</span>
+<span class="nc" id="L43">        return &quot;future/catalog&quot;;</span>
     }
 
     @GetMapping(&quot;/premise/{id}&quot;)
     public String premiseDetail(@PathVariable Long id, Model model) {
-<span class="nc" id="L57">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
-<span class="nc" id="L58">        model.addAttribute(&quot;premise&quot;, premise);</span>
-<span class="nc" id="L59">        return &quot;future/premise-detail&quot;;</span>
+<span class="nc" id="L48">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L51">            return &quot;redirect:/catalog&quot;; // или ошибка 404</span>
+        }
+
+<span class="nc" id="L54">        model.addAttribute(&quot;premise&quot;, premise);</span>
+<span class="nc" id="L55">        return &quot;future/premise-detail&quot;;</span>
+    }
+
+    // ==================== REST ЭНДПОИНТЫ ДЛЯ КОММЕНТАРИЕВ ====================
+
+    @PostMapping(&quot;/api/comments&quot;)
+    @ResponseBody
+    public CommentDto addComment(@RequestBody CommentDto commentDto) {
+<span class="nc" id="L63">        return commentService.addComment(commentDto);</span>
+    }
+
+    @GetMapping(&quot;/api/comments/premise/{premiseId}&quot;)
+    @ResponseBody
+    public List&lt;CommentDto&gt; getComments(@PathVariable Long premiseId) {
+        // Вызываем сервис, который через Feign клиент обращается к catalog-service
+<span class="nc" id="L70">        return commentService.getCommentsByPremiseId(premiseId);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

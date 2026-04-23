@@ -1,23 +1,995 @@
-<!-- src/main/resources/templates/future/premise-detail.html
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${premise.type} + ' — подробнее'">Офис — подробнее</title>
-    style
-        body { font-family: Arial, sans-serif; background: #111; color: white; padding: 40px; }
-        .back { color: #ff9800; text-decoration: none; }
-        .back:hover { text-decoration: underline; }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${premise.getTypeInRussian() ?: premise.type} + ' — ' + ${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}">Подробности помещения</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=4a02e3e8-33bf-4c35-ab01-4edcc2923896&lang=ru_RU" type="text/javascript"></script>
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        /* ====================== HEADER (статичный, тонкий) ====================== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            color: white;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 25px; }
+        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
+        .nav-left a:hover { color: #ffcc80; }
+
+        .city-dropdown { position: relative; cursor: pointer; }
+        .current-city {
+            padding: 5px 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.15);
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .city-list {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            list-style: none;
+            padding: 6px 0;
+            margin: 0;
+            background: rgba(0,0,0,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            min-width: 170px;
+            z-index: 1010;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .city-dropdown:hover .city-list { display: block; }
+        .city-list li a {
+            padding: 8px 14px;
+            display: block;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .city-list li a:hover { background: #ff5722; }
+
+        /* Профиль пользователя */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 6px 4px 4px;
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+            padding: 3px 12px 3px 6px;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .user-info:hover { background: rgba(255,255,255,0.18); }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(255,87,34,0.4);
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 13px;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logout-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+            transform: translateY(-1px);
+        }
+
+        .auth-links a {
+            color: white;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .login-link:hover { background: rgba(255,255,255,0.15); }
+        .register-link {
+            background: #ff5722;
+        }
+        .register-link:hover { background: #e64a19; }
+
+        /* Контейнер основного контента */
+        .container { max-width: 1280px; margin: 0 auto; padding: 30px 20px; }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: #ff5722; text-decoration: none; font-weight: 600; margin-bottom: 20px;
+        }
+        h1 { font-size: 2.4rem; margin-bottom: 8px; }
+        .address { font-size: 1.2rem; color: #555; margin-bottom: 30px; }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 40px;
+        }
+
+        /* Блок с фото + удобства (единый блок) */
+        .photos-amenities-block {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* Слайдер фотографий */
+        .photos-slider {
+            position: relative;
+            height: 460px;
+            overflow: hidden;
+            cursor: grab;
+            background: #1a1a2e;
+        }
+        .photos-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .photo-item {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        .no-photo {
+            height: 460px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .no-photo i { font-size: 64px; opacity: 0.8; }
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+        .photos-slider:hover .slider-arrow {
+            opacity: 0.9;
+        }
+        .slider-arrow:hover {
+            background: #ff5722;
+            transform: translateY(-50%) scale(1.1);
+            opacity: 1;
+        }
+        .arrow-left { left: 16px; }
+        .arrow-right { right: 16px; }
+
+        .photo-counter {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 20;
+            font-family: monospace;
+        }
+        .photo-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 20;
+        }
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .indicator-dot.active {
+            background: #ff5722;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* Блок удобств (под слайдером) */
+        .amenities-under-photos {
+            padding: 20px 24px;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+        }
+        .amenities-under-photos h3 {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 14px;
+            letter-spacing: 0.5px;
+        }
+        .amenities-under-photos h3 i {
+            color: #ff5722;
+            margin-right: 8px;
+        }
+        .amenities-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .amenity-chip {
+            background: #f5f5f5;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #444;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .amenity-chip i {
+            color: #ff5722;
+            font-size: 13px;
+        }
+        .amenity-chip:hover {
+            background: #fff0e8;
+            transform: translateY(-1px);
+        }
+
+        /* Карта */
+        .map-container {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .map-label {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: #ff5722;
+            font-size: 14px;
+        }
+        .map-label i { margin-right: 8px; }
+        #ymap { width: 100%; height: 280px; }
+
+        /* Карточка цены */
+        .price-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+        .price-card h2 { margin-bottom: 18px; font-size: 1.6rem; color: #222; }
+        .price-table {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .price-item { text-align: center; background: #f9f9f9; padding: 12px 6px; border-radius: 14px; }
+        .price-item .label { font-size: 0.8rem; color: #777; margin-bottom: 6px; display: block; }
+        .price-item .value { font-size: 1.3rem; font-weight: bold; color: #ff5722; }
+
+        .contact-btn {
+            width: 100%; background: #ff5722; color: white; border: none;
+            padding: 16px; font-size: 1.2rem; font-weight: bold; border-radius: 50px;
+            cursor: pointer; margin-top: 15px;
+            transition: all 0.3s;
+        }
+        .contact-btn:hover { background: #e64a19; transform: translateY(-2px); }
+        .owner-info {
+            text-align: center; margin-top: 20px; padding-top: 15px;
+            border-top: 1px solid #eee; color: #555; font-size: 14px;
+        }
+        .owner-info i { margin-right: 6px; color: #ff5722; }
+
+        /* Описание и дополнительные блоки */
+        .description-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-top: 40px;
+        }
+        .info-block {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-block:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+        .info-block h3 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: #222;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .info-block h3 i {
+            color: #ff5722;
+            font-size: 1.3rem;
+        }
+        .info-block p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+        .info-block p.empty {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        /* ====================== КОММЕНТАРИИ ====================== */
+        .comments-section {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            margin-top: 40px;
+        }
+        .comments-section h2 {
+            margin-bottom: 25px;
+            color: #222;
+            font-size: 1.65rem;
+        }
+        .comment-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        .comment-form textarea {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            resize: vertical;
+            min-height: 90px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #ff5722;
+        }
+        .comment-form button {
+            padding: 0 32px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .comment-form button:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .comment {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 16px;
+            border-left: 5px solid #ff9800;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .comment-author {
+            font-weight: 600;
+            color: #ff5722;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .comment-author:hover {
+            color: #e64a19;
+            text-decoration: underline;
+        }
+        .comment-date { color: #888; }
+        .comment-text { line-height: 1.6; color: #444; }
+
+        .no-comments {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 40px 0;
+        }
+
+        @media (max-width: 992px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .photos-slider { height: 380px; }
+        }
+        @media (max-width: 768px) {
+            .header { padding: 8px 16px; flex-wrap: wrap; gap: 8px; }
+            .nav-left { flex-wrap: wrap; gap: 12px; }
+            .photos-slider { height: 280px; }
+            .slider-arrow { width: 36px; height: 36px; font-size: 22px; }
+            .amenities-chips { gap: 8px; }
+            .amenity-chip { padding: 6px 12px; font-size: 11px; }
+            .comments-section { padding: 20px; }
+            .comment-form { flex-direction: column; }
+            .comment-form button { padding: 12px; }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 14px 22px;
+            border-radius: 10px;
+            z-index: 10000;
+            max-width: 500px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            animation: slideIn 0.4s ease;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .notification.error { background: #ff5722; }
+        .notification.info { background: #2196f3; }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        #fullscreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 10001;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        #fullImg {
+            max-width: 95%;
+            max-height: 95%;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
-    <a href="/catalog" class="back">← Назад к каталогу</a>
-    <h1 th:text="${premise.type}">ОФИС</h1>
-    <p>Площадь: <span th:text="${premise.area} + ' м²'"></span></p>
-    <p>Вместимость: <span th:text="${premise.capacity} + ' чел.'"></span></p>
-    <p>Цена: <span th:text="${premise.priceWeekday} + ' ₽/сутки'"></span></p>
 
-    <!-- Здесь будет полное описание, большая карта, календарь бронирования и т.д. -->
-<p>Подробная страница в разработке...</p>
+<!-- HEADER (статичный, тонкий, как на главной) -->
+<header class="header">
+    <div class="nav-left">
+        <a href="/about">О нас</a>
+
+        <!-- Выбор города -->
+        <div class="city-dropdown">
+            <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
+            <ul class="city-list">
+                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
+                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
+                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
+                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
+                <li><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="nav-right">
+        <!-- Если пользователь авторизован -->
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
+            <a th:href="@{/profile}" class="user-info">
+                <span class="user-avatar">👤</span>
+                <span class="user-name" th:text="${#authentication.name}"></span>
+            </a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Выйти</button>
+            </form>
+        </div>
+
+        <!-- Если пользователь не авторизован -->
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
+            <a href="/auth/login" class="login-link">Вход</a>
+            <a href="/auth/register" class="register-link">Регистрация</a>
+        </div>
+    </div>
+</header>
+
+<!-- Основной контент -->
+<div class="container">
+    <a href="/catalog" class="back-btn"><i class="fas fa-arrow-left"></i> Назад в каталог</a>
+
+    <h1 th:text="${premise.getTypeInRussian() ?: premise.type}"></h1>
+    <div class="address" th:text="${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
+
+    <div class="main-grid">
+        <!-- ЛЕВАЯ КОЛОНКА: Фото + Удобства под ними -->
+        <div class="photos-amenities-block">
+            <!-- Слайдер с фотографиями -->
+            <div th:if="${!premise.photoPaths.isEmpty()}" class="photos-slider" id="mainSlider">
+                <div class="photos-container" id="photosContainer">
+                    <img th:each="photo, iterStat : ${premise.photoPaths}"
+                         th:src="@{'/uploads/' + ${photo}}"
+                         class="photo-item"
+                         onclick="openFullscreen(this.src)"
+                         onerror="this.src='/images/no-photo.jpg';"
+                         alt="Фото помещения">
+                </div>
+                <div class="slider-arrow arrow-left" id="arrowLeft"><i class="fas fa-chevron-left"></i></div>
+                <div class="slider-arrow arrow-right" id="arrowRight"><i class="fas fa-chevron-right"></i></div>
+                <div class="photo-counter" id="photoCounter">
+                    <span id="currentPhotoNum">1</span> / <span id="totalPhotosNum">0</span>
+                </div>
+                <div class="photo-indicators" id="photoIndicators"></div>
+            </div>
+            <div class="no-photo" th:unless="${!premise.photoPaths.isEmpty()}">
+                <i class="fas fa-camera-retro"></i>
+                <span>Фотографии отсутствуют</span>
+            </div>
+
+            <!-- Удобства под слайдером -->
+            <div class="amenities-under-photos">
+                <h3><i class="fas fa-star-of-life"></i> Оснащение и удобства</h3>
+                <div class="amenities-chips" th:if="${!premise.amenities.isEmpty()}">
+                    <div class="amenity-chip" th:each="am : ${premise.amenities}">
+                        <i class="fas fa-check-circle"></i>
+                        <span th:text="${premise.getAmenityInRussian(am)}"></span>
+                    </div>
+                </div>
+                <div class="amenities-chips" th:unless="${!premise.amenities.isEmpty()}">
+                    <span style="color:#999; font-size:13px;">Удобства не указаны</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: Карта + Цена -->
+        <div>
+            <div class="map-container">
+                <div class="map-label"><i class="fas fa-map-marker-alt"></i> Расположение на карте</div>
+                <div id="ymap"></div>
+            </div>
+
+            <div class="price-card">
+                <h2><i class="fas fa-tag"></i> Стоимость аренды</h2>
+                <div class="price-table">
+                    <div class="price-item">
+                        <span class="label"><i class="fas fa-calendar-week"></i> Будни</span>
+                        <div class="value" th:text="${premise.priceWeekday} + ' ₽'"></div>
+                    </div>
+                    <div class="price-item" th:if="${premise.priceWeekend != null}">
+                        <span class="label"><i class="fas fa-calendar-weekend"></i> Выходные</span>
+                        <div class="value" th:text="${premise.priceWeekend} + ' ₽'"></div>
+                    </div>
+                    <div class="price-item" th:if="${premise.priceHoliday != null}">
+                        <span class="label"><i class="fas fa-gift"></i> Праздники</span>
+                        <div class="value" th:text="${premise.priceHoliday} + ' ₽'"></div>
+                    </div>
+                </div>
+
+                <button class="contact-btn" onclick="contactSeller()">
+                    <i class="fas fa-comment-dots"></i> Связаться с продавцом
+                </button>
+
+                <div class="owner-info">
+                    <i class="fas fa-user-circle"></i>
+                    <strong th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></strong><br>
+                    <i class="fas fa-phone-alt"></i>
+                    <span th:text="${premise.contactPhone}"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ОПИСАНИЕ + ДОП. ПЛАТЕЖИ + ВАЖНАЯ ИНФОРМАЦИЯ -->
+    <div class="description-section">
+        <div class="info-block">
+            <h3><i class="fas fa-info-circle"></i> Описание помещения</h3>
+            <p th:text="${premise.description != null && premise.description != '' ? premise.description : 'Описание отсутствует'}"
+               th:class="${premise.description != null && premise.description != ''} ? '' : 'empty'"></p>
+        </div>
+
+        <div class="info-block">
+            <h3><i class="fas fa-receipt"></i> Дополнительные платежи</h3>
+            <p th:text="${premise.extraFees != null && premise.extraFees != '' ? premise.extraFees : 'Не указаны'}"
+               th:class="${premise.extraFees != null && premise.extraFees != ''} ? '' : 'empty'"></p>
+        </div>
+
+        <div class="info-block">
+            <h3><i class="fas fa-exclamation-triangle"></i> Важная информация</h3>
+            <p th:text="${premise.importantInfo != null && premise.importantInfo != '' ? premise.importantInfo : 'Не указана'}"
+               th:class="${premise.importantInfo != null && premise.importantInfo != ''} ? '' : 'empty'"></p>
+        </div>
+    </div>
+
+    <!-- ====================== КОММЕНТАРИИ ====================== -->
+    <div class="comments-section">
+        <h2><i class="fas fa-comments"></i> Комментарии и вопросы</h2>
+
+        <!-- Форма добавления комментария -->
+        <sec:authorize access="isAuthenticated()">
+            <form id="commentForm" class="comment-form">
+                <textarea id="commentText" placeholder="Напишите ваш комментарий или вопрос..." required></textarea>
+                <button type="submit">Отправить</button>
+            </form>
+        </sec:authorize>
+
+        <sec:authorize access="!isAuthenticated()">
+            <p style="text-align:center; color:#666; padding:20px;">
+                Чтобы оставить комментарий, <a href="/auth/login" style="color:#ff5722;">войдите в аккаунт</a>
+            </p>
+        </sec:authorize>
+
+        <!-- Список комментариев -->
+        <div class="comment-list" id="commentsList">
+            <!-- Заполняется через JavaScript -->
+        </div>
+    </div>
+</div>
+
+<div id="fullscreen" onclick="this.style.display='none'">
+    <img id="fullImg" src="">
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const premiseId = /*[[${premise.id}]]*/ null;
+    const premiseData = {
+        region: /*[[${premise.region}]]*/ null,
+        city: /*[[${premise.city}]]*/ null,
+        street: /*[[${premise.street}]]*/ null,
+        building: /*[[${premise.building}]]*/ null,
+        latitude: /*[[${premise.latitude}]]*/ null,
+        longitude: /*[[${premise.longitude}]]*/ null,
+        contactPhone: /*[[${premise.contactPhone}]]*/ null,
+        contactFirstName: /*[[${premise.contactFirstName}]]*/ null,
+        contactLastName: /*[[${premise.contactLastName}]]*/ null
+    };
+    /*]]>*/
+</script>
+
+<script>
+    // ======================== СЛАЙДЕР ФОТОГРАФИЙ ========================
+    let currentPhotoIndex = 0;
+    let totalPhotos = 0;
+    let photosContainer = null;
+    let autoSlideInterval = null;
+
+    function updateSliderUI() {
+        if (!photosContainer) return;
+        const total = totalPhotos;
+        if (total === 0) return;
+        photosContainer.style.transform = `translateX(-${currentPhotoIndex * 100}%)`;
+        const currentSpan = document.getElementById('currentPhotoNum');
+        const totalSpan = document.getElementById('totalPhotosNum');
+        if (currentSpan) currentSpan.textContent = currentPhotoIndex + 1;
+        if (totalSpan) totalSpan.textContent = total;
+
+        const indicatorsContainer = document.getElementById('photoIndicators');
+        if (indicatorsContainer) {
+            const dots = indicatorsContainer.querySelectorAll('.indicator-dot');
+            dots.forEach((dot, idx) => {
+                idx === currentPhotoIndex ? dot.classList.add('active') : dot.classList.remove('active');
+            });
+        }
+
+        const leftArrow = document.getElementById('arrowLeft');
+        const rightArrow = document.getElementById('arrowRight');
+        if (leftArrow && rightArrow && total <= 1) {
+            leftArrow.style.opacity = '0';
+            leftArrow.style.pointerEvents = 'none';
+            rightArrow.style.opacity = '0';
+            rightArrow.style.pointerEvents = 'none';
+        } else if (leftArrow && rightArrow) {
+            leftArrow.style.opacity = '0.9';
+            leftArrow.style.pointerEvents = 'auto';
+            rightArrow.style.opacity = '0.9';
+            rightArrow.style.pointerEvents = 'auto';
+        }
+    }
+
+    function prevPhoto() { if (totalPhotos <= 1) return; currentPhotoIndex = (currentPhotoIndex - 1 + totalPhotos) % totalPhotos; updateSliderUI(); resetAutoSlide(); }
+    function nextPhoto() { if (totalPhotos <= 1) return; currentPhotoIndex = (currentPhotoIndex + 1) % totalPhotos; updateSliderUI(); resetAutoSlide(); }
+    function goToPhoto(index) { if (index < 0 || index >= totalPhotos) return; currentPhotoIndex = index; updateSliderUI(); resetAutoSlide(); }
+
+    function resetAutoSlide() {
+        if (autoSlideInterval) clearInterval(autoSlideInterval);
+        if (totalPhotos > 1) autoSlideInterval = setInterval(() => nextPhoto(), 4000);
+    }
+
+    function initPhotoSlider() {
+        photosContainer = document.getElementById('photosContainer');
+        if (!photosContainer) return;
+        const photos = photosContainer.querySelectorAll('.photo-item');
+        totalPhotos = photos.length;
+        if (totalPhotos === 0) return;
+
+        const indicatorsContainer = document.getElementById('photoIndicators');
+        if (indicatorsContainer && totalPhotos > 1) {
+            indicatorsContainer.innerHTML = '';
+            for (let i = 0; i < totalPhotos; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'indicator-dot' + (i === 0 ? ' active' : '');
+                dot.addEventListener('click', (e) => { e.stopPropagation(); goToPhoto(i); });
+                indicatorsContainer.appendChild(dot);
+            }
+        }
+        currentPhotoIndex = 0;
+        updateSliderUI();
+        document.getElementById('arrowLeft')?.addEventListener('click', (e) => { e.stopPropagation(); prevPhoto(); });
+        document.getElementById('arrowRight')?.addEventListener('click', (e) => { e.stopPropagation(); nextPhoto(); });
+        resetAutoSlide();
+        const slider = document.getElementById('mainSlider');
+        if (slider) {
+            slider.addEventListener('mouseenter', () => { if (autoSlideInterval) { clearInterval(autoSlideInterval); autoSlideInterval = null; } });
+            slider.addEventListener('mouseleave', () => { if (totalPhotos > 1 && !autoSlideInterval) autoSlideInterval = setInterval(() => nextPhoto(), 4000); });
+        }
+    }
+
+    function openFullscreen(src) {
+        const fullImg = document.getElementById('fullImg');
+        const fullscreen = document.getElementById('fullscreen');
+        if (fullImg && fullscreen) { fullImg.src = src; fullscreen.style.display = 'flex'; }
+    }
+
+    function contactSeller() { alert('📞 Связаться с продавцом\nТелефон: ' + (premiseData.contactPhone || 'не указан')); }
+
+    let notificationTimeout = null;
+    function showNotification(message, isError = false, isInfo = false) {
+        const old = document.querySelector('.notification');
+        if (old) old.remove();
+        if (notificationTimeout) clearTimeout(notificationTimeout);
+        const n = document.createElement('div');
+        n.className = `notification${isError ? ' error' : ''}${isInfo ? ' info' : ''}`;
+        n.textContent = message;
+        document.body.appendChild(n);
+        notificationTimeout = setTimeout(() => n.remove(), 8000);
+    }
+
+    // ======================== КАРТА ========================
+    ymaps.ready(() => {
+        const region = premiseData.region || '';
+        const city = premiseData.city || '';
+        const street = premiseData.street || '';
+        const building = premiseData.building || '';
+
+        if (!city || city === '') {
+            showNotification(`⚠️ Адрес не найден: город не указан`, true);
+            const map = new ymaps.Map('ymap', { center: [55.751574, 37.573856], zoom: 10, controls: ['zoomControl'] });
+            const pm = new ymaps.Placemark([55.751574, 37.573856], { hintContent: 'Адрес не указан', balloonContent: 'Адрес не заполнен' }, { preset: 'islands#redIcon' });
+            map.geoObjects.add(pm);
+            return;
+        }
+
+        const variants = [`${city}, ${street} ${building}`, `${city}, ${street}, ${building}`, `${city}, ${street} дом ${building}`];
+        if (region && region !== city) variants.unshift(`${region}, ${city}, ${street} ${building}`);
+        const fullVariants = variants.map(v => `${v}, Россия`);
+        const map = new ymaps.Map('ymap', { center: [55.751574, 37.573856], zoom: 10, controls: ['zoomControl', 'fullscreenControl'] });
+        let pm = null;
+
+        const setPlacemark = (coords, addr) => {
+            if (pm) map.geoObjects.remove(pm);
+            pm = new ymaps.Placemark(coords, { hintContent: addr, balloonContent: `<strong>${city}, ${street} ${building}</strong><br>${addr}` }, { preset: 'islands#redIcon' });
+            map.geoObjects.add(pm);
+            pm.balloon.open();
+        };
+
+        const tryGeocode = async () => {
+            for (let addr of fullVariants) {
+                try {
+                    const res = await ymaps.geocode(addr, { results: 5, kind: 'house' });
+                    const objs = res.geoObjects;
+                    if (objs.getLength() > 0) {
+                        const first = objs.get(0);
+                        const coords = first.geometry.getCoordinates();
+                        const faddr = first.getAddressLine();
+                        const zoom = building ? 18 : (street ? 17 : 14);
+                        map.setCenter(coords, zoom);
+                        setPlacemark(coords, faddr);
+                        showNotification(`✅ Адрес найден: ${faddr}`, false, false);
+                        return true;
+                    }
+                } catch(e) { console.error(e); }
+            }
+            return false;
+        };
+
+        showNotification(`🔍 Поиск адреса: ${city}, ${street} ${building}...`, false, true);
+        tryGeocode().then(found => {
+            if (!found) {
+                showNotification(`⚠️ Адрес не найден: ${city}, ${street} ${building}\nПроверьте данные`, true);
+                const errPm = new ymaps.Placemark([55.751574, 37.573856], { hintContent: 'Адрес не найден', balloonContent: `<strong>Не удалось найти адрес</strong><br>${city}, ${street} ${building}` }, { preset: 'islands#redIcon' });
+                map.geoObjects.add(errPm);
+                errPm.balloon.open();
+            }
+        });
+    });
+
+    // ======================== КОММЕНТАРИИ (ОБНОВЛЕНО) ========================
+    async function loadComments() {
+        const list = document.getElementById('commentsList');
+        if (!list) return;
+
+        try {
+            const res = await fetch(`/api/comments/premise/${premiseId}`);
+            if (!res.ok) throw new Error('Failed to fetch');
+
+            const comments = await res.json();
+
+            list.innerHTML = '';
+
+            if (!comments || comments.length === 0) {
+                list.innerHTML = `<div class="no-comments">Пока нет комментариев. Будьте первым!</div>`;
+                return;
+            }
+
+            comments.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'comment';
+                div.innerHTML = `
+                    <div class="comment-header">
+                        <a href="/profile/${encodeURIComponent(c.authorName)}"
+                           class="comment-author"
+                           style="text-decoration: none; color: #ff5722; font-weight: 600;">
+                            ${escapeHtml(c.authorName)}
+                        </a>
+                        <span class="comment-date">${new Date(c.createdAt).toLocaleString('ru-RU')}</span>
+                    </div>
+                    <div class="comment-text">${escapeHtml(c.text)}</div>
+                `;
+                list.appendChild(div);
+            });
+        } catch (e) {
+            console.error('Error loading comments:', e);
+            list.innerHTML = `<div class="no-comments">Не удалось загрузить комментарии</div>`;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    document.getElementById('commentForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const textArea = document.getElementById('commentText');
+        const text = textArea.value.trim();
+
+        if (!text || !premiseId) return;
+
+        // Блокируем кнопку отправки, чтобы избежать двойной отправки
+        const submitBtn = this.querySelector('button');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Отправка...';
+
+        try {
+            const res = await fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    premiseId: premiseId,
+                    text: text
+                })
+            });
+
+            if (res.ok) {
+                textArea.value = '';
+                await loadComments();           // обновляем список
+                showNotification('✅ Комментарий добавлен!', false);
+            } else {
+                const errorData = await res.text();
+                showNotification('Ошибка при отправке комментария: ' + errorData, true);
+            }
+        } catch (err) {
+            console.error('Error submitting comment:', err);
+            showNotification('Не удалось отправить комментарий', true);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    });
+
+    // Загружаем комментарии при открытии страницы
+    document.addEventListener('DOMContentLoaded', () => {
+        initPhotoSlider();   // твой существующий код
+        if (premiseId) {
+            loadComments();      // загружаем комментарии
+        }
+    });
+</script>
 </body>
 </html>

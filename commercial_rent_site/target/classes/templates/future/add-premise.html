@@ -466,8 +466,8 @@
         const street = streetEl.value.trim();
         const building = buildingEl.value.trim();
 
-        if (!city || !building) {
-            showNotification("Пожалуйста, заполните город и номер дома", true);
+        if (!city || !street || !building) {
+            showNotification("Пожалуйста, заполните город, улицу и номер дома", true);
             return false;
         }
 
@@ -493,18 +493,15 @@
                 const formatted = (geo.metaDataProperty?.GeocoderMetaData?.Address?.formatted || '').toLowerCase();
 
                 // Проверяем, содержит ли найденный адрес введённые компоненты
-                let addressValid = true;
-
-                if (street && street.trim() !== '') {
-                    // Если улица указана, проверяем её наличие
-                    if (!name.includes(street.toLowerCase()) && !formatted.includes(street.toLowerCase())) {
-                        addressValid = false;
-                    }
+                if (name.includes(city.toLowerCase()) &&
+                    name.includes(street.toLowerCase()) &&
+                    name.includes(building.toLowerCase())) {
+                    exactMatch = true;
+                    break;
                 }
-
-                if (addressValid &&
-                    (name.includes(city.toLowerCase()) || formatted.includes(city.toLowerCase())) &&
-                    (name.includes(building.toLowerCase()) || formatted.includes(building.toLowerCase()))) {
+                if (formatted.includes(city.toLowerCase()) &&
+                    formatted.includes(street.toLowerCase()) &&
+                    formatted.includes(building.toLowerCase())) {
                     exactMatch = true;
                     break;
                 }
@@ -678,7 +675,7 @@
         const dropdown = document.getElementById('cityDropdown');
         if (!dropdown) return;
 
-        if (!query || query.length < 1) {
+        if (!query || query.length < 2) {
             dropdown.classList.remove('active');
             return;
         }
@@ -724,7 +721,7 @@
         const dropdown = document.getElementById('streetDropdown');
         if (!dropdown) return;
 
-        if (!query || query.length < 1) {
+        if (!query || query.length < 2) {
             dropdown.classList.remove('active');
             return;
         }
@@ -787,8 +784,8 @@
             return;
         }
 
-        if (!city) {
-            if (forceCenter) showNotification('Введите город', true);
+        if (!city || !street) {
+            dropdown.classList.remove('active');
             return;
         }
 
@@ -961,10 +958,7 @@
             addressInputTimer = setTimeout(() => {
                 const city = cityInput.value.trim();
                 const street = streetInput.value.trim();
-                const building = buildingInput.value.trim();
-                if (city && (street.length > 2 || building.length > 0)) {
-                    forwardGeocode(false);
-                }
+                if (city && street.length > 2) forwardGeocode(false);
             }, 800);
         });
         streetInput.addEventListener('click', (e) => {
@@ -1093,7 +1087,7 @@
         }
 
         isGeocodingInProgress = true;
-        const fullAddress = `${city}${street ? ', ' + street : ''}${building ? ', ' + building : ''}, Россия`;
+        const fullAddress = `${city}, ${street}${building ? ', ' + building : ''}, Россия`;
 
         try {
             const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(fullAddress)}&results=5`);
@@ -1153,7 +1147,7 @@
             } else {
                 // Только город + улица — центрируем без точки
                 clearAddressError();
-                showNotification(`📍 Карта перемещена к: ${city}${street ? ', ' + street : ''}${building ? ', ' + building : ''}`, false);
+                showNotification(`📍 Карта перемещена к: ${city}, ${street}`, false);
 
                 // Убираем точку, если она была
                 if (placemark) {

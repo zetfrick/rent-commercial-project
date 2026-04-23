@@ -1,6 +1,7 @@
 package com.example.rentapp.dto;
 
 import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -42,10 +43,15 @@ public class PremiseDto {
     private String contactPhone;
     private String contactEmail;
 
+    // getters + setters
+    @Getter
     private Double latitude;
+    @Getter
     private Double longitude;
 
     private List<String> photoPaths = new ArrayList<>();
+
+    private List<CommentDto> comments = new ArrayList<>();
 
     private boolean active = true;
 

@@ -1,7 +1,10 @@
 package com.example.catalog.controller;
 
-import com.example.catalog.dto.PremiseDto;        // ← ВАЖНО: свой DTO из catalog
+import com.example.catalog.dto.CommentDto;
+import com.example.catalog.dto.PremiseDto;
+import com.example.catalog.entity.Comment;
 import com.example.catalog.entity.Premise;
+import com.example.catalog.repository.CommentRepository;
 import com.example.catalog.repository.PremiseRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,11 @@ public class CatalogController {
 
     @Autowired
     private PremiseRepository premiseRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ ====================
 
     @GetMapping("/catalog")
     public ResponseEntity<List<Premise>> getAll() {
@@ -34,7 +42,6 @@ public class CatalogController {
     public ResponseEntity<Premise> addPremise(@RequestBody PremiseDto premiseDto) {
         Premise premise = new Premise();
         BeanUtils.copyProperties(premiseDto, premise, "id", "createdAt");
-
         premise.setLatitude(premiseDto.getLatitude());
         premise.setLongitude(premiseDto.getLongitude());
 
@@ -45,8 +52,51 @@ public class CatalogController {
     @GetMapping("/premises/latest")
     public ResponseEntity<List<Premise>> getLatestPremises(
             @RequestParam(value = "limit", defaultValue = "6") int limit) {
-
         List<Premise> latest = premiseRepository.findTop6ByActiveTrueOrderByCreatedAtDesc();
         return ResponseEntity.ok(latest);
+    }
+
+    // ==================== НОВЫЕ МЕТОДЫ ДЛЯ КОММЕНТАРИЕВ ====================
+
+    @GetMapping("/comments/premise/{premiseId}")
+    public ResponseEntity<List<CommentDto>> getCommentsByPremiseId(@PathVariable Long premiseId) {
+        List<Comment> comments = commentRepository.findByPremiseIdOrderByCreatedAtDesc(premiseId);
+
+        List<CommentDto> dtos = comments.stream().map(c ->
+                new CommentDto(
+                        c.getId(),
+                        c.getPremiseId(),
+                        c.getAuthorName(),
+                        c.getText(),
+                        c.getCreatedAt()
+                )
+        ).toList();
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/comments")
+    public ResponseEntity<CommentDto> addComment(@RequestBody CommentDto commentDto) {
+        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Comment comment = new Comment(
+                commentDto.getPremiseId(),
+                commentDto.getAuthorName(),
+                commentDto.getText()
+        );
+
+        Comment saved = commentRepository.save(comment);
+
+        CommentDto response = new CommentDto(
+                saved.getId(),
+                saved.getPremiseId(),
+                saved.getAuthorName(),
+                saved.getText(),
+                saved.getCreatedAt()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

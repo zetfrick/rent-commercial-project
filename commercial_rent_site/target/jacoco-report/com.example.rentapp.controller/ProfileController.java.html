@@ -149,30 +149,39 @@ import java.util.Map;
 <span class="nc" id="L149">            premiseDto.setPhotoPaths(paths);</span>
         }
 
-        // Координаты
+        // ==================== ИСПРАВЛЕННАЯ ОБРАБОТКА КООРДИНАТ ====================
+<span class="nc" id="L153">        Double lat = null;</span>
+<span class="nc" id="L154">        Double lng = null;</span>
+
         try {
-<span class="nc" id="L154">            premiseDto.setLatitude(Double.parseDouble(latitudeStr));</span>
-<span class="nc" id="L155">            premiseDto.setLongitude(Double.parseDouble(longitudeStr));</span>
-<span class="nc" id="L156">        } catch (Exception e) {</span>
-<span class="nc" id="L157">            premiseDto.setLatitude(null);</span>
-<span class="nc" id="L158">            premiseDto.setLongitude(null);</span>
-<span class="nc" id="L159">        }</span>
+<span class="nc bnc" id="L157" title="All 4 branches missed.">            if (latitudeStr != null &amp;&amp; !latitudeStr.trim().isEmpty()) {</span>
+<span class="nc" id="L158">                lat = Double.parseDouble(latitudeStr.trim());</span>
+            }
+<span class="nc bnc" id="L160" title="All 4 branches missed.">            if (longitudeStr != null &amp;&amp; !longitudeStr.trim().isEmpty()) {</span>
+<span class="nc" id="L161">                lng = Double.parseDouble(longitudeStr.trim());</span>
+            }
+<span class="nc" id="L163">        } catch (Exception e) {</span>
+<span class="nc" id="L164">            System.err.println(&quot;Ошибка парсинга координат: lat=&quot; + latitudeStr + &quot;, lng=&quot; + longitudeStr);</span>
+<span class="nc" id="L165">        }</span>
+
+<span class="nc" id="L167">        premiseDto.setLatitude(lat);</span>
+<span class="nc" id="L168">        premiseDto.setLongitude(lng);</span>
 
         // Отправляем помещение в catalog-service
-<span class="nc" id="L162">        catalogClient.addPremise(premiseDto);</span>
+<span class="nc" id="L171">        catalogClient.addPremise(premiseDto);</span>
 
-<span class="nc" id="L164">        return &quot;redirect:/premise/add?success&quot;;</span>
+<span class="nc" id="L173">        return &quot;redirect:/premise/add?success&quot;;</span>
     }
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private User getCurrentUser(UserDetails userDetails) {
-<span class="nc" id="L170">        return userService.findByLogin(userDetails.getUsername())</span>
-<span class="nc" id="L171">                .orElseThrow(() -&gt; new RuntimeException(&quot;Пользователь не найден&quot;));</span>
+<span class="nc" id="L179">        return userService.findByLogin(userDetails.getUsername())</span>
+<span class="nc" id="L180">                .orElseThrow(() -&gt; new RuntimeException(&quot;Пользователь не найден&quot;));</span>
     }
 
     private String getOrDefault(String value, String defaultValue) {
-<span class="nc bnc" id="L175" title="All 4 branches missed.">        return (value != null &amp;&amp; !value.trim().isEmpty()) ? value.trim() : defaultValue;</span>
+<span class="nc bnc" id="L184" title="All 4 branches missed.">        return (value != null &amp;&amp; !value.trim().isEmpty()) ? value.trim() : defaultValue;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

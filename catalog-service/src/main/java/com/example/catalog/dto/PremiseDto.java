@@ -1,6 +1,7 @@
 package com.example.catalog.dto;
 
 import lombok.Data;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -42,8 +43,11 @@ public class PremiseDto {
     private String contactPhone;
     private String contactEmail;
 
+    // getters + setters
     // Новые поля — очень важны для карточек на главной странице
+    @Getter
     private Double latitude;
+    @Getter
     private Double longitude;
 
     private List<String> photoPaths = new ArrayList<>();

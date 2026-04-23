@@ -2,87 +2,677 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Личный кабинет</title>
+    <title>Личный кабинет | Аренда помещений</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; }
-        .profile-container { min-height: 100vh; background: url('/images/fon.jpeg') no-repeat center center fixed; background-size: cover; position: relative; }
-        .overlay { background: rgba(0, 0, 0, 0.45); min-height: 100vh; padding: 40px 20px; display: flex; flex-direction: column; }
-        .header-buttons { text-align: center; margin-bottom: 40px; }
-        .header-buttons a { background: rgba(255, 152, 0, 0.95); color: white; padding: 14px 34px; margin: 0 15px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 18px; transition: all 0.3s; }
-        .header-buttons a:hover { background: #ff8f00; transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
-        .content { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 50px; max-width: 1400px; margin: 0 auto; }
-        .user-info { background: rgba(0, 0, 0, 0.55); padding: 30px; border-radius: 18px; backdrop-filter: blur(5px); min-width: 420px; flex: 1; }
-        .user-info h1 { margin: 0 0 30px 0; font-size: 32px; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.7); color: white; }
-        .info-row { margin: 18px 0; font-size: 19px; display: flex; justify-content: space-between; align-items: center; }
-        .label { color: #ffcc80; font-weight: 600; min-width: 140px; }
-        .value { flex: 1; text-align: right; color: white; font-weight: 500; }
-        input[type=text], input[type=tel] { width: 100%; padding: 10px; border-radius: 10px; border: none; font-size: 16px; }
-        .edit-btn, .save-btn, .cancel-btn { background: #ff5722; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-top: 20px; transition: 0.3s; }
-        .edit-btn:hover, .save-btn:hover { background: #e64a19; transform: scale(1.05); }
-        .cancel-btn { background: #666; margin-left: 10px; }
-        .success { color: #8f8; text-align: center; font-weight: bold; margin: 20px 0; }
-        .right-buttons { display: flex; flex-direction: column; gap: 22px; margin-top: 20px; }
-        .action-btn { background: linear-gradient(135deg, #ff5722, #ff8a65); color: white; padding: 18px 40px; font-size: 19px; font-weight: bold; border: none; border-radius: 50px; cursor: pointer; width: 260px; text-align: center; box-shadow: 0 6px 20px rgba(255,87,34,0.4); transition: all 0.3s; }
-        .action-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 25px rgba(255,87,34,0.5); }
-        @media (max-width: 900px) { .content { flex-direction: column; align-items: center; } .user-info, .right-buttons { min-width: 100%; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+        }
+
+        /* Анимации */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .profile-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff5eb 0%, #ffe0cc 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Декоративные элементы фона */
+        .profile-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 80%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255, 87, 34, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .profile-container::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 60%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 152, 0, 0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .overlay {
+            min-height: 100vh;
+            padding: 30px 24px 50px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ====================== ШАПКА ====================== */
+        .header-buttons {
+            text-align: center;
+            margin-bottom: 45px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-buttons a {
+            background: rgba(255, 87, 34, 0.15);
+            backdrop-filter: blur(10px);
+            color: #e64a19;
+            padding: 12px 32px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 87, 34, 0.3);
+            letter-spacing: 0.3px;
+        }
+
+        .header-buttons a:hover {
+            background: #ff5722;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 87, 34, 0.3);
+            border-color: transparent;
+        }
+
+        /* Уведомление об успехе */
+        .success {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 60px;
+            margin: 0 auto 35px;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+            animation: fadeInUp 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .success i {
+            font-size: 22px;
+        }
+
+        /* ====================== ОСНОВНОЙ КОНТЕНТ ====================== */
+        .content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Блок информации о пользователе */
+        .user-info {
+            background: white;
+            backdrop-filter: blur(0px);
+            padding: 0;
+            border-radius: 32px;
+            min-width: 420px;
+            flex: 1;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease;
+            transition: transform 0.3s ease;
+        }
+
+        .user-info:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px -15px rgba(255, 87, 34, 0.2);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            padding: 30px 30px 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .avatar-wrapper {
+            margin-bottom: 15px;
+        }
+
+        .avatar-circle {
+            width: 90px;
+            height: 90px;
+            background: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 4px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .avatar-circle i {
+            font-size: 48px;
+            color: #ff5722;
+        }
+
+        .profile-header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            letter-spacing: -0.3px;
+        }
+
+        .profile-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(5px);
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            margin-top: 12px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            background: #fffaf5;
+            padding: 20px 20px;
+            border-bottom: 1px solid #ffe0cc;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ff5722;
+            display: block;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #8b5a2b;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .profile-body {
+            padding: 25px 30px 30px;
+        }
+
+        .info-row {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #fff0e0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            color: #ff5722;
+            font-weight: 600;
+            min-width: 130px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label i {
+            width: 22px;
+            font-size: 16px;
+            color: #ff9800;
+        }
+
+        .value {
+            flex: 1;
+            text-align: right;
+            color: #4a3729;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        /* Поля формы */
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #ff5722;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 2px solid #ffe0cc;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: #fffaf5;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff5722;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.1);
+        }
+
+        .readonly-field {
+            background: #fff5eb;
+            color: #8b5a2b;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid #ffe0cc;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .save-btn, .edit-btn, .cancel-btn {
+            padding: 14px 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            flex: 1;
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 87, 34, 0.4);
+        }
+
+        .edit-btn {
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 87, 34, 0.4);
+        }
+
+        .cancel-btn {
+            background: #fff0e0;
+            color: #e64a19;
+            text-decoration: none;
+            padding: 14px 28px;
+            border: 1px solid #ffe0cc;
+        }
+
+        .cancel-btn:hover {
+            background: #ffe0cc;
+            transform: translateY(-2px);
+        }
+
+        /* Правая панель с кнопками */
+        .right-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 280px;
+            animation: slideInRight 0.6s ease;
+        }
+
+        .action-btn {
+            background: white;
+            backdrop-filter: blur(10px);
+            color: #ff5722;
+            padding: 20px 28px;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn i {
+            font-size: 26px;
+            width: 36px;
+            transition: transform 0.3s ease;
+        }
+
+        .action-btn span {
+            flex: 1;
+        }
+
+        .action-btn .arrow-icon {
+            font-size: 18px;
+            color: #ff9800;
+            transition: transform 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateX(8px);
+            background: #fffaf5;
+            box-shadow: 0 12px 30px rgba(255, 87, 34, 0.15);
+        }
+
+        .action-btn:hover i {
+            transform: scale(1.1);
+        }
+
+        .action-btn:hover .arrow-icon {
+            transform: translateX(5px);
+        }
+
+        /* Цвета для разных кнопок */
+        .action-btn:nth-child(1) { border-left: 5px solid #ff5722; }
+        .action-btn:nth-child(2) { border-left: 5px solid #ff9800; }
+        .action-btn:nth-child(3) { border-left: 5px solid #ffc107; }
+        .action-btn:nth-child(4) { border-left: 5px solid #ff6f00; }
+
+        /* Адаптивность */
+        @media (max-width: 900px) {
+            .overlay {
+                padding: 20px 16px 40px;
+            }
+
+            .content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .user-info {
+                min-width: auto;
+            }
+
+            .right-buttons {
+                min-width: auto;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .label {
+                min-width: auto;
+            }
+
+            .value {
+                text-align: left;
+                width: 100%;
+            }
+
+            .profile-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stat-item {
+                text-align: center;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .header-buttons {
+                gap: 12px;
+            }
+
+            .header-buttons a {
+                padding: 10px 24px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .profile-body {
+                padding: 20px;
+            }
+
+            .action-btn {
+                padding: 16px 22px;
+                font-size: 15px;
+            }
+
+            .action-btn i {
+                font-size: 22px;
+                width: 28px;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="profile-container">
     <div class="overlay">
         <div class="header-buttons">
-            <a th:href="@{/}">Главная страница</a>
-            <a th:href="@{/catalog}">Каталог</a>
+            <a th:href="@{/}"><i class="fas fa-home"></i> Главная</a>
+            <a th:href="@{/catalog}"><i class="fas fa-search"></i> Каталог</a>
+            <a th:href="@{/premise/add}"><i class="fas fa-plus-circle"></i> Сдать помещение</a>
         </div>
 
-        <div th:if="${param.updated}" class="success">Профиль успешно обновлён!</div>
+        <div th:if="${param.updated}" class="success">
+            <i class="fas fa-check-circle"></i>
+            <span>Профиль успешно обновлён!</span>
+        </div>
 
         <div class="content">
+            <!-- Левая колонка - информация о пользователе -->
             <div class="user-info">
-                <h1>Личный кабинет</h1>
-
-                <form th:object="${currentUser}" th:action="@{/profile/edit}" method="post" th:if="${editMode}">
-                    <div class="info-row"><span class="label">Имя:</span>
-                        <input type="text" th:field="*{firstName}" placeholder="Имя"/>
+                <div class="profile-header">
+                    <div class="avatar-wrapper">
+                        <div class="avatar-circle">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
                     </div>
-                    <div class="info-row"><span class="label">Фамилия:</span>
-                        <input type="text" th:field="*{lastName}" placeholder="Фамилия"/>
+                    <h1 th:text="${currentUser.firstName} ?: ${currentUser.login}">Пользователь</h1>
+                    <div class="profile-badge">
+                        <i class="fas fa-user-check"></i> Аккаунт подтверждён
                     </div>
-                    <div class="info-row"><span class="label">Отчество:</span>
-                        <input type="text" th:field="*{middleName}" placeholder="Отчество (необязательно)"/>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" th:text="${rentedOutCount}">0</span>
+                        <span class="stat-label"><i class="fas fa-key"></i> Сдаётся</span>
                     </div>
-                    <div class="info-row"><span class="label">Телефон:</span>
-                        <input type="tel" th:field="*{phone}" placeholder="+7 999 123 45 67"/>
+                    <div class="stat-item">
+                        <span class="stat-number" th:text="${rentedInCount}">0</span>
+                        <span class="stat-label"><i class="fas fa-building"></i> Арендовано</span>
                     </div>
-                    <div class="info-row"><span class="label">Почта:</span> <span class="value" th:text="*{email}"></span></div>
-                    <div class="info-row"><span class="label">Ник:</span> <span class="value" th:text="*{login}"></span></div>
-                    <div class="info-row"><span class="label">Сдаёт в аренду:</span> <span class="value" th:text="${rentedOutCount}">1</span></div>
-                    <div class="info-row"><span class="label">Взято в аренду:</span> <span class="value" th:text="${rentedInCount}">0</span></div>
+                    <div class="stat-item">
+                        <span class="stat-number" th:text="${currentUser.id}">1</span>
+                        <span class="stat-label"><i class="fas fa-calendar-alt"></i> С нами</span>
+                    </div>
+                </div>
 
-                    <button type="submit" class="save-btn">Сохранить</button>
-                    <a th:href="@{/profile}" class="cancel-btn">Отмена</a>
-                </form>
+                <div class="profile-body">
+                    <!-- Режим редактирования -->
+                    <form th:object="${currentUser}" th:action="@{/profile/edit}" method="post" th:if="${editMode}">
+                        <div class="form-group">
+                            <label><i class="fas fa-user"></i> Имя</label>
+                            <input type="text" th:field="*{firstName}" placeholder="Ваше имя">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user-tag"></i> Фамилия</label>
+                            <input type="text" th:field="*{lastName}" placeholder="Ваша фамилия">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-user-friends"></i> Отчество</label>
+                            <input type="text" th:field="*{middleName}" placeholder="Отчество (необязательно)">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-phone-alt"></i> Телефон</label>
+                            <input type="tel" th:field="*{phone}" placeholder="+7 999 123 45 67">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-envelope"></i> Электронная почта</label>
+                            <div class="readonly-field" th:text="*{email}"></div>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-at"></i> Логин</label>
+                            <div class="readonly-field" th:text="*{login}"></div>
+                        </div>
 
-                <div th:unless="${editMode}">
-                    <div class="info-row"><span class="label">Имя:</span>         <span class="value" th:text="${currentUser.firstName} ?: 'Нет'"></span></div>
-                    <div class="info-row"><span class="label">Фамилия:</span>     <span class="value" th:text="${currentUser.lastName} ?: 'Нет'"></span></div>
-                    <div class="info-row"><span class="label">Отчество:</span>    <span class="value" th:text="${currentUser.middleName} ?: 'Нет'"></span></div>
-                    <div class="info-row"><span class="label">Телефон:</span>     <span class="value" th:text="${currentUser.phone} ?: 'Нет'"></span></div>
-                    <div class="info-row"><span class="label">Почта:</span>       <span class="value" th:text="${currentUser.email}"></span></div>
-                    <div class="info-row"><span class="label">Ник:</span>         <span class="value" th:text="${currentUser.login}"></span></div>
-                    <div class="info-row"><span class="label">Сдаёт в аренду:</span><span class="value" th:text="${rentedOutCount}">1</span></div>
-                    <div class="info-row"><span class="label">Взято в аренду:</span><span class="value" th:text="${rentedInCount}">0</span></div>
+                        <div class="button-group">
+                            <button type="submit" class="save-btn">
+                                <i class="fas fa-save"></i> Сохранить изменения
+                            </button>
+                            <a th:href="@{/profile}" class="cancel-btn">
+                                <i class="fas fa-times"></i> Отмена
+                            </a>
+                        </div>
+                    </form>
 
-                    <a th:href="@{/profile/edit}"><button class="edit-btn">Редактировать</button></a>
+                    <!-- Режим просмотра -->
+                    <div th:unless="${editMode}">
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-user"></i> Имя</span>
+                            <span class="value" th:text="${currentUser.firstName} ?: 'Не указано'"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-user-tag"></i> Фамилия</span>
+                            <span class="value" th:text="${currentUser.lastName} ?: 'Не указано'"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-user-friends"></i> Отчество</span>
+                            <span class="value" th:text="${currentUser.middleName} ?: 'Не указано'"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-phone-alt"></i> Телефон</span>
+                            <span class="value" th:text="${currentUser.phone} ?: 'Не указан'"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-envelope"></i> Почта</span>
+                            <span class="value" th:text="${currentUser.email}"></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label"><i class="fas fa-at"></i> Логин</span>
+                            <span class="value" th:text="${currentUser.login}"></span>
+                        </div>
+
+                        <button class="edit-btn" onclick="window.location.href='/profile/edit'">
+                            <i class="fas fa-pen"></i> Редактировать профиль
+                        </button>
+                    </div>
                 </div>
             </div>
 
+            <!-- Правая панель с действиями -->
             <div class="right-buttons">
-                <button class="action-btn" onclick="alert('В разработке')">Избранное</button>
-                <button class="action-btn" onclick="alert('В разработке')">Сдаётся</button>
-                <button class="action-btn" onclick="alert('В разработке')">Взято</button>
-                <button class="action-btn" onclick="alert('В разработке')">История</button>
+                <button class="action-btn" onclick="alert('⭐ Избранное — в разработке')">
+                    <i class="fas fa-heart"></i>
+                    <span>Избранное</span>
+                    <i class="fas fa-chevron-right arrow-icon"></i>
+                </button>
+                <button class="action-btn" onclick="alert('🏠 Мои объявления — в разработке')">
+                    <i class="fas fa-key"></i>
+                    <span>Мои объявления (сдаётся)</span>
+                    <i class="fas fa-chevron-right arrow-icon"></i>
+                </button>
+                <button class="action-btn" onclick="alert('📋 Арендованные помещения — в разработке')">
+                    <i class="fas fa-building"></i>
+                    <span>Арендованные помещения</span>
+                    <i class="fas fa-chevron-right arrow-icon"></i>
+                </button>
+                <button class="action-btn" onclick="alert('📜 История операций — в разработке')">
+                    <i class="fas fa-history"></i>
+                    <span>История операций</span>
+                    <i class="fas fa-chevron-right arrow-icon"></i>
+                </button>
+                <button class="action-btn" onclick="window.location.href='/logout'" style="border-left-color: #dc3545; color: #dc3545;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выйти из аккаунта</span>
+                    <i class="fas fa-chevron-right arrow-icon"></i>
+                </button>
             </div>
         </div>
     </div>
