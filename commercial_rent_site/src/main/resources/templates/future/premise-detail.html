@@ -916,7 +916,7 @@
                 div.className = 'comment';
                 div.innerHTML = `
                     <div class="comment-header">
-                        <a href="/profile/${encodeURIComponent(c.authorName)}"
+                        <a href="/profile?username=${encodeURIComponent(c.authorName)}"
                            class="comment-author"
                            style="text-decoration: none; color: #ff5722; font-weight: 600;">
                             ${escapeHtml(c.authorName)}

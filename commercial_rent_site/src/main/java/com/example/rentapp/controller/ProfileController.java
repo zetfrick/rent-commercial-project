@@ -28,22 +28,51 @@ public class ProfileController {
     private FileStorageService fileStorageService;
 
     @Autowired
-    private CatalogClient catalogClient;  // Клиент для вызова catalog-service
+    private CatalogClient catalogClient;
 
-    // ==================== ПРОФИЛЬ ====================
+    // ==================== ПРОФИЛЬ (поддержка просмотра чужого профиля) ====================
 
     @GetMapping("/profile")
-    public String profile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        User user = getCurrentUser(userDetails);
-        model.addAttribute("currentUser", user);
+    public String profile(@RequestParam(required = false) String username,
+                          @AuthenticationPrincipal UserDetails userDetails,
+                          Model model) {
+
+        String currentUsername = (userDetails != null) ? userDetails.getUsername() : null;
+
+        // Если передан username в параметре — показываем именно его профиль
+        String targetUsername;
+        if (username != null && !username.trim().isEmpty()) {
+            targetUsername = username.trim();
+        } else {
+            targetUsername = currentUsername;
+        }
+
+        if (targetUsername == null) {
+            return "redirect:/auth/login";
+        }
+
+        User profileUser = userService.findByLogin(targetUsername)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + targetUsername));
+
+        User currentUser = (currentUsername != null)
+                ? userService.findByLogin(currentUsername).orElse(null)
+                : null;
+
+        model.addAttribute("profileUser", profileUser);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("isOwnProfile", targetUsername.equals(currentUsername));
+
         model.addAttribute("editMode", false);
         return "future/profile";
     }
 
+    // ==================== РЕДАКТИРОВАНИЕ ПРОФИЛЯ (только своего) ====================
+
     @GetMapping("/profile/edit")
     public String editProfile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         User user = getCurrentUser(userDetails);
-        model.addAttribute("currentUser", user);
+        model.addAttribute("profileUser", user);
+        model.addAttribute("isOwnProfile", true);
         model.addAttribute("editMode", true);
         return "future/profile";
     }
@@ -51,10 +80,11 @@ public class ProfileController {
     @PostMapping("/profile/edit")
     public String saveProfile(@AuthenticationPrincipal UserDetails userDetails,
                               @ModelAttribute User updatedUser) {
+
         User currentUser = getCurrentUser(userDetails);
 
         if (!currentUser.getId().equals(updatedUser.getId())) {
-            return "redirect:/profile?error";
+            return "redirect:/profile?error=access_denied";
         }
 
         currentUser.setFirstName(updatedUser.getFirstName());
@@ -63,7 +93,7 @@ public class ProfileController {
         currentUser.setPhone(updatedUser.getPhone());
 
         userService.save(currentUser);
-        return "redirect:/profile?success";
+        return "redirect:/profile?success=true";
     }
 
     // ==================== ДОБАВЛЕНИЕ ПОМЕЩЕНИЯ ====================
@@ -73,16 +103,13 @@ public class ProfileController {
         User owner = getCurrentUser(userDetails);
 
         PremiseForm form = new PremiseForm();
-        // Автозаполнение контактов
         form.setOwnerFirstName(owner.getFirstName());
         form.setOwnerLastName(owner.getLastName());
         form.setOwnerMiddleName(owner.getMiddleName());
         form.setOwnerPhone(owner.getPhone());
         form.setOwnerEmail(owner.getEmail());
 
-        // === ДИНАМИЧЕСКИЕ СПИСКИ ===
         model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
-
         model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING",
                 "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
 
@@ -106,7 +133,7 @@ public class ProfileController {
                              @ModelAttribute PremiseForm form,
                              @RequestParam(value = "photos", required = false) List<MultipartFile> photos,
                              @RequestParam("latitude") String latitudeStr,
-                             @RequestParam("longitude") String longitudeStr)   {
+                             @RequestParam("longitude") String longitudeStr) {
 
         User owner = getCurrentUser(userDetails);
 
@@ -136,38 +163,28 @@ public class ProfileController {
         premiseDto.setExtraFees(form.getExtraFees());
         premiseDto.setImportantInfo(form.getImportantInfo());
 
-        // Контакты — приоритет у формы, иначе из профиля
         premiseDto.setContactFirstName(getOrDefault(form.getOwnerFirstName(), owner.getFirstName()));
         premiseDto.setContactLastName(getOrDefault(form.getOwnerLastName(), owner.getLastName()));
         premiseDto.setContactMiddleName(getOrDefault(form.getOwnerMiddleName(), owner.getMiddleName()));
         premiseDto.setContactPhone(getOrDefault(form.getOwnerPhone(), owner.getPhone()));
         premiseDto.setContactEmail(getOrDefault(form.getOwnerEmail(), owner.getEmail()));
 
-        // Фото
         if (photos != null && !photos.isEmpty() && !photos.stream().allMatch(MultipartFile::isEmpty)) {
             List<String> paths = fileStorageService.savePhotos(photos);
             premiseDto.setPhotoPaths(paths);
         }
 
-        // ==================== ИСПРАВЛЕННАЯ ОБРАБОТКА КООРДИНАТ ====================
-        Double lat = null;
-        Double lng = null;
-
+        Double lat = null, lng = null;
         try {
-            if (latitudeStr != null && !latitudeStr.trim().isEmpty()) {
-                lat = Double.parseDouble(latitudeStr.trim());
-            }
-            if (longitudeStr != null && !longitudeStr.trim().isEmpty()) {
-                lng = Double.parseDouble(longitudeStr.trim());
-            }
+            if (latitudeStr != null && !latitudeStr.trim().isEmpty()) lat = Double.parseDouble(latitudeStr.trim());
+            if (longitudeStr != null && !longitudeStr.trim().isEmpty()) lng = Double.parseDouble(longitudeStr.trim());
         } catch (Exception e) {
-            System.err.println("Ошибка парсинга координат: lat=" + latitudeStr + ", lng=" + longitudeStr);
+            System.err.println("Ошибка парсинга координат");
         }
 
         premiseDto.setLatitude(lat);
         premiseDto.setLongitude(lng);
 
-        // Отправляем помещение в catalog-service
         catalogClient.addPremise(premiseDto);
 
         return "redirect:/premise/add?success";
