@@ -55,6 +55,10 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
     // Загрузка пользователя для Spring Security
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {

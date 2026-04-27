@@ -3,7 +3,9 @@ package com.example.rentapp.controller;
 import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.CommentDto;
 import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.User;
 import com.example.rentapp.service.CommentService;
+import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +24,9 @@ public class WebCatalogController {
 
     @Autowired
     private CommentService commentService;
+
+    @Autowired
+    private UserService userService;  // Добавлен для получения ID пользователя
 
     @GetMapping("/catalog")
     public String catalog(Model model) {
@@ -62,10 +67,17 @@ public class WebCatalogController {
     @PostMapping("/api/comments")
     @ResponseBody
     public CommentDto addComment(@RequestBody CommentDto commentDto,
-                                 @AuthenticationPrincipal UserDetails userDetails) {  // ← ДОБАВЛЕН ПАРАМЕТР
+                                 @AuthenticationPrincipal UserDetails userDetails) {
         // Устанавливаем имя автора из текущего авторизованного пользователя
         if (userDetails != null) {
             commentDto.setAuthorName(userDetails.getUsername());
+
+            // Также можно установить ID автора, если нужно
+            User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+            if (currentUser != null) {
+                // Если в CommentDto есть поле authorId, можно его установить
+                // commentDto.setAuthorId(currentUser.getId());
+            }
         }
         return commentService.addComment(commentDto);
     }

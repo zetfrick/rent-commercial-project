@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои чаты - RentApp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* ====================== HEADER (статичный, тонкий) ====================== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            color: white;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 25px; }
+        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
+        .nav-left a:hover { color: #ffcc80; }
+
+        .city-dropdown { position: relative; cursor: pointer; }
+        .current-city {
+            padding: 5px 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.15);
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .city-list {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            list-style: none;
+            padding: 6px 0;
+            margin: 0;
+            background: rgba(0,0,0,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            min-width: 170px;
+            z-index: 1010;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .city-dropdown:hover .city-list { display: block; }
+        .city-list li a {
+            padding: 8px 14px;
+            display: block;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .city-list li a:hover { background: #ff5722; }
+
+        /* Профиль пользователя */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 6px 4px 4px;
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+            padding: 3px 12px 3px 6px;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .user-info:hover { background: rgba(255,255,255,0.18); }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(255,87,34,0.4);
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 13px;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logout-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #e64a19;
+            transform: translateY(-1px);
+        }
+
+        .auth-links a {
+            color: white;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .login-link:hover { background: rgba(255,255,255,0.15); }
+        .register-link {
+            background: #ff5722;
+        }
+        .register-link:hover { background: #e64a19; }
+
+        /* Контейнер основного контента */
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Список чатов */
+        .chats-list {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            text-decoration: none;
+            color: #333;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .chat-item:hover {
+            background: #fef7f2;
+        }
+
+        .chat-avatar {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .chat-avatar i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .chat-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .chat-premise {
+            font-size: 12px;
+            color: #ff5722;
+            background: #fff0e8;
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .chat-preview {
+            font-size: 13px;
+            color: #888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: #aaa;
+            margin-left: 10px;
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .unread-badge {
+            background: #ff5722;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Пустое состояние */
+        .empty-chats {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 20px;
+        }
+
+        .empty-chats i {
+            font-size: 64px;
+            color: #ddd;
+            margin-bottom: 16px;
+        }
+
+        .empty-chats p {
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .empty-chats a {
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .empty-chats a:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Уведомление о новых сообщениях */
+        .new-message-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff5722;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 1000;
+            cursor: pointer;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            .chat-preview { max-width: 200px; }
+            .chat-item { padding: 15px; }
+            .chat-avatar { width: 45px; height: 45px; }
+            .chat-avatar i { font-size: 20px; }
+            .chat-name { font-size: 14px; }
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 8px 16px; flex-wrap: wrap; gap: 8px; }
+            .nav-left { flex-wrap: wrap; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER (статичный, тонкий, как на главной) -->
+<header class="header">
+    <div class="nav-left">
+        <a href="/about">О нас</a>
+
+        <!-- Выбор города -->
+        <div class="city-dropdown">
+            <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
+            <ul class="city-list">
+                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
+                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
+                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
+                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
+                <li><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="nav-right">
+        <!-- Если пользователь авторизован -->
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
+            <a th:href="@{/profile}" class="user-info">
+                <span class="user-avatar">👤</span>
+                <span class="user-name" th:text="${#authentication.name}"></span>
+            </a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Выйти</button>
+            </form>
+        </div>
+
+        <!-- Если пользователь не авторизован -->
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
+            <a href="/auth/login" class="login-link">Вход</a>
+            <a href="/auth/register" class="register-link">Регистрация</a>
+        </div>
+    </div>
+</header>
+
+<!-- Основной контент -->
+<div class="container">
+    <div class="chats-list" id="chatsList">
+        <!-- Список чатов будет загружаться через JavaScript -->
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const chatsData = /*[[${chats}]]*/ [];
+    /*]]>*/
+
+    let pollingInterval = null;
+    let isPolling = false;
+    let lastUpdateHash = '';
+    let notificationTimeout = null;
+
+    // Функция для генерации хеша списка чатов (для сравнения изменений)
+    function generateChatsHash(chats) {
+        if (!chats || chats.length === 0) return 'empty';
+        return chats.map(chat =>
+            `${chat.user.id}_${chat.premiseId}_${chat.lastMessage}_${chat.lastMessageTime}_${chat.unreadCount}`
+        ).join('|');
+    }
+
+    // Функция для форматирования времени
+    function formatTime(timeStr) {
+        const date = new Date(timeStr);
+        return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Функция для отображения списка чатов
+    function renderChats(chats) {
+        const container = document.getElementById('chatsList');
+        if (!container) return;
+
+        if (!chats || chats.length === 0) {
+            container.innerHTML = `
+                <div class="empty-chats">
+                    <i class="fas fa-comment-dots"></i>
+                    <p>У вас пока нет активных чатов</p>
+                    <a href="/catalog">Найти помещение</a>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        for (const chat of chats) {
+            const userName = (chat.user.firstName && chat.user.firstName !== '')
+                ? `${chat.user.firstName} ${chat.user.lastName || ''}`
+                : chat.user.login;
+
+            const premiseBadge = chat.premise ? `<span class="chat-premise">📌 ${chat.premise.typeInRussian}</span>` : '';
+            const unreadBadge = chat.unreadCount > 0 ? `<span class="unread-badge">${chat.unreadCount}</span>` : '';
+            const chatUrl = chat.premiseId
+                ? `/chats/with/${chat.user.login}/premise/${chat.premiseId}`
+                : `/chats/with/${chat.user.login}`;
+
+            html += `
+                <a href="${chatUrl}" class="chat-item">
+                    <div class="chat-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-name">
+                            <span>${escapeHtml(userName)}</span>
+                            ${premiseBadge}
+                            ${unreadBadge}
+                        </div>
+                        <div class="chat-preview">${escapeHtml(chat.lastMessage || '')}</div>
+                    </div>
+                    <div class="chat-time">
+                        <span>${formatTime(chat.lastMessageTime)}</span>
+                    </div>
+                </a>
+            `;
+        }
+
+        container.innerHTML = html;
+        lastUpdateHash = generateChatsHash(chats);
+    }
+
+    // Показать уведомление о новых сообщениях
+    function showNewMessageNotification() {
+        const existing = document.querySelector('.new-message-notification');
+        if (existing) existing.remove();
+        if (notificationTimeout) clearTimeout(notificationTimeout);
+
+        const notification = document.createElement('div');
+        notification.className = 'new-message-notification';
+        notification.innerHTML = '<i class="fas fa-comment-dots"></i> Новые сообщения! Нажмите для обновления';
+        notification.onclick = () => {
+            loadChats();
+            notification.remove();
+        };
+        document.body.appendChild(notification);
+
+        notificationTimeout = setTimeout(() => {
+            if (notification && notification.parentNode) {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    // Функция для загрузки чатов с сервера
+    async function loadChats() {
+        if (isPolling) return;
+        isPolling = true;
+
+        try {
+            const response = await fetch('/chats/api/chats');
+            if (response.ok) {
+                const newChats = await response.json();
+                const newHash = generateChatsHash(newChats);
+
+                // Если данные изменились, обновляем список
+                if (newHash !== lastUpdateHash) {
+                    renderChats(newChats);
+                    // Показываем уведомление при наличии новых непрочитанных сообщений
+                    const hasNewUnread = newChats.some(chat => chat.unreadCount > 0);
+                    if (hasNewUnread && document.visibilityState === 'visible') {
+                        showNewMessageNotification();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading chats:', error);
+        } finally {
+            isPolling = false;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Запускаем polling при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        if (chatsData && chatsData.length > 0) {
+            renderChats(chatsData);
+        } else {
+            renderChats([]);
+            // Если данных нет, сразу загружаем с сервера
+            loadChats();
+        }
+
+        // Запускаем polling каждые 5 секунд
+        pollingInterval = setInterval(loadChats, 5000);
+    });
+
+    // Очищаем интервал при уходе со страницы
+    window.addEventListener('beforeunload', function() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    });
+</script>
+</body>
+</html>

@@ -820,7 +820,12 @@
         if (fullImg && fullscreen) { fullImg.src = src; fullscreen.style.display = 'flex'; }
     }
 
-    function contactSeller() { alert('📞 Связаться с продавцом\nТелефон: ' + (premiseData.contactPhone || 'не указан')); }
+    // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ contactSeller ==========
+    function contactSeller() {
+        // Просто перенаправляем на страницу чата
+        // Если пользователь не авторизован, Spring Security перенаправит на логин
+        window.location.href = '/chats/premise/' + premiseId;
+    }
 
     let notificationTimeout = null;
     function showNotification(message, isError = false, isInfo = false) {
@@ -893,7 +898,7 @@
         });
     });
 
-    // ======================== КОММЕНТАРИИ (ОБНОВЛЕНО) ========================
+    // ======================== КОММЕНТАРИИ ========================
     async function loadComments() {
         const list = document.getElementById('commentsList');
         if (!list) return;
@@ -950,7 +955,6 @@
 
         if (!text || !premiseId) return;
 
-        // Блокируем кнопку отправки, чтобы избежать двойной отправки
         const submitBtn = this.querySelector('button');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
@@ -968,7 +972,7 @@
 
             if (res.ok) {
                 textArea.value = '';
-                await loadComments();           // обновляем список
+                await loadComments();
                 showNotification('✅ Комментарий добавлен!', false);
             } else {
                 const errorData = await res.text();
@@ -983,11 +987,10 @@
         }
     });
 
-    // Загружаем комментарии при открытии страницы
     document.addEventListener('DOMContentLoaded', () => {
-        initPhotoSlider();   // твой существующий код
+        initPhotoSlider();
         if (premiseId) {
-            loadComments();      // загружаем комментарии
+            loadComments();
         }
     });
 </script>

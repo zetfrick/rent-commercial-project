@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -22,17 +21,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Отключаем CSRF только для API
+                // Отключаем CSRF для API и чатов
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**")  // ← ВОТ ЭТА СТРОКА РЕШАЕТ ВСЁ
+                        .ignoringRequestMatchers("/api/**", "/chats/**")  // Отключаем CSRF для всех чатов
                 )
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/", "/auth/**", "/catalog", "/catalog/**", "/about", "/contacts",
                                 "/main/**", "/catalog/preview", "/uploads/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                                "/api/auth/register", "/api/auth/login")  // ← явно разрешаем регистрацию
+                                "/api/auth/register", "/api/auth/login",
+                                "/auth/check")
                         .permitAll()
-                        .requestMatchers("/profile", "/profile/**", "/premise/**", "/api/premise/**")
+                        .requestMatchers("/profile", "/profile/**", "/premise/**", "/api/premise/**",
+                                "/chats/**")
                         .authenticated()
                         .anyRequest().permitAll()
                 )

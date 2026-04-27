@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Полный сброс - ИСПРАВЛЕНО: убраны конфликтующие overflow */
+        /* Полный сброс */
         * {
             margin: 0;
             padding: 0;
@@ -19,8 +19,8 @@
             padding: 0;
             width: 100%;
             min-height: 100vh;
-            overflow-x: hidden; /* Только горизонтальный скролл скрыт */
-            overflow-y: auto; /* Вертикальный скролл正常工作 */
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         body {
@@ -54,7 +54,7 @@
             }
         }
 
-        /* ====================== ХЕДЕР (как на странице деталей) ====================== */
+        /* ====================== ХЕДЕР ====================== */
         .profile-page-header {
             display: flex;
             justify-content: space-between;
@@ -227,7 +227,7 @@
             background: #e64a19;
         }
 
-        /* Контейнер профиля - ИСПРАВЛЕНО: убран overflow и проблемы с псевдоэлементами */
+        /* Контейнер профиля */
         .profile-container {
             position: relative;
             background: linear-gradient(135deg, #fff5eb 0%, #ffe0cc 100%);
@@ -235,16 +235,14 @@
             overflow-x: hidden;
         }
 
-        /* Когда хедере скрыт, добавляем отступ сверху для контейнера */
         .profile-container.no-header {
             min-height: 100vh;
             display: flex;
             align-items: center;
-            padding-top: 70px; /* Добавляем отступ сверху, равный примерной высоте хедера */
-            padding-bottom: 70px; /* Добавляем отступ снизу для баланса */
+            padding-top: 70px;
+            padding-bottom: 70px;
         }
 
-        /* Декоративные элементы фона - ИСПРАВЛЕНО: убраны выходящие за пределы элементы */
         .profile-container::before {
             content: '';
             position: fixed;
@@ -280,12 +278,10 @@
             width: 100%;
         }
 
-        /* Когда хедере скрыт, корректируем отступы */
         .no-header .profile-overlay {
             padding: 0 24px;
         }
 
-        /* Уведомление об успехе */
         .profile-success {
             background: linear-gradient(135deg, #4caf50, #45a049);
             color: white;
@@ -317,7 +313,6 @@
             width: 100%;
         }
 
-        /* Блок информации о пользователе */
         .profile-user-info {
             background: white;
             border-radius: 32px;
@@ -458,7 +453,6 @@
             word-break: break-word;
         }
 
-        /* Поля формы */
         .profile-form-group {
             margin-bottom: 22px;
         }
@@ -594,8 +588,11 @@
             transition: transform 0.3s ease;
         }
 
-        .profile-action-btn span {
+        .profile-action-btn .btn-text {
             flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .profile-action-btn .profile-arrow-icon {
@@ -616,6 +613,24 @@
 
         .profile-action-btn:hover .profile-arrow-icon {
             transform: translateX(5px);
+        }
+
+        /* Бейдж для чатов - аккуратный кружок */
+        .chat-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ff5722;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            border-radius: 20px;
+            text-align: center;
+            line-height: 1;
+            margin-left: 8px;
         }
 
         /* Адаптивность */
@@ -872,16 +887,16 @@
             <!-- Правая панель с действиями -->
             <div class="profile-right-buttons">
                 <!-- ЧАТЫ - только для владельца -->
-                <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="window.location.href='/chats'" style="border-left: 5px solid #4caf50;">
+                <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="window.location.href='/chats'" style="border-left: 5px solid #4caf50;" id="chatsButton">
                     <i class="fas fa-comments"></i>
-                    <span>Сообщения и чаты</span>
+                    <span class="btn-text">Сообщения и чаты <span id="chatsBadge" class="chat-badge" style="display: none;"></span></span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
                 <!-- ИЗБРАННОЕ - только для владельца -->
                 <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="alert('⭐ Избранное — в разработке')" style="border-left: 5px solid #ff5722;">
                     <i class="fas fa-heart"></i>
-                    <span>Избранное</span>
+                    <span class="btn-text">Избранное</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
@@ -891,7 +906,7 @@
                         onclick="alert('🏠 Мои объявления — в разработке')"
                         style="border-left: 5px solid #ff9800;">
                     <i class="fas fa-key"></i>
-                    <span>Мои объявления (сдаётся)</span>
+                    <span class="btn-text">Мои объявления (сдаётся)</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
@@ -900,27 +915,70 @@
                         onclick="alert('📋 Объявления пользователя — в разработке')"
                         style="border-left: 5px solid #ff9800;">
                     <i class="fas fa-key"></i>
-                    <span>Объявления пользователя</span>
+                    <span class="btn-text">Объявления пользователя</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
                 <!-- АРЕНДОВАННЫЕ ПОМЕЩЕНИЯ - только для владельца -->
                 <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="alert('📋 Арендованные помещения — в разработке')" style="border-left: 5px solid #ffc107;">
                     <i class="fas fa-building"></i>
-                    <span>Арендованные помещения</span>
+                    <span class="btn-text">Арендованные помещения</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
                 <!-- ИСТОРИЯ ОБЪЯВЛЕНИЙ - для всех (видна и владельцу, и гостю) -->
                 <button class="profile-action-btn" onclick="alert('📜 История объявлений — в разработке')" style="border-left: 5px solid #ff6f00;">
                     <i class="fas fa-history"></i>
-                    <span>История объявлений</span>
+                    <span class="btn-text">История объявлений</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Функция для обновления бейджа на кнопке "Сообщения и чаты"
+    function updateChatButtonBadge() {
+        const badgeElement = document.getElementById('chatsBadge');
+        if (!badgeElement) return;
+
+        const unreadCount = localStorage.getItem('unreadChatsCount');
+
+        if (unreadCount && parseInt(unreadCount) > 0) {
+            badgeElement.textContent = unreadCount;
+            badgeElement.style.display = 'inline-flex';
+        } else {
+            badgeElement.style.display = 'none';
+        }
+    }
+
+    // Функция для загрузки количества чатов с непрочитанными сообщениями
+    function loadUnreadChatsCount() {
+        fetch('/chats/api/chats')
+            .then(response => response.json())
+            .then(chats => {
+                const chatsWithUnread = chats.filter(chat => chat.unreadCount > 0).length;
+                localStorage.setItem('unreadChatsCount', chatsWithUnread);
+                updateChatButtonBadge();
+            })
+            .catch(error => console.error('Error loading unread chats count:', error));
+    }
+
+    // Слушаем событие обновления количества непрочитанных чатов
+    window.addEventListener('unreadChatsUpdate', function(e) {
+        if (e.detail && e.detail.count !== undefined) {
+            localStorage.setItem('unreadChatsCount', e.detail.count);
+        }
+        updateChatButtonBadge();
+    });
+
+    // При загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUnreadChatsCount();
+        setInterval(loadUnreadChatsCount, 10000);
+    });
+</script>
 
 </body>
 </html>
