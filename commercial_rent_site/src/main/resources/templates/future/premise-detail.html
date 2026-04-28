@@ -157,6 +157,44 @@
         h1 { font-size: 2.4rem; margin-bottom: 8px; }
         .address { font-size: 1.2rem; color: #555; margin-bottom: 30px; }
 
+        /* Кнопка редактирования */
+        .edit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 15px;
+            transition: all 0.3s;
+        }
+        .edit-btn:hover {
+            background: #ff5722;
+            transform: translateY(-2px);
+        }
+
+        /* Кнопка профиля владельца */
+        .owner-profile-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 15px;
+            transition: all 0.3s;
+        }
+        .owner-profile-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 420px;
@@ -355,6 +393,109 @@
         .price-item .label { font-size: 0.8rem; color: #777; margin-bottom: 6px; display: block; }
         .price-item .value { font-size: 1.3rem; font-weight: bold; color: #ff5722; }
 
+        /* Характеристики помещения */
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 16px;
+        }
+        .spec-item {
+            text-align: center;
+            padding: 10px;
+        }
+        .spec-icon {
+            font-size: 24px;
+            color: #ff5722;
+            margin-bottom: 8px;
+        }
+        .spec-label {
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+        .spec-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .spec-unit {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* Доступность */
+        .availability-card {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4caf50;
+        }
+        .availability-card .label {
+            font-weight: 600;
+            color: #2e7d32;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .availability-card .dates {
+            color: #1b5e20;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        /* Информация о владельце */
+        .owner-card {
+            background: #fff8f0;
+            padding: 20px;
+            border-radius: 16px;
+            margin-top: 20px;
+            border: 1px solid #ffe0cc;
+        }
+        .owner-card h3 {
+            font-size: 1rem;
+            color: #ff5722;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .owner-details {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .owner-detail-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #ffe0cc;
+        }
+        .owner-detail-row:last-child {
+            border-bottom: none;
+        }
+        .owner-detail-icon {
+            width: 32px;
+            color: #ff9800;
+            font-size: 16px;
+            text-align: center;
+        }
+        .owner-detail-label {
+            width: 80px;
+            font-size: 13px;
+            color: #777;
+        }
+        .owner-detail-value {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+
         .contact-btn {
             width: 100%; background: #ff5722; color: white; border: none;
             padding: 16px; font-size: 1.2rem; font-weight: bold; border-radius: 50px;
@@ -362,11 +503,6 @@
             transition: all 0.3s;
         }
         .contact-btn:hover { background: #e64a19; transform: translateY(-2px); }
-        .owner-info {
-            text-align: center; margin-top: 20px; padding-top: 15px;
-            border-top: 1px solid #eee; color: #555; font-size: 14px;
-        }
-        .owner-info i { margin-right: 6px; color: #ff5722; }
 
         /* Описание и дополнительные блоки */
         .description-section {
@@ -506,6 +642,16 @@
             .comments-section { padding: 20px; }
             .comment-form { flex-direction: column; }
             .comment-form button { padding: 12px; }
+            .specs-grid { grid-template-columns: 1fr; }
+            .top-buttons { flex-direction: column; align-items: stretch; gap: 10px; }
+            .edit-btn, .owner-profile-btn { margin-left: 0; justify-content: center; }
+        }
+
+        .top-buttons {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .notification {
@@ -586,7 +732,23 @@
 
 <!-- Основной контент -->
 <div class="container">
-    <a href="/catalog" class="back-btn"><i class="fas fa-arrow-left"></i> Назад в каталог</a>
+    <div class="top-buttons" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap;">
+        <a href="/catalog" class="back-btn"><i class="fas fa-arrow-left"></i> Назад в каталог</a>
+        <div style="display: flex; gap: 10px;">
+            <!-- Кнопка профиля владельца -->
+            <a th:href="@{/profile(username=${ownerLogin})}" class="owner-profile-btn">
+                <i class="fas fa-user-circle"></i> Профиль владельца
+            </a>
+            <!-- Кнопка редактирования - видна только владельцу -->
+            <a th:if="${isOwner}" th:href="@{/premise/{id}/edit(id=${premise.id})}" class="edit-btn">
+                <i class="fas fa-pen"></i> Редактировать объявление
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${param.updated}" class="notification" style="background: #4caf50; display: block;">
+        <i class="fas fa-check-circle"></i> Объявление успешно обновлено!
+    </div>
 
     <h1 th:text="${premise.getTypeInRussian() ?: premise.type}"></h1>
     <div class="address" th:text="${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
@@ -631,7 +793,7 @@
             </div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА: Карта + Цена -->
+        <!-- ПРАВАЯ КОЛОНКА: Карта + Цена + Характеристики -->
         <div>
             <div class="map-container">
                 <div class="map-label"><i class="fas fa-map-marker-alt"></i> Расположение на карте</div>
@@ -655,16 +817,59 @@
                     </div>
                 </div>
 
+                <!-- ХАРАКТЕРИСТИКИ ПОМЕЩЕНИЯ -->
+                <div class="specs-grid">
+                    <div class="spec-item">
+                        <div class="spec-icon"><i class="fas fa-arrows-alt"></i></div>
+                        <div class="spec-label">Площадь</div>
+                        <div class="spec-value" th:text="${premise.area} + ' м²'"></div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-icon"><i class="fas fa-users"></i></div>
+                        <div class="spec-label">Вместимость</div>
+                        <div class="spec-value" th:text="${premise.capacity} + ' чел.'"></div>
+                    </div>
+                </div>
+
+                <!-- ДОСТУПНОСТЬ -->
+                <div class="availability-card">
+                    <span class="label"><i class="fas fa-calendar-alt"></i> Доступно для аренды</span>
+                    <span class="dates">
+                        <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')}"></span> —
+                        <span th:text="${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
+                    </span>
+                </div>
+
+                <!-- ИНФОРМАЦИЯ О ВЛАДЕЛЬЦЕ -->
+                <div class="owner-card">
+                    <h3><i class="fas fa-user-circle"></i> Контактные данные владельца</h3>
+                    <div class="owner-details">
+                        <div class="owner-detail-row">
+                            <div class="owner-detail-icon"><i class="fas fa-user"></i></div>
+                            <div class="owner-detail-label">Имя:</div>
+                            <div class="owner-detail-value" th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></div>
+                        </div>
+                        <div class="owner-detail-row" th:if="${premise.contactMiddleName != null and premise.contactMiddleName != ''}">
+                            <div class="owner-detail-icon"><i class="fas fa-user-tag"></i></div>
+                            <div class="owner-detail-label">Отчество:</div>
+                            <div class="owner-detail-value" th:text="${premise.contactMiddleName}"></div>
+                        </div>
+                        <div class="owner-detail-row">
+                            <div class="owner-detail-icon"><i class="fas fa-phone-alt"></i></div>
+                            <div class="owner-detail-label">Телефон:</div>
+                            <div class="owner-detail-value" th:text="${premise.contactPhone}"></div>
+                        </div>
+                        <div class="owner-detail-row" th:if="${premise.contactEmail != null and premise.contactEmail != ''}">
+                            <div class="owner-detail-icon"><i class="fas fa-envelope"></i></div>
+                            <div class="owner-detail-label">Email:</div>
+                            <div class="owner-detail-value" th:text="${premise.contactEmail}"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="contact-btn" onclick="contactSeller()">
                     <i class="fas fa-comment-dots"></i> Связаться с продавцом
                 </button>
-
-                <div class="owner-info">
-                    <i class="fas fa-user-circle"></i>
-                    <strong th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></strong><br>
-                    <i class="fas fa-phone-alt"></i>
-                    <span th:text="${premise.contactPhone}"></span>
-                </div>
             </div>
         </div>
     </div>
@@ -694,7 +899,6 @@
     <div class="comments-section">
         <h2><i class="fas fa-comments"></i> Комментарии и вопросы</h2>
 
-        <!-- Форма добавления комментария -->
         <sec:authorize access="isAuthenticated()">
             <form id="commentForm" class="comment-form">
                 <textarea id="commentText" placeholder="Напишите ваш комментарий или вопрос..." required></textarea>
@@ -708,10 +912,7 @@
             </p>
         </sec:authorize>
 
-        <!-- Список комментариев -->
-        <div class="comment-list" id="commentsList">
-            <!-- Заполняется через JavaScript -->
-        </div>
+        <div class="comment-list" id="commentsList"></div>
     </div>
 </div>
 
@@ -720,8 +921,8 @@
 </div>
 
 <script th:inline="javascript">
-    /*<![CDATA[*/
     const premiseId = /*[[${premise.id}]]*/ null;
+    const ownerUsername = /*[[${premise.contactFirstName != null ? premise.contactFirstName : ''}]]*/ null;
     const premiseData = {
         region: /*[[${premise.region}]]*/ null,
         city: /*[[${premise.city}]]*/ null,
@@ -733,7 +934,6 @@
         contactFirstName: /*[[${premise.contactFirstName}]]*/ null,
         contactLastName: /*[[${premise.contactLastName}]]*/ null
     };
-    /*]]>*/
 </script>
 
 <script>
@@ -820,10 +1020,7 @@
         if (fullImg && fullscreen) { fullImg.src = src; fullscreen.style.display = 'flex'; }
     }
 
-    // ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ contactSeller ==========
     function contactSeller() {
-        // Просто перенаправляем на страницу чата
-        // Если пользователь не авторизован, Spring Security перенаправит на логин
         window.location.href = '/chats/premise/' + premiseId;
     }
 

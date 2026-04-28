@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактирование помещения</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #ff5722;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #ff5722;
+            box-shadow: 0 0 0 3px rgba(255,87,34,0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 12px;
+        }
+
+        .amenity-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .amenity-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .amenity-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .readonly-field {
+            background: #f5f5f5;
+            padding: 12px 15px;
+            border-radius: 12px;
+            color: #666;
+            border: 1px solid #eee;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-save {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-save:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ff5722;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        hr {
+            margin: 25px 0;
+            border: none;
+            border-top: 1px solid #eee;
+        }
+
+        .info-note {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #ff9800;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .form-card { padding: 20px; }
+            .amenities-grid { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+            .btn-save, .btn-cancel { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/premise/1" th:href="@{/premise/{id}(id=${premise.id})}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Вернуться к объявлению
+    </a>
+
+    <h1><i class="fas fa-edit"></i> Редактирование помещения</h1>
+
+    <div class="info-note">
+        <i class="fas fa-info-circle"></i> Вы можете редактировать только: тип помещения, площадь, вместительность, удобства, описание, доп. платежи и важную информацию.
+    </div>
+
+    <div class="form-card">
+        <form th:action="@{/premise/{id}/edit(id=${premise.id})}" method="post">
+            <!-- Тип помещения -->
+            <div class="form-group">
+                <label><i class="fas fa-building"></i> Тип помещения <span style="color:#ff5722;">*</span></label>
+                <select name="type" required>
+                    <option value="">— Выберите тип —</option>
+                    <option th:each="t : ${types}"
+                            th:value="${t}"
+                            th:text="${typeInRussian.get(t)}"
+                            th:selected="${premise.type == t}"></option>
+                </select>
+            </div>
+
+            <!-- Площадь -->
+            <div class="form-group">
+                <label><i class="fas fa-arrows-alt"></i> Площадь (м²) <span style="color:#ff5722;">*</span></label>
+                <input type="number" name="area" th:value="${premise.area}" min="1" required>
+            </div>
+
+            <!-- Вместимость -->
+            <div class="form-group">
+                <label><i class="fas fa-users"></i> Вместимость (человек) <span style="color:#ff5722;">*</span></label>
+                <input type="number" name="capacity" th:value="${premise.capacity}" min="1" required>
+            </div>
+
+            <!-- Удобства -->
+            <div class="form-group">
+                <label><i class="fas fa-star-of-life"></i> Оснащение и удобства</label>
+                <div class="amenities-grid">
+                    <div th:each="amenity : ${amenities}" class="amenity-item">
+                        <input type="checkbox"
+                               name="amenities"
+                               th:value="${amenity}"
+                               th:id="${amenity}"
+                               th:checked="${premise.amenities.contains(amenity)}">
+                        <label th:for="${amenity}" th:text="${amenityInRussian.get(amenity)}"></label>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Описание -->
+            <div class="form-group">
+                <label><i class="fas fa-info-circle"></i> Описание помещения</label>
+                <textarea name="description" th:text="${premise.description}"></textarea>
+            </div>
+
+            <!-- Дополнительные платежи -->
+            <div class="form-group">
+                <label><i class="fas fa-receipt"></i> Дополнительные платежи</label>
+                <textarea name="extraFees" th:text="${premise.extraFees}"></textarea>
+            </div>
+
+            <!-- Важная информация -->
+            <div class="form-group">
+                <label><i class="fas fa-exclamation-triangle"></i> Важная информация</label>
+                <textarea name="importantInfo" th:text="${premise.importantInfo}"></textarea>
+            </div>
+
+            <hr>
+
+            <!-- Неизменяемые поля для информации -->
+            <div class="form-group">
+                <label><i class="fas fa-map-marker-alt"></i> Адрес</label>
+                <div class="readonly-field" th:text="${premise.region} + ', ' + ${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-tag"></i> Цены</label>
+                <div class="readonly-field">
+                    Будни: <span th:text="${premise.priceWeekday} + ' ₽'"></span><br>
+                    <span th:if="${premise.priceWeekend != null}">Выходные: <span th:text="${premise.priceWeekend} + ' ₽'"></span><br></span>
+                    <span th:if="${premise.priceHoliday != null}">Праздники: <span th:text="${premise.priceHoliday} + ' ₽'"></span></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-calendar-alt"></i> Доступность</label>
+                <div class="readonly-field">
+                    <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')}"></span> —
+                    <span th:text="${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Контактные данные</label>
+                <div class="readonly-field">
+                    <span th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></span><br>
+                    <span th:text="${premise.contactPhone}"></span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Сохранить изменения</button>
+                <a th:href="@{/premise/{id}(id=${premise.id})}" class="btn-cancel">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

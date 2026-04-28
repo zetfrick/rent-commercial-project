@@ -901,23 +901,23 @@
                 </button>
 
                 <!-- ОБЪЯВЛЕНИЯ (меняем текст в зависимости от владельца) -->
-                <button class="profile-action-btn"
-                        th:if="${isOwnProfile}"
-                        onclick="alert('🏠 Мои объявления — в разработке')"
-                        style="border-left: 5px solid #ff9800;">
+                <a th:if="${isOwnProfile}"
+                   th:href="@{/profile/{username}/premises(username=${profileUser.login})}"
+                   class="profile-action-btn"
+                   style="border-left: 5px solid #ff9800; text-decoration: none; display: flex;">
                     <i class="fas fa-key"></i>
                     <span class="btn-text">Мои объявления (сдаётся)</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
-                </button>
+                </a>
 
-                <button class="profile-action-btn"
-                        th:unless="${isOwnProfile}"
-                        onclick="alert('📋 Объявления пользователя — в разработке')"
-                        style="border-left: 5px solid #ff9800;">
+                <a th:unless="${isOwnProfile}"
+                   th:href="@{/profile/{username}/premises(username=${profileUser.login})}"
+                   class="profile-action-btn"
+                   style="border-left: 5px solid #ff9800; text-decoration: none; display: flex;">
                     <i class="fas fa-key"></i>
                     <span class="btn-text">Объявления пользователя</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
-                </button>
+                </a>
 
                 <!-- АРЕНДОВАННЫЕ ПОМЕЩЕНИЯ - только для владельца -->
                 <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="alert('📋 Арендованные помещения — в разработке')" style="border-left: 5px solid #ffc107;">

@@ -1,4 +1,3 @@
-// src/main/java/com/example/rentapp/config/SecurityConfig.java
 package com.example.rentapp.config;
 
 import com.example.rentapp.service.UserService;
@@ -23,17 +22,20 @@ public class SecurityConfig {
         http
                 // Отключаем CSRF для API и чатов
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/chats/**")  // Отключаем CSRF для всех чатов
+                        .ignoringRequestMatchers("/api/**", "/chats/**")
                 )
                 .authorizeHttpRequests(authz -> authz
+                        // Публичные страницы - доступны всем
                         .requestMatchers("/", "/auth/**", "/catalog", "/catalog/**", "/about", "/contacts",
                                 "/main/**", "/catalog/preview", "/uploads/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/api/auth/register", "/api/auth/login",
-                                "/auth/check")
+                                "/auth/check",
+                                "/premise/**")  // ← ДОБАВЛЕНО: страницы просмотра помещений доступны всем
                         .permitAll()
-                        .requestMatchers("/profile", "/profile/**", "/premise/**", "/api/premise/**",
-                                "/chats/**")
+                        // Защищённые страницы - только для авторизованных
+                        .requestMatchers("/profile", "/profile/**", "/api/premise/**",
+                                "/chats/**", "/premise/add", "/premise/*/edit")
                         .authenticated()
                         .anyRequest().permitAll()
                 )

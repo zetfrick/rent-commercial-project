@@ -101,7 +101,6 @@
             margin-bottom: 15px;
         }
 
-        /* Подсветка ошибочного адреса */
         .address-error {
             border: 2px solid #ff5722 !important;
             background: rgba(255, 87, 34, 0.15) !important;
@@ -158,7 +157,6 @@
             border-left-color: #ff5722;
         }
 
-        /* Стили для выпадающего списка подсказок */
         .suggest-wrapper {
             position: relative;
             width: 100%;
@@ -215,6 +213,48 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(255,87,34,0.3);
         }
+
+        /* Стили для миниатюр фотографий */
+        .photos-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .photo-preview-item {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-photo-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 24px;
+            height: 24px;
+            background: rgba(255,87,34,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .remove-photo-btn:hover {
+            background: #ff5722;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -232,11 +272,10 @@
             <h1>Сдать помещение в аренду</h1>
 
             <form id="premiseForm" th:action="@{/premise/add}" th:object="${premiseForm}" method="post" enctype="multipart/form-data">
-                <!-- Скрытые координаты -->
                 <input type="hidden" name="latitude" id="lat">
                 <input type="hidden" name="longitude" id="lng">
 
-                <!-- Фото с ограничением 20 МБ -->
+                <!-- Фото с миниатюрами -->
                 <div class="row">
                     <div class="col">
                         <label class="required">Фото помещения (до 10 шт., каждое не более 20 МБ)</label>
@@ -244,6 +283,7 @@
                         <small style="color:#ffcc80; display:block; margin-top:6px;">
                             Максимальный размер одного файла — 20 МБ
                         </small>
+                        <div id="photosPreview" class="photos-preview"></div>
                     </div>
                 </div>
 
@@ -399,12 +439,21 @@
 
                 <h3>Контактные данные арендодателя</h3>
                 <div class="row">
-                    <div class="col-50"><label class="required">Имя</label><input type="text" th:field="*{ownerFirstName}" required></div>
-                    <div class="col-50"><label class="required">Фамилия</label><input type="text" th:field="*{ownerLastName}" required></div>
+                    <div class="col-50">
+                        <label class="required">Имя</label>
+                        <input type="text" th:field="*{ownerFirstName}" required readonly style="background: rgba(255,255,255,0.8); cursor: not-allowed;">
+                    </div>
+                    <div class="col-50">
+                        <label class="required">Фамилия</label>
+                        <input type="text" th:field="*{ownerLastName}" required readonly style="background: rgba(255,255,255,0.8); cursor: not-allowed;">
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-50"><label>Отчество</label><input type="text" th:field="*{ownerMiddleName}"></div>
-                    <div class="col-50"><label class="required">Телефон</label><input type="tel" th:field="*{ownerPhone}" required></div>
+                    <div class="col-50">
+                        <label class="required">Телефон</label>
+                        <input type="tel" id="ownerPhone" name="ownerPhone" th:field="*{ownerPhone}" required placeholder="+7 ___ ___ __ __">
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col"><label>Email для связи (необязательно)</label>
@@ -422,11 +471,99 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // ==================== ОГРАНИЧЕНИЕ РАЗМЕРА ФОТО (20 МБ) ====================
+    // ==================== РАБОТА С ФОТОГРАФИЯМИ ====================
     const MAX_FILE_SIZE_MB = 20;
     const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+    let selectedFiles = [];
 
-    // Функция показа уведомлений (общая для всего скрипта)
+    function updatePhotoPreview() {
+        const previewContainer = document.getElementById('photosPreview');
+        previewContainer.innerHTML = '';
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'photo-preview-item';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="remove-photo-btn" data-index="${index}" data-filename="${file.name}">×</button>
+                `;
+                previewContainer.appendChild(previewDiv);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Добавляем обработчики удаления после того как все элементы созданы
+        document.querySelectorAll('.remove-photo-btn').forEach(btn => {
+            btn.removeEventListener('click', handleRemoveClick);
+            btn.addEventListener('click', handleRemoveClick);
+        });
+    }
+
+    function handleRemoveClick(e) {
+        const index = parseInt(e.target.getAttribute('data-index'));
+        if (!isNaN(index) && index >= 0 && index < selectedFiles.length) {
+            selectedFiles.splice(index, 1);
+            updatePhotoPreview();
+            updateFileInput();
+        }
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('photos').files = dataTransfer.files;
+    }
+
+    document.getElementById('photos').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+
+        for (let file of files) {
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                showNotification(`Файл "${file.name}" слишком большой! Максимум ${MAX_FILE_SIZE_MB} МБ.`, true);
+                return;
+            }
+        }
+
+        // ДОБАВЛЯЕМ новые файлы к существующим, а не заменяем
+        selectedFiles.push(...files);
+        updatePhotoPreview();
+        updateFileInput();
+    });
+
+    // ==================== МАСКА ДЛЯ ТЕЛЕФОНА ====================
+    const phoneInput = document.getElementById('ownerPhone');
+
+    phoneInput.addEventListener('focus', function() {
+        if (!this.value.startsWith('+7')) {
+            this.value = '+7';
+        }
+    });
+
+    phoneInput.addEventListener('input', function(e) {
+        let value = this.value;
+
+        if (!value.startsWith('+7')) {
+            value = '+7' + value.replace(/[^\d]/g, '');
+        }
+
+        value = value.replace(/[^\d+]/g, '');
+
+        const numbers = value.replace(/[^0-9]/g, '');
+        let formatted = '+7';
+
+        if (numbers.length > 1) {
+            const phoneNumbers = numbers.substring(1);
+            if (phoneNumbers.length >= 1) formatted += ' ' + phoneNumbers.substring(0, 3);
+            if (phoneNumbers.length >= 4) formatted += ' ' + phoneNumbers.substring(3, 6);
+            if (phoneNumbers.length >= 7) formatted += ' ' + phoneNumbers.substring(6, 8);
+            if (phoneNumbers.length >= 9) formatted += ' ' + phoneNumbers.substring(8, 10);
+        }
+
+        this.value = formatted;
+    });
+
     function showNotification(message, isError = false) {
         const notification = document.createElement('div');
         notification.className = `notification ${isError ? 'error' : ''}`;
@@ -438,23 +575,6 @@
             setTimeout(() => notification.remove(), 600);
         }, 4500);
     }
-
-    // Проверка файлов при выборе
-    document.getElementById('photos').addEventListener('change', function(e) {
-        const files = e.target.files;
-        let hasError = false;
-
-        for (let file of files) {
-            if (file.size > MAX_FILE_SIZE_BYTES) {
-                showNotification(`Файл "${file.name}" слишком большой! Максимум ${MAX_FILE_SIZE_MB} МБ.`, true);
-                hasError = true;
-            }
-        }
-
-        if (hasError) {
-            e.target.value = ''; // очищаем поле
-        }
-    });
 
     // ==================== ВАЛИДАЦИЯ АДРЕСА ====================
     async function validateAddress() {
@@ -484,7 +604,6 @@
                 return false;
             }
 
-            // Строгая проверка — ищем точное совпадение по введённым данным
             let exactMatch = false;
 
             for (const item of featureMember) {
@@ -492,7 +611,6 @@
                 const name = (geo.name || '').toLowerCase();
                 const formatted = (geo.metaDataProperty?.GeocoderMetaData?.Address?.formatted || '').toLowerCase();
 
-                // Проверяем, содержит ли найденный адрес введённые компоненты
                 if (name.includes(city.toLowerCase()) &&
                     name.includes(street.toLowerCase()) &&
                     name.includes(building.toLowerCase())) {
@@ -513,7 +631,6 @@
                 return false;
             }
 
-            // Адрес прошёл строгую проверку
             clearAddressError();
             return true;
 
@@ -538,7 +655,7 @@
         });
     }
 
-    // ==================== ОСТАЛЬНОЙ JAVASCRIPT (КАРТА, ПОДСКАЗКИ) ====================
+    // ==================== КАРТА ====================
     let map, placemark;
     let isGeocodingInProgress = false;
     let ymapsReady = false;
@@ -557,7 +674,6 @@
         return div.innerHTML;
     }
 
-    // Функция для очистки названия улицы (убираем "улица", "проспект" и т.д. если нужно)
     function cleanStreetName(streetFull) {
         if (!streetFull) return '';
         const prefixes = ['улица ', 'ул. ', 'проспект ', 'пр. ', 'переулок ', 'пер. ', 'бульвар ', 'б-р ', 'набережная ', 'наб. ', 'шоссе ', 'площадь ', 'пл. '];
@@ -571,14 +687,12 @@
         return cleaned.trim();
     }
 
-    // Функция для извлечения только номера дома из полного адреса
     function extractBuildingNumber(fullBuilding) {
         if (!fullBuilding) return '';
         const match = fullBuilding.match(/(\d+[А-Яа-я]?)/);
         return match ? match[1] : fullBuilding;
     }
 
-    // Функция для получения области через геокодер
     async function getRegionByCityFromGeocoder(cityName) {
         if (!cityName || cityName.trim().length < 3) return null;
 
@@ -635,7 +749,6 @@
         return null;
     }
 
-    // Функция для получения подсказок от API Геосаджеста
     async function getSuggestions(query, type = 'city', city = '', street = '') {
         if (!query || query.length < 1) return [];
 
@@ -670,7 +783,6 @@
         }
     }
 
-    // Отображение выпадающего списка для города
     async function showCityDropdown(query) {
         const dropdown = document.getElementById('cityDropdown');
         if (!dropdown) return;
@@ -715,7 +827,6 @@
         if (dropdown.children.length > 0) dropdown.classList.add('active');
     }
 
-    // Отображение выпадающего списка для улицы (очищаем название)
     async function showStreetDropdown(query) {
         const city = document.getElementById('city').value.trim();
         const dropdown = document.getElementById('streetDropdown');
@@ -772,7 +883,6 @@
         if (dropdown.children.length > 0) dropdown.classList.add('active');
     }
 
-    // Отображение выпадающего списка для дома (извлекаем только номер)
     async function showBuildingDropdown(query) {
         const city = document.getElementById('city').value.trim();
         const street = document.getElementById('street').value.trim();
@@ -901,13 +1011,11 @@
 
         const street = document.getElementById('street')?.value.trim();
         if (coords && autoCenterEnabled && (!street || street.length < 2)) {
-            // Только центровка карты, без установки точки
             map.setCenter([coords.lat, coords.lng], 12);
             document.getElementById('lat').value = coords.lat;
             document.getElementById('lng').value = coords.lng;
             showNotification(`📍 Карта перемещена к городу: ${city}`, false);
 
-            // Убираем точку, если она была
             if (placemark) {
                 map.geoObjects.remove(placemark);
                 placemark = null;
@@ -926,7 +1034,6 @@
             document.getElementById("extraPrices").style.display = this.checked ? "block" : "none";
         });
 
-        // Город
         const cityInput = document.getElementById('city');
         let citySuggestTimer = null;
         cityInput.addEventListener('input', (e) => {
@@ -945,7 +1052,6 @@
             if (query.length >= 2) showCityDropdown(query);
         });
 
-        // Улица
         const streetInput = document.getElementById('street');
         let streetSuggestTimer = null;
         streetInput.addEventListener('input', (e) => {
@@ -967,7 +1073,6 @@
             if (query.length >= 2) showStreetDropdown(query);
         });
 
-        // Дом
         const buildingInput = document.getElementById('building');
         let buildingSuggestTimer = null;
         buildingInput.addEventListener('input', (e) => {
@@ -1009,7 +1114,7 @@
     function init() {
         ymapsReady = true;
         map = new ymaps.Map('osmMap', {
-            center: [56.2965, 43.9360], // Нижний Новгород
+            center: [56.2965, 43.9360],
             zoom: 12,
             controls: ['zoomControl', 'fullscreenControl']
         });
@@ -1036,7 +1141,7 @@
                 map.geoObjects.add(placemark);
             }
             reverseGeocode(coords[0], coords[1]);
-            clearAddressError(); // снимаем красную подсветку при клике по карте
+            clearAddressError();
         });
     }
 
@@ -1107,13 +1212,11 @@
             const lat = parseFloat(pos[1]);
             const lng = parseFloat(pos[0]);
 
-            // Центровка карты
             if (forceCenter || autoCenterEnabled) {
                 const zoom = building ? 18 : (street ? 17 : 14);
                 map.setCenter([lat, lng], zoom);
             }
 
-            // Точка ставится ТОЛЬКО при наличии полного адреса (с номером дома) И после успешной проверки
             if (building && building.trim() !== '') {
                 const isValid = await validateAddress();
 
@@ -1145,11 +1248,9 @@
                     }
                 }
             } else {
-                // Только город + улица — центрируем без точки
                 clearAddressError();
                 showNotification(`📍 Карта перемещена к: ${city}, ${street}`, false);
 
-                // Убираем точку, если она была
                 if (placemark) {
                     map.geoObjects.remove(placemark);
                     placemark = null;
@@ -1172,7 +1273,6 @@
         }
     }
 
-    // ==================== ПРОВЕРКА ПЕРЕД ОТПРАВКОЙ ФОРМЫ ====================
     document.getElementById('premiseForm').addEventListener('submit', async function(e) {
         const fileInput = document.getElementById('photos');
         const files = fileInput.files;

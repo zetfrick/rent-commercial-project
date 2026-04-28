@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -23,8 +24,6 @@ public class CatalogController {
 
     @Autowired
     private CommentRepository commentRepository;
-
-    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ ====================
 
     @GetMapping("/catalog")
     public ResponseEntity<List<Premise>> getAll() {
@@ -49,6 +48,25 @@ public class CatalogController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
+    @PutMapping("/premise/{id}")
+    public ResponseEntity<Premise> updatePremise(@PathVariable Long id, @RequestBody PremiseDto premiseDto) {
+        Premise existingPremise = premiseRepository.findById(id).orElse(null);
+        if (existingPremise == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        existingPremise.setType(premiseDto.getType());
+        existingPremise.setArea(premiseDto.getArea());
+        existingPremise.setCapacity(premiseDto.getCapacity());
+        existingPremise.setAmenities(premiseDto.getAmenities());
+        existingPremise.setDescription(premiseDto.getDescription());
+        existingPremise.setExtraFees(premiseDto.getExtraFees());
+        existingPremise.setImportantInfo(premiseDto.getImportantInfo());
+
+        Premise saved = premiseRepository.save(existingPremise);
+        return ResponseEntity.ok(saved);
+    }
+
     @GetMapping("/premises/latest")
     public ResponseEntity<List<Premise>> getLatestPremises(
             @RequestParam(value = "limit", defaultValue = "6") int limit) {
@@ -56,7 +74,19 @@ public class CatalogController {
         return ResponseEntity.ok(latest);
     }
 
-    // ==================== НОВЫЕ МЕТОДЫ ДЛЯ КОММЕНТАРИЕВ ====================
+    // НОВЫЙ МЕТОД: получение помещений по ID владельца
+    @GetMapping("/premises/owner/{ownerId}")
+    public ResponseEntity<List<PremiseDto>> getPremisesByOwnerId(@PathVariable Long ownerId) {
+        List<Premise> premises = premiseRepository.findByOwnerId(ownerId);
+
+        List<PremiseDto> dtos = premises.stream().map(p -> {
+            PremiseDto dto = new PremiseDto();
+            BeanUtils.copyProperties(p, dto);
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
 
     @GetMapping("/comments/premise/{premiseId}")
     public ResponseEntity<List<CommentDto>> getCommentsByPremiseId(@PathVariable Long premiseId) {

@@ -35,9 +35,15 @@ public class ProfileController {
     @GetMapping("/profile")
     public String profile(@RequestParam(required = false) String username,
                           @AuthenticationPrincipal UserDetails userDetails,
+                          @RequestParam(required = false) String city,
+                          jakarta.servlet.http.HttpServletRequest request,
                           Model model) {
 
         String currentUsername = (userDetails != null) ? userDetails.getUsername() : null;
+
+        // Для header
+        model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
+        model.addAttribute("currentUri", request.getRequestURI());
 
         // Если передан username в параметре — показываем именно его профиль
         String targetUsername;
@@ -69,8 +75,16 @@ public class ProfileController {
     // ==================== РЕДАКТИРОВАНИЕ ПРОФИЛЯ (только своего) ====================
 
     @GetMapping("/profile/edit")
-    public String editProfile(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String editProfile(@AuthenticationPrincipal UserDetails userDetails,
+                              @RequestParam(required = false) String city,
+                              jakarta.servlet.http.HttpServletRequest request,
+                              Model model) {
         User user = getCurrentUser(userDetails);
+
+        // Для header
+        model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
+        model.addAttribute("currentUri", request.getRequestURI());
+
         model.addAttribute("profileUser", user);
         model.addAttribute("isOwnProfile", true);
         model.addAttribute("editMode", true);
@@ -99,8 +113,15 @@ public class ProfileController {
     // ==================== ДОБАВЛЕНИЕ ПОМЕЩЕНИЯ ====================
 
     @GetMapping("/premise/add")
-    public String addPremiseForm(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String addPremiseForm(@AuthenticationPrincipal UserDetails userDetails,
+                                 @RequestParam(required = false) String city,
+                                 jakarta.servlet.http.HttpServletRequest request,
+                                 Model model) {
         User owner = getCurrentUser(userDetails);
+
+        // Для header
+        model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
+        model.addAttribute("currentUri", request.getRequestURI());
 
         PremiseForm form = new PremiseForm();
         form.setOwnerFirstName(owner.getFirstName());
@@ -188,6 +209,46 @@ public class ProfileController {
         catalogClient.addPremise(premiseDto);
 
         return "redirect:/premise/add?success";
+    }
+
+    // ==================== НОВЫЙ МЕТОД: ОБЪЯВЛЕНИЯ ПОЛЬЗОВАТЕЛЯ ====================
+
+    @GetMapping("/profile/{username}/premises")
+    public String userPremises(@PathVariable String username,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               @RequestParam(required = false) String city,
+                               jakarta.servlet.http.HttpServletRequest request,
+                               Model model) {
+
+        // Находим пользователя
+        User profileUser = userService.findByLogin(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
+
+        // Получаем все помещения пользователя
+        List<PremiseDto> userPremises = catalogClient.getPremisesByOwnerId(profileUser.getId());
+
+        // Для header
+        model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
+        model.addAttribute("currentUri", request.getRequestURI());
+
+        model.addAttribute("profileUser", profileUser);
+        model.addAttribute("premises", userPremises);
+        model.addAttribute("isOwnProfile", userDetails != null && userDetails.getUsername().equals(username));
+
+        // Для фильтров (без фильтров на странице, но для совместимости с каталогом)
+        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
+        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING", "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
+        model.addAttribute("typeInRussian", Map.of(
+                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
+                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
+        ));
+        model.addAttribute("amenityInRussian", Map.of(
+                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
+                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
+                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
+        ));
+
+        return "future/user-premises";
     }
 
     // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
