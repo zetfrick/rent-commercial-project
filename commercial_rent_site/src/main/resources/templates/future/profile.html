@@ -997,7 +997,7 @@
                 <!-- АДМИНИСТРАТОРЫ - только для SUPER_ADMIN, ОСОБЫЙ ДИЗАЙН -->
                 <button th:if="${profileUser.role.name() == 'SUPER_ADMIN'}"
                         class="profile-action-btn admin-premium-btn"
-                        onclick="alert('👥 Управление администраторами — в разработке')">
+                        onclick="window.location.href='/admin/admins'">
                     <i class="fas fa-crown"></i>
                     <span class="btn-text">Администраторы</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>

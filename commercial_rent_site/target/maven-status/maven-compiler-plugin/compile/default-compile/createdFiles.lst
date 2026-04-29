@@ -12,6 +12,7 @@ com\example\rentapp\config\WebConfig.class
 com\example\rentapp\controller\ChatController.class
 com\example\rentapp\controller\api\ApiAuthController.class
 com\example\rentapp\controller\FuturePagesController.class
+com\example\rentapp\controller\AdminController.class
 com\example\rentapp\service\CommentService.class
 com\example\rentapp\service\ChatService.class
 com\example\rentapp\repository\ChatMessageRepository.class

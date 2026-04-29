@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление администраторами</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            color: white;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 25px; }
+        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
+        .nav-left a:hover { color: #ffcc80; }
+
+        .city-dropdown { position: relative; cursor: pointer; }
+        .current-city {
+            padding: 5px 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.15);
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .city-list {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            list-style: none;
+            padding: 6px 0;
+            margin: 0;
+            background: rgba(0,0,0,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            min-width: 170px;
+            z-index: 1010;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        .city-dropdown:hover .city-list { display: block; }
+        .city-list li a { padding: 8px 14px; display: block; color: white; text-decoration: none; font-size: 13px; }
+        .city-list li a:hover { background: #ff5722; }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 6px 4px 4px;
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+            padding: 3px 12px 3px 6px;
+            border-radius: 40px;
+            transition: all 0.3s ease;
+        }
+        .user-info:hover { background: rgba(255,255,255,0.18); }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .user-name { font-weight: 600; font-size: 13px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .logout-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover { background: #e64a19; transform: translateY(-1px); }
+        .auth-links a { color: white; text-decoration: none; padding: 6px 16px; border-radius: 6px; font-weight: 500; font-size: 13px; }
+        .login-link:hover { background: rgba(255,255,255,0.15); }
+        .register-link { background: #ff5722; }
+        .register-link:hover { background: #e64a19; }
+
+        /* Контейнер */
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Заголовок */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .page-header h1 {
+            font-size: 28px;
+            color: #ff5722;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .page-header-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .back-btn {
+            background: #ff5722;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover { background: #e64a19; transform: translateY(-2px); }
+        .add-admin-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .add-admin-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+
+        /* Поиск - несколько полей */
+        .search-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .search-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .search-group input:focus { border-color: #ff5722; box-shadow: 0 0 0 3px rgba(255,87,34,0.1); }
+        .search-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Таблица */
+        .admins-table {
+            background: white;
+            border-radius: 20px;
+            overflow-x: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        th, td {
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background: #fff5f0;
+            font-weight: 600;
+            color: #ff5722;
+        }
+        tr:hover { background: #fef9f6; }
+        .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .view-profile-btn, .delete-admin-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .view-profile-btn {
+            background: #4caf50;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .view-profile-btn:hover { background: #45a049; transform: translateY(-1px); }
+        .delete-admin-btn {
+            background: #f44336;
+            color: white;
+        }
+        .delete-admin-btn:hover { background: #d32f2f; transform: translateY(-1px); }
+        .admin-badge {
+            background: #ff9800;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 24px;
+            animation: modalFadeIn 0.3s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 24px 24px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { display: flex; align-items: center; gap: 10px; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.2s;
+        }
+        .modal-close:hover {
+            transform: scale(1.1);
+        }
+        .modal-body { padding: 25px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus { border-color: #667eea; }
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .submit-btn:hover { transform: translateY(-2px); }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 14px 22px;
+            border-radius: 10px;
+            z-index: 10000;
+            animation: slideIn 0.4s ease;
+        }
+        .notification.error { background: #f44336; }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .access-denied {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 20px;
+            margin: 50px auto;
+            max-width: 500px;
+        }
+        .access-denied i { font-size: 64px; color: #f44336; margin-bottom: 20px; }
+
+        @media (max-width: 768px) {
+            .header { padding: 8px 16px; flex-wrap: wrap; gap: 8px; }
+            .nav-left { flex-wrap: wrap; gap: 12px; }
+            th, td { padding: 10px 8px; font-size: 13px; }
+            .admin-actions { flex-direction: column; gap: 5px; }
+            .search-filters { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="nav-left">
+        <a href="/about">О нас</a>
+        <div class="city-dropdown">
+            <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
+            <ul class="city-list">
+                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
+                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
+                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
+                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
+                <li><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="nav-right">
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
+            <a th:href="@{/profile}" class="user-info">
+                <span class="user-avatar">👤</span>
+                <span class="user-name" th:text="${#authentication.name}"></span>
+            </a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">Выйти</button>
+            </form>
+        </div>
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
+            <a href="/auth/login" class="login-link">Вход</a>
+            <a href="/auth/register" class="register-link">Регистрация</a>
+        </div>
+    </div>
+</header>
+
+<div class="container" id="adminPageContent">
+    <!-- Доступ запрещён - показываем для обычных пользователей -->
+    <div id="accessDenied" style="display: none;" class="access-denied">
+        <i class="fas fa-lock"></i>
+        <h2>Доступ запрещён</h2>
+        <p>Эта страница доступна только главному администратору.</p>
+        <a href="/profile" class="back-btn" style="margin-top: 20px; display: inline-block;">Вернуться в профиль</a>
+    </div>
+
+    <!-- Контент для SUPER_ADMIN -->
+    <div id="adminContent">
+        <div class="page-header">
+            <h1><i class="fas fa-user-shield"></i> Управление администраторами</h1>
+            <div class="page-header-buttons">
+                <a href="/profile" class="back-btn"><i class="fas fa-arrow-left"></i> Назад в профиль</a>
+                <button class="add-admin-btn" onclick="openAddAdminModal()"><i class="fas fa-plus"></i> Добавить администратора</button>
+            </div>
+        </div>
+
+        <!-- Фильтры поиска -->
+        <div class="search-filters">
+            <div class="search-group">
+                <label><i class="fas fa-user"></i> Имя</label>
+                <input type="text" id="searchFirstName" placeholder="Поиск по имени..." autocomplete="off">
+            </div>
+            <div class="search-group">
+                <label><i class="fas fa-user-tag"></i> Фамилия</label>
+                <input type="text" id="searchLastName" placeholder="Поиск по фамилии..." autocomplete="off">
+            </div>
+            <div class="search-group">
+                <label><i class="fas fa-at"></i> Логин</label>
+                <input type="text" id="searchLogin" placeholder="Поиск по логину..." autocomplete="off">
+            </div>
+            <div class="search-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="text" id="searchEmail" placeholder="Поиск по email..." autocomplete="off">
+            </div>
+        </div>
+
+        <div class="admins-table">
+            <table id="adminsTable">
+                <thead>
+                <tr><th>Имя</th><th>Фамилия</th><th>Логин</th><th>Email</th><th>Пароль</th><th>Роль</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="adminsList"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления администратора -->
+<div id="addAdminModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> Добавить администратора</h3>
+            <button class="modal-close" onclick="closeAddAdminModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group"><label>Логин *</label><input type="text" id="adminLogin" placeholder="Логин"></div>
+            <div class="form-group"><label>Email *</label><input type="email" id="adminEmail" placeholder="Email"></div>
+            <div class="form-group"><label>Имя *</label><input type="text" id="adminFirstName" placeholder="Имя"></div>
+            <div class="form-group"><label>Фамилия *</label><input type="text" id="adminLastName" placeholder="Фамилия"></div>
+            <div class="form-group">
+                <label>Пароль *</label>
+                <input type="text" id="adminPassword" placeholder="Пароль">
+            </div>
+            <button class="submit-btn" onclick="addAdmin()">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let allAdmins = [];
+    let currentUserLogin = '';
+
+    // Проверка прав доступа
+    async function checkAccess() {
+        try {
+            const response = await fetch('/auth/check');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.authenticated) {
+                    currentUserLogin = data.username;
+                    const userResponse = await fetch(`/admin/api/user/role/${data.username}`);
+                    if (userResponse.ok) {
+                        const role = await userResponse.text();
+                        if (role === 'SUPER_ADMIN') {
+                            document.getElementById('adminContent').style.display = 'block';
+                            document.getElementById('accessDenied').style.display = 'none';
+                            loadAdmins();
+                            return;
+                        }
+                    }
+                }
+            }
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('accessDenied').style.display = 'block';
+        } catch (error) {
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('accessDenied').style.display = 'block';
+        }
+    }
+
+    function renderAdmins(admins) {
+        const tbody = document.getElementById('adminsList');
+        if (!tbody) return;
+
+        if (!admins || admins.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px;">Нет администраторов</td></tr>';
+            return;
+        }
+
+        let html = '';
+        for (const admin of admins) {
+            if (admin.role === 'SUPER_ADMIN') continue;
+
+            const roleBadge = '<span class="admin-badge">Администратор</span>';
+            const passwordDisplay = '••••••••';
+
+            html += `
+                <tr>
+                    <td>${escapeHtml(admin.firstName || '')}</td>
+                    <td>${escapeHtml(admin.lastName || '')}</td>
+                    <td>${escapeHtml(admin.login)}</td>
+                    <td>${escapeHtml(admin.email)}</td>
+                    <td><span style="font-family: monospace;">${passwordDisplay}</span></td>
+                    <td>${roleBadge}</td>
+                    <td class="admin-actions">
+                        <a href="/profile?username=${encodeURIComponent(admin.login)}" class="view-profile-btn" target="_blank">Профиль</a>
+                        <button class="delete-admin-btn" onclick="deleteAdmin(${admin.id})">Удалить</button>
+                    </td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    function filterAdmins() {
+        const searchFirstName = document.getElementById('searchFirstName').value.toLowerCase();
+        const searchLastName = document.getElementById('searchLastName').value.toLowerCase();
+        const searchLogin = document.getElementById('searchLogin').value.toLowerCase();
+        const searchEmail = document.getElementById('searchEmail').value.toLowerCase();
+
+        let filtered = [...allAdmins];
+
+        if (searchFirstName) {
+            filtered = filtered.filter(admin => (admin.firstName && admin.firstName.toLowerCase().includes(searchFirstName)));
+        }
+        if (searchLastName) {
+            filtered = filtered.filter(admin => (admin.lastName && admin.lastName.toLowerCase().includes(searchLastName)));
+        }
+        if (searchLogin) {
+            filtered = filtered.filter(admin => (admin.login && admin.login.toLowerCase().includes(searchLogin)));
+        }
+        if (searchEmail) {
+            filtered = filtered.filter(admin => (admin.email && admin.email.toLowerCase().includes(searchEmail)));
+        }
+
+        renderAdmins(filtered);
+    }
+
+    async function loadAdmins() {
+        try {
+            const response = await fetch('/admin/api/admins');
+            if (response.ok) {
+                allAdmins = await response.json();
+                allAdmins = allAdmins.filter(admin => admin.role !== 'SUPER_ADMIN');
+                renderAdmins(allAdmins);
+            }
+        } catch (error) {
+            console.error('Error loading admins:', error);
+        }
+    }
+
+    function openAddAdminModal() {
+        document.getElementById('addAdminModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAddAdminModal() {
+        document.getElementById('addAdminModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('adminLogin').value = '';
+        document.getElementById('adminEmail').value = '';
+        document.getElementById('adminFirstName').value = '';
+        document.getElementById('adminLastName').value = '';
+        document.getElementById('adminPassword').value = '';
+    }
+
+    async function addAdmin() {
+        const login = document.getElementById('adminLogin').value.trim();
+        const email = document.getElementById('adminEmail').value.trim();
+        const firstName = document.getElementById('adminFirstName').value.trim();
+        const lastName = document.getElementById('adminLastName').value.trim();
+        const password = document.getElementById('adminPassword').value.trim();
+
+        if (!login || !email || !firstName || !lastName || !password) {
+            showNotification('Заполните все поля!', true);
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/api/admins/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `login=${encodeURIComponent(login)}&email=${encodeURIComponent(email)}&firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&password=${encodeURIComponent(password)}`
+            });
+            const result = await response.text();
+            if (result === 'ok') {
+                showNotification('Администратор успешно добавлен!');
+                closeAddAdminModal();
+                loadAdmins();
+            } else if (result.startsWith('error:')) {
+                showNotification(result.substring(6), true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка при добавлении администратора', true);
+        }
+    }
+
+    async function deleteAdmin(id) {
+        if (!confirm('Вы уверены, что хотите удалить этого администратора?')) return;
+        try {
+            const response = await fetch(`/admin/api/admins/${id}`, { method: 'DELETE' });
+            const result = await response.text();
+            if (result === 'ok') {
+                showNotification('Администратор удалён');
+                loadAdmins();
+            } else if (result.startsWith('error:')) {
+                showNotification(result.substring(6), true);
+            }
+        } catch (error) {
+            showNotification('Ошибка при удалении администратора', true);
+        }
+    }
+
+    function showNotification(message, isError = false) {
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+        const notification = document.createElement('div');
+        notification.className = `notification ${isError ? 'error' : ''}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 300); }, 4000);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    document.getElementById('searchFirstName').addEventListener('input', filterAdmins);
+    document.getElementById('searchLastName').addEventListener('input', filterAdmins);
+    document.getElementById('searchLogin').addEventListener('input', filterAdmins);
+    document.getElementById('searchEmail').addEventListener('input', filterAdmins);
+
+    // Модальное окно закрывается ТОЛЬКО при клике на крестик
+    // Удаляем обработчик window.onclick, который закрывал окно при клике вне его
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkAccess();
+    });
+</script>
+</body>
+</html>

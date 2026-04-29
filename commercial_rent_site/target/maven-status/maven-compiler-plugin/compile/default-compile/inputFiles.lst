@@ -16,6 +16,7 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ChatController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\CommentService.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\ChatService.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\AdminController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\WebCatalogController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\ChatMessageDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\client\CatalogClient.java
