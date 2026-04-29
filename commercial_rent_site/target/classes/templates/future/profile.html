@@ -54,8 +54,8 @@
             }
         }
 
-        /* ====================== ХЕДЕР ====================== */
-        .profile-page-header {
+        /* ====================== HEADER (статичный, тонкий) ====================== */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -63,37 +63,19 @@
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(12px);
             position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
             color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            width: 100%;
         }
 
-        .profile-page-nav-left {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            flex-wrap: wrap;
-        }
+        .nav-left { display: flex; align-items: center; gap: 25px; }
+        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
+        .nav-left a:hover { color: #ffcc80; }
 
-        .profile-page-nav-left a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-
-        .profile-page-nav-left a:hover {
-            color: #ffcc80;
-        }
-
-        .profile-page-city-dropdown {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .profile-page-current-city {
+        .city-dropdown { position: relative; cursor: pointer; }
+        .current-city {
             padding: 5px 12px;
             border: 1px solid rgba(255,255,255,0.4);
             border-radius: 6px;
@@ -101,8 +83,7 @@
             white-space: nowrap;
             font-size: 14px;
         }
-
-        .profile-page-city-list {
+        .city-list {
             position: absolute;
             top: calc(100% + 5px);
             left: 0;
@@ -118,29 +99,18 @@
             display: none;
             backdrop-filter: blur(10px);
         }
-
-        .profile-page-city-dropdown:hover .profile-page-city-list {
-            display: block;
-        }
-
-        .profile-page-city-list li a {
+        .city-dropdown:hover .city-list { display: block; }
+        .city-list li a {
             padding: 8px 14px;
             display: block;
             color: white;
             text-decoration: none;
             font-size: 13px;
         }
+        .city-list li a:hover { background: #ff5722; }
 
-        .profile-page-city-list li a:hover {
-            background: #ff5722;
-        }
-
-        .profile-page-nav-right {
-            display: flex;
-            align-items: center;
-        }
-
-        .profile-page-user-profile {
+        /* Профиль пользователя */
+        .user-profile {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -151,7 +121,7 @@
             border: 1px solid rgba(255,255,255,0.25);
         }
 
-        .profile-page-user-info {
+        .user-info {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -161,12 +131,9 @@
             border-radius: 40px;
             transition: all 0.3s ease;
         }
+        .user-info:hover { background: rgba(255,255,255,0.18); }
 
-        .profile-page-user-info:hover {
-            background: rgba(255,255,255,0.18);
-        }
-
-        .profile-page-user-avatar {
+        .user-avatar {
             width: 32px;
             height: 32px;
             background: linear-gradient(135deg, #ff5722, #ff9800);
@@ -180,7 +147,7 @@
             box-shadow: 0 3px 10px rgba(255,87,34,0.4);
         }
 
-        .profile-page-user-name {
+        .user-name {
             font-weight: 600;
             font-size: 13px;
             max-width: 150px;
@@ -189,7 +156,7 @@
             text-overflow: ellipsis;
         }
 
-        .profile-page-logout-btn {
+        .logout-btn {
             background: #ff5722;
             color: white;
             border: none;
@@ -200,13 +167,12 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-
-        .profile-page-logout-btn:hover {
+        .logout-btn:hover {
             background: #e64a19;
             transform: translateY(-1px);
         }
 
-        .profile-page-auth-links a {
+        .auth-links a {
             color: white;
             text-decoration: none;
             padding: 6px 16px;
@@ -214,18 +180,11 @@
             font-weight: 500;
             font-size: 13px;
         }
-
-        .profile-page-login-link:hover {
-            background: rgba(255,255,255,0.15);
-        }
-
-        .profile-page-register-link {
+        .login-link:hover { background: rgba(255,255,255,0.15); }
+        .register-link {
             background: #ff5722;
         }
-
-        .profile-page-register-link:hover {
-            background: #e64a19;
-        }
+        .register-link:hover { background: #e64a19; }
 
         /* Контейнер профиля */
         .profile-container {
@@ -366,7 +325,8 @@
             letter-spacing: -0.3px;
         }
 
-        .profile-badge {
+        /* Стиль для бейджа роли */
+        .profile-role-badge {
             display: inline-block;
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(5px);
@@ -376,6 +336,10 @@
             font-weight: 500;
             color: white;
             margin-top: 12px;
+        }
+
+        .profile-role-badge i {
+            margin-right: 6px;
         }
 
         .profile-stats {
@@ -615,6 +579,74 @@
             transform: translateX(5px);
         }
 
+        /* ====================== ОСОБЫЕ АДМИНИСТРАТИВНЫЕ КНОПКИ ====================== */
+
+        /* Кнопка Администраторы - премиум стиль */
+        .admin-premium-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            border-left: 5px solid #ffd700;
+        }
+
+        .admin-premium-btn i {
+            color: #ffd700;
+        }
+
+        .admin-premium-btn .profile-arrow-icon {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .admin-premium-btn:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46a0 100%);
+            transform: translateX(8px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Кнопка Жалобы (для админов) - опасный стиль */
+        .complaint-danger-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(238, 90, 36, 0.3);
+            border-left: 5px solid #ffeb3b;
+        }
+
+        .complaint-danger-btn i {
+            color: #ffeb3b;
+        }
+
+        .complaint-danger-btn .profile-arrow-icon {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .complaint-danger-btn:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #e84118 100%);
+            transform: translateX(8px);
+            box-shadow: 0 12px 35px rgba(238, 90, 36, 0.4);
+        }
+
+        /* Кнопка пожаловаться на пользователя - красный стиль */
+        .report-user-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
+            border-left: 5px solid #ff9800;
+        }
+
+        .report-user-btn i {
+            color: #ff9800;
+        }
+
+        .report-user-btn .profile-arrow-icon {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .report-user-btn:hover {
+            background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+            transform: translateX(8px);
+            box-shadow: 0 12px 35px rgba(244, 67, 54, 0.4);
+        }
+
         /* Бейдж для чатов - аккуратный кружок */
         .chat-badge {
             display: inline-flex;
@@ -631,6 +663,86 @@
             text-align: center;
             line-height: 1;
             margin-left: 8px;
+        }
+
+        /* Модальное окно для жалобы */
+        .report-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .report-modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            animation: modalFadeIn 0.3s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .report-modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .report-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .report-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .report-modal-body {
+            padding: 20px;
+        }
+        .report-modal-body textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+            margin-bottom: 15px;
+        }
+        .report-modal-body textarea:focus {
+            outline: none;
+            border-color: #f44336;
+        }
+        .report-submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .report-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
         }
 
         /* Адаптивность */
@@ -686,20 +798,8 @@
         }
 
         @media (max-width: 768px) {
-            .profile-page-header {
-                padding: 8px 16px;
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-
-            .profile-page-nav-left {
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-
-            .profile-page-nav-right {
-                margin-left: auto;
-            }
+            .header { padding: 8px 16px; flex-wrap: wrap; gap: 8px; }
+            .nav-left { flex-wrap: wrap; gap: 12px; }
         }
 
         @media (max-width: 480px) {
@@ -717,15 +817,6 @@
                 width: 28px;
             }
 
-            .profile-page-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .profile-page-nav-right {
-                justify-content: center;
-            }
-
             .profile-container.no-header {
                 padding-top: 30px;
                 padding-bottom: 30px;
@@ -735,46 +826,46 @@
 </head>
 <body>
 
-<!-- ХЕДЕР ПОКАЗЫВАЕТСЯ ТОЛЬКО ЕСЛИ ПРОСМАТРИВАЕТСЯ ЧУЖОЙ ПРОФИЛЬ -->
-<header th:unless="${isOwnProfile}" class="profile-page-header">
-    <div class="profile-page-nav-left">
+<!-- HEADER (статичный, тонкий, как на главной) -->
+<header class="header">
+    <div class="nav-left">
         <a href="/about">О нас</a>
 
         <!-- Выбор города -->
-        <div class="profile-page-city-dropdown">
-            <span class="profile-page-current-city" th:text="${currentCity}">Нижний Новгород</span>
-            <ul class="profile-page-city-list">
+        <div class="city-dropdown">
+            <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
+            <ul class="city-list">
                 <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
                 <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
                 <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
                 <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
-                <li class="selected"><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
+                <li><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
             </ul>
         </div>
     </div>
 
-    <div class="profile-page-nav-right">
-        <!-- Если пользователь авторизован - показываем информацию о текущем пользователе (не о просматриваемом) -->
-        <div th:if="${#authorization.expression('isAuthenticated()')}" class="profile-page-user-profile">
-            <a th:href="@{/profile}" class="profile-page-user-info">
-                <span class="profile-page-user-avatar">👤</span>
-                <span class="profile-page-user-name" th:text="${#authentication.name}"></span>
+    <div class="nav-right">
+        <!-- Если пользователь авторизован -->
+        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
+            <a th:href="@{/profile}" class="user-info">
+                <span class="user-avatar">👤</span>
+                <span class="user-name" th:text="${#authentication.name}"></span>
             </a>
             <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="profile-page-logout-btn">Выйти</button>
+                <button type="submit" class="logout-btn">Выйти</button>
             </form>
         </div>
 
         <!-- Если пользователь не авторизован -->
-        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="profile-page-auth-links">
-            <a href="/auth/login" class="profile-page-login-link">Вход</a>
-            <a href="/auth/register" class="profile-page-register-link">Регистрация</a>
+        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
+            <a href="/auth/login" class="login-link">Вход</a>
+            <a href="/auth/register" class="register-link">Регистрация</a>
         </div>
     </div>
 </header>
 
-<!-- Если профиль свой - добавляем класс no-header для центрирования контента с отступами -->
-<div th:class="${isOwnProfile} ? 'profile-container no-header' : 'profile-container'">
+<!-- Основной контент профиля -->
+<div class="profile-container">
     <div class="profile-overlay">
         <div th:if="${param.updated}" class="profile-success">
             <i class="fas fa-check-circle"></i>
@@ -791,8 +882,11 @@
                         </div>
                     </div>
                     <h1 th:text="${profileUser?.firstName != null and profileUser?.firstName != ''} ? ${profileUser.firstName} : ${profileUser.login}">Пользователь</h1>
-                    <div class="profile-badge">
-                        <i class="fas fa-user-check"></i> Аккаунт подтверждён
+
+                    <!-- Бейдж с ролью вместо "Аккаунт подтверждён" -->
+                    <div class="profile-role-badge">
+                        <i class="fas fa-user-shield"></i>
+                        <span th:text="${profileUser.role.name() == 'USER' ? 'Пользователь' : (profileUser.role.name() == 'ADMIN' ? 'Администратор' : 'Главный администратор')}"></span>
                     </div>
                 </div>
 
@@ -900,6 +994,33 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
+                <!-- АДМИНИСТРАТОРЫ - только для SUPER_ADMIN, ОСОБЫЙ ДИЗАЙН -->
+                <button th:if="${profileUser.role.name() == 'SUPER_ADMIN'}"
+                        class="profile-action-btn admin-premium-btn"
+                        onclick="alert('👥 Управление администраторами — в разработке')">
+                    <i class="fas fa-crown"></i>
+                    <span class="btn-text">Администраторы</span>
+                    <i class="fas fa-chevron-right profile-arrow-icon"></i>
+                </button>
+
+                <!-- ЖАЛОБЫ - для ADMIN и SUPER_ADMIN, ОСОБЫЙ ДИЗАЙН -->
+                <button th:if="${profileUser.role.name() == 'ADMIN' or profileUser.role.name() == 'SUPER_ADMIN'}"
+                        class="profile-action-btn complaint-danger-btn"
+                        onclick="alert('⚠️ Жалобы на объявления — в разработке')">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="btn-text">Жалобы</span>
+                    <i class="fas fa-chevron-right profile-arrow-icon"></i>
+                </button>
+
+                <!-- ПОЖАЛОВАТЬСЯ НА ПОЛЬЗОВАТЕЛЯ - только когда смотрим чужой профиль и у текущего пользователя НЕ АДМИНИСТРАТОР -->
+                <button th:if="${!isOwnProfile and (#authorization.expression('isAuthenticated()')) and profileUser.role.name() != 'ADMIN' and profileUser.role.name() != 'SUPER_ADMIN'}"
+                        class="profile-action-btn report-user-btn"
+                        onclick="openUserReportModal()">
+                    <i class="fas fa-flag"></i>
+                    <span class="btn-text">Пожаловаться на пользователя</span>
+                    <i class="fas fa-chevron-right profile-arrow-icon"></i>
+                </button>
+
                 <!-- ОБЪЯВЛЕНИЯ (меняем текст в зависимости от владельца) -->
                 <a th:if="${isOwnProfile}"
                    th:href="@{/profile/{username}/premises(username=${profileUser.login})}"
@@ -933,6 +1054,20 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для жалобы на пользователя -->
+<div id="userReportModal" class="report-modal">
+    <div class="report-modal-content">
+        <div class="report-modal-header">
+            <h3><i class="fas fa-flag"></i> Пожаловаться на пользователя</h3>
+            <button class="report-modal-close" onclick="closeUserReportModal()">&times;</button>
+        </div>
+        <div class="report-modal-body">
+            <textarea id="userReportReason" placeholder="Опишите причину жалобы на пользователя..."></textarea>
+            <button class="report-submit-btn" onclick="submitUserReport()">Отправить жалобу</button>
         </div>
     </div>
 </div>
@@ -972,6 +1107,68 @@
         }
         updateChatButtonBadge();
     });
+
+    // Функции для модального окна жалобы на пользователя
+    function openUserReportModal() {
+        document.getElementById('userReportModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeUserReportModal() {
+        document.getElementById('userReportModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('userReportReason').value = '';
+    }
+
+    function submitUserReport() {
+        const reason = document.getElementById('userReportReason').value.trim();
+        const reportedUsername = '[[${profileUser.login}]]';
+
+        if (!reason) {
+            showNotification('Пожалуйста, укажите причину жалобы', true);
+            return;
+        }
+
+        // Заглушка - здесь будет отправка на сервер
+        console.log('Жалоба на пользователя:', reportedUsername);
+        console.log('Причина:', reason);
+
+        showNotification('Жалоба отправлена администратору. Спасибо за бдительность!');
+        closeUserReportModal();
+    }
+
+    function showNotification(message, isError = false) {
+        const existing = document.querySelector('.profile-success');
+        if (existing && existing !== document.querySelector('.profile-success')) {
+            // Не удаляем основной success
+        }
+        const notification = document.createElement('div');
+        notification.className = `notification ${isError ? 'error' : ''}`;
+        notification.textContent = message;
+        notification.style.position = 'fixed';
+        notification.style.bottom = '20px';
+        notification.style.right = '20px';
+        notification.style.background = isError ? '#ff5722' : '#4caf50';
+        notification.style.color = 'white';
+        notification.style.padding = '14px 22px';
+        notification.style.borderRadius = '10px';
+        notification.style.zIndex = '10000';
+        notification.style.animation = 'slideIn 0.4s ease';
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 600);
+        }, 5000);
+    }
+
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        const modal = document.getElementById('userReportModal');
+        if (event.target === modal) {
+            closeUserReportModal();
+        }
+    }
 
     // При загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {

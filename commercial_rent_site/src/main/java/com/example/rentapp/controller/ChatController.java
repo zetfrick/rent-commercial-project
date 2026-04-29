@@ -120,6 +120,9 @@ public class ChatController {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
         User otherUser = userService.findByLogin(username).orElseThrow();
 
+        // Получаем информацию об объявлении для карточки
+        PremiseDto premise = catalogClient.getPremiseById(premiseId);
+
         chatService.markMessagesAsReadByPremise(currentUser.getId(), otherUser.getId(), premiseId);
 
         List<ChatMessage> messages = chatService.getChatBetweenByPremise(currentUser.getId(), otherUser.getId(), premiseId);
@@ -129,6 +132,7 @@ public class ChatController {
         model.addAttribute("messages", messages);
         model.addAttribute("otherUsername", username);
         model.addAttribute("premiseId", premiseId);
+        model.addAttribute("premise", premise);  // ДОБАВЛЕНО: передаём данные об объявлении
 
         return "future/chat-window";
     }
@@ -158,6 +162,7 @@ public class ChatController {
         model.addAttribute("otherUsername", owner.getLogin());
         model.addAttribute("premiseId", premiseId);
         model.addAttribute("premiseTitle", premise.getTypeInRussian() + " в " + premise.getCity());
+        model.addAttribute("premise", premise);  // ДОБАВЛЕНО: передаём данные об объявлении для карточки
 
         return "future/chat-window";
     }
@@ -214,7 +219,6 @@ public class ChatController {
         )).collect(Collectors.toList());
     }
 
-    // НОВЫЙ МЕТОД: API для пометки сообщений как прочитанных
     @PostMapping("/api/messages/mark-read")
     @ResponseBody
     public String markMessagesAsRead(@RequestParam Long with,
@@ -236,7 +240,6 @@ public class ChatController {
         return "ok";
     }
 
-    // НОВЫЙ МЕТОД: API для получения списка чатов (для AJAX-обновления)
     @GetMapping("/api/chats")
     @ResponseBody
     public List<ChatInfo> getChatsApi(@AuthenticationPrincipal UserDetails userDetails) {
