@@ -6,12 +6,13 @@ import lombok.Getter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class PremiseDto {
 
     private Long id;
-    private Long ownerId;  // вместо User
+    private Long ownerId;
 
     private String type;
     private Integer area;
@@ -43,7 +44,6 @@ public class PremiseDto {
     private String contactPhone;
     private String contactEmail;
 
-    // getters + setters
     @Getter
     private Double latitude;
     @Getter
@@ -57,32 +57,29 @@ public class PremiseDto {
 
     private LocalDate createdAt;
 
-    // Методы перевода (копируй из catalog-service)
-    public String getTypeInRussian() {
-        if (type == null) return "";
-        return switch (type) {
-            case "OFFICE" -> "Офисное";
-            case "TRADING" -> "Торговое";
-            case "WAREHOUSE" -> "Складское";
-            case "PRODUCTION" -> "Производственное";
-            case "HOSPITALITY" -> "Гостиничное";
-            case "UNIVERSAL" -> "Универсальное";
-            default -> type;
-        };
+    // Статические карты для переводов (будут заполняться из ConfigService)
+    private static Map<String, String> typeRussianMap = Map.of();
+    private static Map<String, String> amenityRussianMap = Map.of();
+
+    /**
+     * Инициализация переводов (вызывается из ConfigService при загрузке)
+     */
+    public static void initTranslations(Map<String, String> typeRussian, Map<String, String> amenityRussian) {
+        if (typeRussian != null && !typeRussian.isEmpty()) {
+            typeRussianMap = typeRussian;
+        }
+        if (amenityRussian != null && !amenityRussian.isEmpty()) {
+            amenityRussianMap = amenityRussian;
+        }
     }
 
-    public String getAmenityInRussian(String english) {
-        if (english == null) return "";
-        return switch (english) {
-            case "CONDITIONER" -> "Кондиционер";
-            case "WI_FI" -> "Wi-Fi";
-            case "FURNITURE" -> "Мебель";
-            case "PARKING" -> "Парковка";
-            case "SECURITY" -> "Охрана";
-            case "ELEVATOR" -> "Лифт";
-            case "KITCHEN" -> "Кухня";
-            case "CONFERENCE" -> "Конференц-зал";
-            default -> english;
-        };
+    public String getTypeInRussian() {
+        if (type == null) return "";
+        return typeRussianMap.getOrDefault(type, type);
+    }
+
+    public String getAmenityInRussian(String amenity) {
+        if (amenity == null) return "";
+        return amenityRussianMap.getOrDefault(amenity, amenity);
     }
 }

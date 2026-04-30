@@ -15,7 +15,6 @@
         }
         a { text-decoration: none; }
 
-        /* ====================== ВЕРХНЯЯ ПАНЕЛЬ ====================== */
         .top-bar {
             background: white;
             padding: 15px 25px;
@@ -42,7 +41,6 @@
         }
         .back-home:hover { background: #e64a19; transform: translateY(-2px); }
 
-        /* Кнопка по центру */
         .center-rent-btn {
             background: #ff5722;
             color: white;
@@ -71,7 +69,6 @@
         .phone { display: flex; align-items: center; gap: 8px; font-weight: 500; color: #333; }
         .phone a { color: #ff5722; font-weight: 600; }
 
-        /* Профиль пользователя */
         .user-profile {
             display: flex;
             align-items: center;
@@ -139,7 +136,6 @@
         .btn-register { background: #ff5722; color: white; }
         .btn-register:hover { background: #e64a19; }
 
-        /* ====================== ФИЛЬТРЫ ====================== */
         .filters {
             background: white;
             padding: 20px 25px;
@@ -195,7 +191,6 @@
             box-shadow: 0 0 0 2px rgba(255,87,34,0.15);
         }
 
-        /* Мультиселект */
         .multi-select {
             position: relative;
         }
@@ -300,7 +295,6 @@
             font-size: 12px;
         }
 
-        /* Кнопки */
         .filters-buttons {
             display: flex;
             gap: 10px;
@@ -333,7 +327,6 @@
         }
         .search-btn:hover { background: #e64a19; transform: translateY(-1px); }
 
-        /* Стили для кнопки сортировки */
         .sort-wrapper {
             position: relative;
         }
@@ -393,11 +386,7 @@
             background: #ff5722;
             color: white;
         }
-        .sort-option.active:hover {
-            background: #e64a19;
-        }
 
-        /* ====================== СЧЁТЧИК ОБЪЯВЛЕНИЙ ====================== */
         .results-counter {
             max-width: 1400px;
             margin: 20px auto 0;
@@ -424,7 +413,6 @@
             color: #999;
         }
 
-        /* ====================== КАТАЛОГ ====================== */
         .catalog-grid {
             max-width: 1400px;
             margin: 20px auto;
@@ -598,7 +586,6 @@
         }
         .details-btn:hover { text-decoration: underline; }
 
-        /* ====================== ПАГИНАЦИЯ ====================== */
         .pagination {
             max-width: 1400px;
             margin: 40px auto 60px;
@@ -638,9 +625,6 @@
             color: white;
             transform: scale(1.05);
         }
-        .page-btn.active:hover {
-            transform: scale(1.08);
-        }
         .page-btn:disabled {
             opacity: 0.45;
             cursor: not-allowed;
@@ -663,22 +647,6 @@
         .nav-arrow {
             font-size: 18px;
             font-weight: bold;
-        }
-
-        @media (max-width: 1200px) {
-            .filters-left .filter-group {
-                min-width: 120px;
-            }
-        }
-
-        @media (max-width: 900px) {
-            .filters-container {
-                flex-direction: column;
-            }
-            .filters-buttons {
-                justify-content: flex-end;
-                width: 100%;
-            }
         }
 
         @media (max-width: 768px) {
@@ -706,7 +674,6 @@
         <a href="/" class="back-home">Вернуться на главную страницу</a>
     </div>
 
-    <!-- Кнопка по центру -->
     <button class="center-rent-btn"
             th:onclick="'javascript:window.location.href=\'' +
             @{${#authentication.principal != null ? '/premise/add' : '/auth/register'}} + '\''">
@@ -719,7 +686,6 @@
             <a href="tel:+79991234567">+7 (999) 123-45-67</a>
         </div>
 
-        <!-- Если пользователь авторизован -->
         <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
             <a th:href="@{/profile}" class="user-info">
                 <span class="user-avatar">👤</span>
@@ -730,7 +696,6 @@
             </form>
         </div>
 
-        <!-- Если пользователь не авторизован -->
         <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-buttons">
             <a href="/auth/login" class="btn-login">Вход</a>
             <a href="/auth/register" class="btn-register">Регистрация</a>
@@ -738,7 +703,6 @@
     </div>
 </div>
 
-<!-- ФИЛЬТРЫ -->
 <div class="filters">
     <div class="filters-container">
         <div class="filters-left">
@@ -823,18 +787,14 @@
     </div>
 </div>
 
-<!-- Счётчик объявлений -->
 <div class="results-counter" id="resultsCounter">
-    <div class="counter-text">
-        📋 Найдено объявлений:
-    </div>
+    <div class="counter-text">📋 Найдено объявлений:</div>
     <div>
         <span class="counter-number" id="foundCount">0</span>
         <span class="counter-total" id="totalCountInfo"></span>
     </div>
 </div>
 
-<!-- Каталог -->
 <div class="catalog-grid" id="catalogGrid">
     <div class="premise-card" th:each="p : ${premises}"
          th:data-id="${p.id}"
@@ -860,10 +820,8 @@
             </div>
         </div>
         <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">📷 Нет фото</div>
-
         <div class="area-badge" th:text="${p.area} + ' м²'"></div>
         <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
-
         <div class="info">
             <div class="type" th:text="${p.getTypeInRussian()}"></div>
             <div class="amenities" th:if="${!p.amenities.isEmpty()}">
@@ -871,7 +829,6 @@
             </div>
             <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
             <div class="address" th:text="${p.region} + ', ' + ${p.city} + ', ' + ${p.street} + ' ' + ${p.building}"></div>
-
             <div class="availability">
                 <span class="availability-label">📅 Доступно:</span>
                 <span class="availability-dates">
@@ -879,7 +836,6 @@
                     <span th:text="${#temporals.format(p.availableTo, 'dd.MM.yyyy')}"></span>
                 </span>
             </div>
-
             <div class="prices">
                 <div class="price-row">
                     <span class="price-label">Будни:</span>
@@ -894,7 +850,6 @@
                     <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
                 </div>
             </div>
-
             <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
         </div>
     </div>
@@ -904,31 +859,61 @@
     😔 По вашему запросу ничего не найдено
 </div>
 
-<!-- Пагинация -->
 <div class="pagination" id="pagination"></div>
 
 <div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
     <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
 </div>
 
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let availableTypes = ['OFFICE', 'TRADING', 'WAREHOUSE', 'PRODUCTION', 'HOSPITALITY', 'UNIVERSAL'];
+    let availableAmenities = ['CONDITIONER', 'WI_FI', 'FURNITURE', 'PARKING', 'SECURITY', 'ELEVATOR', 'KITCHEN', 'CONFERENCE'];
+    let typeInRussianMap = {
+        'OFFICE': 'Офисное', 'TRADING': 'Торговое', 'WAREHOUSE': 'Складское',
+        'PRODUCTION': 'Производственное', 'HOSPITALITY': 'Гостиничное', 'UNIVERSAL': 'Универсальное'
+    };
+    let amenityInRussianMap = {
+        'CONDITIONER': 'Кондиционер', 'WI_FI': 'Wi-Fi', 'FURNITURE': 'Мебель',
+        'PARKING': 'Парковка', 'SECURITY': 'Охрана', 'ELEVATOR': 'Лифт',
+        'KITCHEN': 'Кухня', 'CONFERENCE': 'Конференц-зал'
+    };
+
+    const serverTypesRaw = /*[[${types}]]*/ null;
+    const serverAmenitiesRaw = /*[[${amenities}]]*/ null;
+    const serverTypeInRussianRaw = /*[[${typeInRussian}]]*/ null;
+    const serverAmenityInRussianRaw = /*[[${amenityInRussian}]]*/ null;
+
+    if (serverTypesRaw && Array.isArray(serverTypesRaw) && serverTypesRaw.length > 0) {
+        availableTypes = serverTypesRaw;
+        if (serverTypeInRussianRaw && typeof serverTypeInRussianRaw === 'object') {
+            typeInRussianMap = serverTypeInRussianRaw;
+        }
+    }
+    if (serverAmenitiesRaw && Array.isArray(serverAmenitiesRaw) && serverAmenitiesRaw.length > 0) {
+        availableAmenities = serverAmenitiesRaw;
+        if (serverAmenityInRussianRaw && typeof serverAmenityInRussianRaw === 'object') {
+            amenityInRussianMap = serverAmenityInRussianRaw;
+        }
+    }
+    /*]]>*/
+</script>
+
 <script>
     let selectedRegions = new Set();
     let selectedCities = new Set();
     let selectedTypes = new Set();
     let selectedAmenities = new Set();
-
     let availableRegions = [];
     let availableCities = [];
-    let availableTypes = [];
-    let availableAmenities = [];
-
-    let typeInRussianMap = {};
-    let amenityInRussianMap = {};
 
     let currentSort = 'newest';
     let currentPage = 1;
-    let itemsPerPage = 20;
+    let itemsPerPage = 30;
     let totalFilteredItems = 0;
+
+    // Храним оригинальные карточки
+    let allPremises = [];
 
     function syncDateInputs() {
         window.currentCheckInISO = document.getElementById('checkInDate').value || '';
@@ -998,77 +983,35 @@
         const cards = document.querySelectorAll('.premise-card');
         const regionsSet = new Set();
         const citiesSet = new Set();
-
         cards.forEach(card => {
             const region = card.dataset.region;
             const city = card.dataset.city;
             if (region && region.trim()) regionsSet.add(region);
             if (city && city.trim()) citiesSet.add(city);
         });
-
         availableRegions = Array.from(regionsSet).sort();
         availableCities = Array.from(citiesSet).sort();
-    }
-
-    function initTypesAndAmenities() {
-        const serverTypes = /*[[${types}]]*/ null;
-        const serverAmenities = /*[[${amenities}]]*/ null;
-        const serverTypeInRussian = /*[[${typeInRussian}]]*/ null;
-        const serverAmenityInRussian = /*[[${amenityInRussian}]]*/ null;
-
-        if (serverTypes && Array.isArray(serverTypes) && serverTypes.length > 0) {
-            availableTypes = [...serverTypes];
-            typeInRussianMap = serverTypeInRussian ? {...serverTypeInRussian} : {};
-        } else {
-            console.warn('Сервер не передал типы, используем fallback');
-            availableTypes = ['OFFICE', 'TRADING', 'WAREHOUSE', 'PRODUCTION', 'HOSPITALITY', 'UNIVERSAL'];
-            typeInRussianMap = {
-                'OFFICE': 'Офисное',
-                'TRADING': 'Торговое',
-                'WAREHOUSE': 'Складское',
-                'PRODUCTION': 'Производственное',
-                'HOSPITALITY': 'Гостиничное',
-                'UNIVERSAL': 'Универсальное'
-            };
-        }
-
-        if (serverAmenities && Array.isArray(serverAmenities) && serverAmenities.length > 0) {
-            availableAmenities = [...serverAmenities];
-            amenityInRussianMap = serverAmenityInRussian ? {...serverAmenityInRussian} : {};
-        } else {
-            console.warn('Сервер не передал опции, используем fallback');
-            availableAmenities = ['CONDITIONER', 'WI_FI', 'FURNITURE', 'PARKING', 'SECURITY', 'ELEVATOR', 'KITCHEN', 'CONFERENCE'];
-            amenityInRussianMap = {
-                'CONDITIONER': 'Кондиционер',
-                'WI_FI': 'Wi-Fi',
-                'FURNITURE': 'Мебель',
-                'PARKING': 'Парковка',
-                'SECURITY': 'Охрана',
-                'ELEVATOR': 'Лифт',
-                'KITCHEN': 'Кухня',
-                'CONFERENCE': 'Конференц-зал'
-            };
-        }
     }
 
     function renderOptions(containerId, items, selectedSet, searchInputId, map) {
         const container = document.getElementById(containerId);
         if (!container) return;
-
         const searchInput = document.getElementById(searchInputId);
         const searchTerm = searchInput?.value.toLowerCase() || '';
-        const filtered = items.filter(item => (map[item] || item).toLowerCase().includes(searchTerm));
-
+        const filtered = items.filter(item => {
+            const displayName = map[item] || item;
+            return displayName.toLowerCase().includes(searchTerm);
+        });
         if (filtered.length === 0) {
             container.innerHTML = '<div class="no-results">Ничего не найдено</div>';
             return;
         }
-
         container.innerHTML = '';
         filtered.forEach(item => {
+            const displayName = map[item] || item;
             const div = document.createElement('div');
             div.className = 'option-item';
-            div.innerHTML = `<input type="checkbox" value="${item.replace(/"/g, '&quot;')}" ${selectedSet.has(item) ? 'checked' : ''}><span>${map[item] || item}</span>`;
+            div.innerHTML = `<input type="checkbox" value="${item.replace(/"/g, '&quot;')}" ${selectedSet.has(item) ? 'checked' : ''}><span>${displayName}</span>`;
             div.onclick = (e) => {
                 e.stopPropagation();
                 const cb = div.querySelector('input');
@@ -1090,9 +1033,14 @@
     function updateTriggerText(triggerId, selectedSet, defaultText, map) {
         const trigger = document.getElementById(triggerId);
         if (!trigger) return;
-        if (selectedSet.size === 0) trigger.childNodes[0].nodeValue = defaultText;
-        else if (selectedSet.size === 1) trigger.childNodes[0].nodeValue = map?.[Array.from(selectedSet)[0]] || Array.from(selectedSet)[0];
-        else trigger.childNodes[0].nodeValue = `${selectedSet.size} выбрано`;
+        if (selectedSet.size === 0) {
+            trigger.childNodes[0].nodeValue = defaultText;
+        } else if (selectedSet.size === 1) {
+            const item = Array.from(selectedSet)[0];
+            trigger.childNodes[0].nodeValue = map[item] || item;
+        } else {
+            trigger.childNodes[0].nodeValue = `${selectedSet.size} выбрано`;
+        }
     }
 
     function initDropdowns() {
@@ -1129,42 +1077,7 @@
         return true;
     }
 
-    function sortCards(cardsArray) {
-        cardsArray.sort((a, b) => {
-            const idA = parseInt(a.dataset.id) || 0;
-            const idB = parseInt(b.dataset.id) || 0;
-            const priceA = parseFloat(a.dataset.price) || 0;
-            const priceB = parseFloat(b.dataset.price) || 0;
-            const areaA = parseFloat(a.dataset.area) || 0;
-            const areaB = parseFloat(b.dataset.area) || 0;
-            const capacityA = parseFloat(a.dataset.capacity) || 0;
-            const capacityB = parseFloat(b.dataset.capacity) || 0;
-
-            switch(currentSort) {
-                case 'newest':
-                    return idB - idA;
-                case 'oldest':
-                    return idA - idB;
-                case 'price_asc':
-                    return priceA - priceB;
-                case 'price_desc':
-                    return priceB - priceA;
-                case 'area_asc':
-                    return areaA - areaB;
-                case 'area_desc':
-                    return areaB - areaA;
-                case 'capacity_asc':
-                    return capacityA - capacityB;
-                case 'capacity_desc':
-                    return capacityB - capacityA;
-                default:
-                    return idB - idA;
-            }
-        });
-        return cardsArray;
-    }
-
-    function filterCards() {
+    function getFilteredIndices() {
         const priceMax = parseFloat(document.getElementById('priceMax').value) || Infinity;
         const areaMin = parseFloat(document.getElementById('areaMin').value) || 0;
         const capacityMin = parseFloat(document.getElementById('capacityMin').value) || 0;
@@ -1172,10 +1085,8 @@
         const checkInDate = window.currentCheckInISO || '';
         const checkOutDate = window.currentCheckOutISO || '';
 
-        const cards = document.querySelectorAll('.premise-card');
-        const visibleCards = [];
-
-        cards.forEach(card => {
+        const indices = [];
+        allPremises.forEach((card, idx) => {
             const price = parseFloat(card.dataset.price) || 0;
             const area = parseFloat(card.dataset.area) || 0;
             const capacity = parseFloat(card.dataset.capacity) || 0;
@@ -1193,53 +1104,97 @@
                 isDateRangeAvailable(card.dataset.availableFrom, card.dataset.availableTo, checkInDate, checkOutDate);
 
             if (matches) {
-                visibleCards.push(card);
+                indices.push(idx);
             }
         });
+        return indices;
+    }
 
-        totalFilteredItems = visibleCards.length;
+    function sortIndices(indices) {
+        const sorted = [...indices];
+        sorted.sort((a, b) => {
+            const cardA = allPremises[a];
+            const cardB = allPremises[b];
+            const idA = parseInt(cardA.dataset.id) || 0;
+            const idB = parseInt(cardB.dataset.id) || 0;
+            const priceA = parseFloat(cardA.dataset.price) || 0;
+            const priceB = parseFloat(cardB.dataset.price) || 0;
+            const areaA = parseFloat(cardA.dataset.area) || 0;
+            const areaB = parseFloat(cardB.dataset.area) || 0;
+            const capacityA = parseFloat(cardA.dataset.capacity) || 0;
+            const capacityB = parseFloat(cardB.dataset.capacity) || 0;
+
+            switch(currentSort) {
+                case 'newest': return idB - idA;
+                case 'oldest': return idA - idB;
+                case 'price_asc': return priceA - priceB;
+                case 'price_desc': return priceB - priceA;
+                case 'area_asc': return areaA - areaB;
+                case 'area_desc': return areaB - areaA;
+                case 'capacity_asc': return capacityA - capacityB;
+                case 'capacity_desc': return capacityB - capacityA;
+                default: return idB - idA;
+            }
+        });
+        return sorted;
+    }
+
+    function applyFiltersAndSort() {
+        // Получаем индексы отфильтрованных карточек
+        const filteredIndices = getFilteredIndices();
+        totalFilteredItems = filteredIndices.length;
         updateCounter();
 
-        const sortedCards = sortCards(visibleCards);
+        // Сортируем индексы
+        const sortedIndices = sortIndices(filteredIndices);
 
+        // Пагинация
         const startIdx = (currentPage - 1) * itemsPerPage;
         const endIdx = startIdx + itemsPerPage;
-        const pageCards = sortedCards.slice(startIdx, endIdx);
+        const pageIndices = sortedIndices.slice(startIdx, endIdx);
 
+        // ПЕРЕСТРАИВАЕМ DOM: очищаем контейнер и добавляем карточки в правильном порядке
+        const container = document.getElementById('catalogGrid');
         const allCards = document.querySelectorAll('.premise-card');
-        allCards.forEach(card => {
-            card.style.display = 'none';
-        });
 
-        pageCards.forEach(card => {
-            card.style.display = 'flex';
-        });
-
-        const noResultsDiv = document.getElementById('noResults');
         if (totalFilteredItems === 0) {
-            noResultsDiv.style.display = 'block';
+            // Если нет результатов, показываем все карточки скрытыми
+            allCards.forEach(card => { card.style.display = 'none'; });
+            document.getElementById('noResults').style.display = 'block';
         } else {
-            noResultsDiv.style.display = 'none';
+            document.getElementById('noResults').style.display = 'none';
+
+            // Сначала скрываем все
+            allCards.forEach(card => { card.style.display = 'none'; });
+
+            // Очищаем контейнер и добавляем карточки в новом порядке
+            const cardsToShow = pageIndices.map(idx => allPremises[idx]);
+
+            // Если порядок изменился, переставляем элементы в DOM
+            if (cardsToShow.length > 0) {
+                // Получаем первый элемент, который должен быть
+                const firstCard = cardsToShow[0];
+                // Проверяем, не находится ли он уже на первом месте
+                if (container.firstChild !== firstCard) {
+                    // Переставляем все карточки в правильном порядке
+                    cardsToShow.forEach(card => {
+                        container.appendChild(card);
+                    });
+                }
+                // Показываем только нужные карточки
+                cardsToShow.forEach(card => { card.style.display = 'flex'; });
+            }
         }
 
         renderPagination();
-
-        return pageCards;
     }
 
     function updateCounter() {
         const foundCountSpan = document.getElementById('foundCount');
         const totalCountInfoSpan = document.getElementById('totalCountInfo');
-        const allCards = document.querySelectorAll('.premise-card');
-        const totalAll = allCards.length;
-
+        const totalAll = allPremises.length;
         foundCountSpan.textContent = totalFilteredItems;
-
-        if (totalFilteredItems !== totalAll) {
-            totalCountInfoSpan.textContent = ` (из ${totalAll} всего)`;
-        } else {
-            totalCountInfoSpan.textContent = '';
-        }
+        totalCountInfoSpan.textContent = totalFilteredItems !== totalAll ? ` (из ${totalAll} всего)` : '';
     }
 
     function renderPagination() {
@@ -1249,33 +1204,29 @@
         // Всегда показываем пагинацию, даже если всего одна страница
         let paginationHtml = '';
 
-        // Кнопка "Назад"
+        // Кнопка "Назад" (стрелка влево)
         paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
             <span class="nav-arrow">←</span> Назад
         </button>`;
 
         if (totalPages <= 7) {
-            // Показываем все страницы
             for (let i = 1; i <= totalPages; i++) {
                 paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
             }
         } else {
-            // Показываем с многоточием
             if (currentPage <= 4) {
                 for (let i = 1; i <= 5; i++) {
                     paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
                 }
                 paginationHtml += `<span class="page-dots">...</span>`;
                 paginationHtml += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-            }
-            else if (currentPage >= totalPages - 3) {
+            } else if (currentPage >= totalPages - 3) {
                 paginationHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
                 paginationHtml += `<span class="page-dots">...</span>`;
                 for (let i = totalPages - 4; i <= totalPages; i++) {
                     paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
                 }
-            }
-            else {
+            } else {
                 paginationHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
                 paginationHtml += `<span class="page-dots">...</span>`;
                 for (let i = currentPage - 1; i <= currentPage + 1; i++) {
@@ -1286,12 +1237,12 @@
             }
         }
 
-        // Кнопка "Вперёд"
+        // Кнопка "Вперёд" (стрелка вправо)
         paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
             Вперёд <span class="nav-arrow">→</span>
         </button>`;
 
-        // Информация о странице
+        // Информация о странице (всегда показываем)
         if (totalFilteredItems > 0) {
             paginationHtml += `<span class="page-info">Страница ${currentPage} из ${totalPages}</span>`;
         } else {
@@ -1305,13 +1256,8 @@
         const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
         if (page < 1 || page > totalPages) return;
         currentPage = page;
-        filterCards();
+        applyFiltersAndSort();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function applyFiltersAndSort() {
-        currentPage = 1;
-        filterCards();
     }
 
     function resetAllFilters() {
@@ -1339,6 +1285,7 @@
         renderOptions('typeOptionsContainer', availableTypes, selectedTypes, 'typeSearch', typeInRussianMap);
         renderOptions('amenityOptionsContainer', availableAmenities, selectedAmenities, 'amenitySearch', amenityInRussianMap);
 
+        currentPage = 1;
         applyFiltersAndSort();
     }
 
@@ -1396,14 +1343,19 @@
             });
 
             document.querySelectorAll('.sort-option').forEach(option => {
-                option.addEventListener('click', () => {
-                    const sortValue = option.dataset.sort;
+                const newOption = option.cloneNode(true);
+                option.parentNode.replaceChild(newOption, option);
+
+                newOption.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const sortValue = newOption.getAttribute('data-sort');
                     if (sortValue) {
                         currentSort = sortValue;
                         document.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
-                        option.classList.add('active');
+                        newOption.classList.add('active');
                         sortDropdown.classList.remove('show');
                         sortBtn.classList.remove('active');
+                        currentPage = 1;
                         applyFiltersAndSort();
                     }
                 });
@@ -1419,8 +1371,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Сохраняем оригинальные карточки
+        allPremises = Array.from(document.querySelectorAll('.premise-card'));
+
         collectLocationData();
-        initTypesAndAmenities();
         initDropdowns();
         setupDropdowns();
 
@@ -1434,11 +1388,18 @@
         });
 
         document.querySelectorAll('#priceMax, #areaMin, #capacityMin, #checkInDate, #checkOutDate').forEach(input => {
-            input.addEventListener('input', applyFiltersAndSort);
+            input.addEventListener('input', () => {
+                currentPage = 1;
+                applyFiltersAndSort();
+            });
         });
 
-        document.querySelector('.sort-option[data-sort="newest"]')?.classList.add('active');
-
+        const defaultSortOption = document.querySelector('.sort-option[data-sort="newest"]');
+        if (defaultSortOption) {
+            defaultSortOption.classList.add('active');
+        }
+        currentSort = 'newest';
+        currentPage = 1;
         applyFiltersAndSort();
     });
 </script>

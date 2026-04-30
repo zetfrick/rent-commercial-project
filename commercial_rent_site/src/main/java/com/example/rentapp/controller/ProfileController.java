@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+// Убираем импорт Map - он больше не нужен здесь
 
 @Controller
 public class ProfileController {
@@ -30,7 +30,7 @@ public class ProfileController {
     @Autowired
     private CatalogClient catalogClient;
 
-    // ==================== ПРОФИЛЬ (поддержка просмотра чужого профиля) ====================
+    // ==================== ПРОФИЛЬ ====================
 
     @GetMapping("/profile")
     public String profile(@RequestParam(required = false) String username,
@@ -41,11 +41,9 @@ public class ProfileController {
 
         String currentUsername = (userDetails != null) ? userDetails.getUsername() : null;
 
-        // Для header
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
-        // Если передан username в параметре — показываем именно его профиль
         String targetUsername;
         if (username != null && !username.trim().isEmpty()) {
             targetUsername = username.trim();
@@ -72,7 +70,7 @@ public class ProfileController {
         return "future/profile";
     }
 
-    // ==================== РЕДАКТИРОВАНИЕ ПРОФИЛЯ (только своего) ====================
+    // ==================== РЕДАКТИРОВАНИЕ ПРОФИЛЯ ====================
 
     @GetMapping("/profile/edit")
     public String editProfile(@AuthenticationPrincipal UserDetails userDetails,
@@ -81,7 +79,6 @@ public class ProfileController {
                               Model model) {
         User user = getCurrentUser(userDetails);
 
-        // Для header
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
@@ -119,7 +116,6 @@ public class ProfileController {
                                  Model model) {
         User owner = getCurrentUser(userDetails);
 
-        // Для header
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
@@ -130,20 +126,7 @@ public class ProfileController {
         form.setOwnerPhone(owner.getPhone());
         form.setOwnerEmail(owner.getEmail());
 
-        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
-        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING",
-                "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
-
-        model.addAttribute("typeInRussian", Map.of(
-                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
-                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
-        ));
-
-        model.addAttribute("amenityInRussian", Map.of(
-                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
-                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
-                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
-        ));
+        // Убираем добавление types, amenities, typeInRussian, amenityInRussian - они придут через GlobalModelAdvice
 
         model.addAttribute("premiseForm", form);
         return "future/add-premise";
@@ -211,7 +194,7 @@ public class ProfileController {
         return "redirect:/premise/add?success";
     }
 
-    // ==================== НОВЫЙ МЕТОД: ОБЪЯВЛЕНИЯ ПОЛЬЗОВАТЕЛЯ ====================
+    // ==================== ОБЪЯВЛЕНИЯ ПОЛЬЗОВАТЕЛЯ ====================
 
     @GetMapping("/profile/{username}/premises")
     public String userPremises(@PathVariable String username,
@@ -220,14 +203,11 @@ public class ProfileController {
                                jakarta.servlet.http.HttpServletRequest request,
                                Model model) {
 
-        // Находим пользователя
         User profileUser = userService.findByLogin(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
 
-        // Получаем все помещения пользователя
         List<PremiseDto> userPremises = catalogClient.getPremisesByOwnerId(profileUser.getId());
 
-        // Для header
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
@@ -235,18 +215,7 @@ public class ProfileController {
         model.addAttribute("premises", userPremises);
         model.addAttribute("isOwnProfile", userDetails != null && userDetails.getUsername().equals(username));
 
-        // Для фильтров (без фильтров на странице, но для совместимости с каталогом)
-        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
-        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING", "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
-        model.addAttribute("typeInRussian", Map.of(
-                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
-                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
-        ));
-        model.addAttribute("amenityInRussian", Map.of(
-                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
-                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
-                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
-        ));
+        // Убираем добавление типов - они придут через GlobalModelAdvice
 
         return "future/user-premises";
     }

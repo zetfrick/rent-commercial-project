@@ -183,6 +183,30 @@
             color: white;
         }
 
+        /* Сортировка */
+        .sort-control {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+        .sort-select {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .sort-select:hover {
+            border-color: #ff5722;
+        }
+        .sort-select:focus {
+            border-color: #ff5722;
+            box-shadow: 0 0 0 2px rgba(255,87,34,0.1);
+        }
+
         /* Счётчик объявлений */
         .results-counter {
             margin: 20px 0;
@@ -411,6 +435,7 @@
             .nav-left { flex-wrap: wrap; gap: 12px; }
             .catalog-grid { grid-template-columns: 1fr; }
             .page-title { flex-direction: column; text-align: center; }
+            .sort-control { justify-content: center; }
         }
     </style>
 </head>
@@ -461,68 +486,32 @@
         <a href="/profile" class="back-btn"><i class="fas fa-arrow-left"></i> Вернуться в профиль</a>
     </div>
 
-    <!-- Счетчик объявлений -->
+    <!-- Управление сортировкой -->
+    <div class="sort-control">
+        <select id="sortSelect" class="sort-select">
+            <option value="newest">📅 Новые (сначала новые)</option>
+            <option value="oldest">📅 Старые (сначала старые)</option>
+            <option value="price_asc">💰 Цена (сначала дешёвые)</option>
+            <option value="price_desc">💰 Цена (сначала дорогие)</option>
+            <option value="area_asc">📐 Площадь (сначала малые)</option>
+            <option value="area_desc">📐 Площадь (сначала большие)</option>
+            <option value="capacity_asc">👥 Вместимость (сначала малые)</option>
+            <option value="capacity_desc">👥 Вместимость (сначала большие)</option>
+        </select>
+    </div>
+
+    <!-- Счётчик объявлений -->
     <div class="results-counter">
         <div class="counter-text">📋 Всего объявлений:</div>
         <div>
-            <span class="counter-number" th:text="${#lists.size(premises)}">0</span>
+            <span class="counter-number" id="premisesCount">0</span>
         </div>
     </div>
 
     <!-- Каталог с карточками -->
-    <div th:if="${!#lists.isEmpty(premises)}" class="catalog-grid">
-        <div th:each="p : ${premises}" class="premise-card">
-            <div th:if="${!p.photoPaths.isEmpty()}" class="photos-slider">
-                <div class="photos-container">
-                    <img th:each="photo : ${p.photoPaths}"
-                         th:src="@{'/uploads/' + ${photo}}"
-                         class="photo-item"
-                         onclick="openFullscreen(this.src)"
-                         onerror="this.src='/images/no-photo.jpg';">
-                </div>
-            </div>
-            <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">📷 Нет фото</div>
+    <div class="catalog-grid" id="catalogGrid"></div>
 
-            <div class="area-badge" th:text="${p.area} + ' м²'"></div>
-            <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
-
-            <div class="info">
-                <div class="type" th:text="${p.getTypeInRussian()}"></div>
-                <div class="amenities" th:if="${!p.amenities.isEmpty()}">
-                    <span th:each="a : ${p.amenities}" th:text="${p.getAmenityInRussian(a)}"></span>
-                </div>
-                <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
-                <div class="address" th:text="${p.region} + ', ' + ${p.city} + ', ' + ${p.street} + ' ' + ${p.building}"></div>
-
-                <div class="availability">
-                    <span class="availability-label">📅 Доступно:</span>
-                    <span class="availability-dates">
-                        <span th:text="${#temporals.format(p.availableFrom, 'dd.MM.yyyy')}"></span> —
-                        <span th:text="${#temporals.format(p.availableTo, 'dd.MM.yyyy')}"></span>
-                    </span>
-                </div>
-
-                <div class="prices">
-                    <div class="price-row">
-                        <span class="price-label">Будни:</span>
-                        <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
-                    </div>
-                    <div class="price-row" th:if="${p.priceWeekend != null && p.priceWeekend > 0}">
-                        <span class="price-label">Выходные:</span>
-                        <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
-                    </div>
-                    <div class="price-row" th:if="${p.priceHoliday != null && p.priceHoliday > 0}">
-                        <span class="price-label">Праздники:</span>
-                        <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
-                    </div>
-                </div>
-
-                <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
-            </div>
-        </div>
-    </div>
-
-    <div th:if="${#lists.isEmpty(premises)}" class="empty-state">
+    <div id="emptyState" class="empty-state" style="display: none;">
         <i class="fas fa-building"></i>
         <p th:text="${isOwnProfile} ? 'У вас пока нет объявлений' : 'У пользователя пока нет объявлений'"></p>
         <a th:if="${isOwnProfile}" href="/premise/add">Добавить объявление</a>
@@ -533,7 +522,165 @@
     <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
 </div>
 
-<script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Получаем данные с сервера
+    const premisesData = /*[[${premises}]]*/ [];
+    console.log('Загружено объявлений:', premisesData.length);
+
+    // Сохраняем оригинальный порядок (как пришёл с сервера - обычно новые сверху)
+    let currentPremises = [...premisesData];
+    let currentSort = 'newest';
+
+    // Функция для рендеринга карточек
+    function renderCards() {
+        const container = document.getElementById('catalogGrid');
+        const emptyState = document.getElementById('emptyState');
+        const countSpan = document.getElementById('premisesCount');
+
+        if (!currentPremises || currentPremises.length === 0) {
+            container.innerHTML = '';
+            emptyState.style.display = 'block';
+            countSpan.textContent = '0';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        countSpan.textContent = currentPremises.length;
+
+        container.innerHTML = '';
+
+        currentPremises.forEach(premise => {
+            const card = document.createElement('div');
+            card.className = 'premise-card';
+
+            // Фотографии
+            let photosHtml = '';
+            if (premise.photoPaths && premise.photoPaths.length > 0) {
+                photosHtml = `
+                    <div class="photos-slider">
+                        <div class="photos-container">
+                            ${premise.photoPaths.map(photo => `
+                                <img src="/uploads/${photo}" class="photo-item" onclick="openFullscreen(this.src)" onerror="this.src='/images/no-photo.jpg';">
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                photosHtml = `<div class="no-photo">📷 Нет фото</div>`;
+            }
+
+            // Удобства
+            let amenitiesHtml = '';
+            if (premise.amenities && premise.amenities.length > 0) {
+                amenitiesHtml = `
+                    <div class="amenities">
+                        ${premise.amenities.map(a => `<span>${premise.getAmenityInRussian ? premise.getAmenityInRussian(a) : a}</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // Цены
+            let weekendPriceHtml = '';
+            if (premise.priceWeekend && premise.priceWeekend > 0) {
+                weekendPriceHtml = `
+                    <div class="price-row">
+                        <span class="price-label">Выходные:</span>
+                        <span class="price-value highlight">${premise.priceWeekend} ₽</span>
+                    </div>
+                `;
+            }
+
+            let holidayPriceHtml = '';
+            if (premise.priceHoliday && premise.priceHoliday > 0) {
+                holidayPriceHtml = `
+                    <div class="price-row">
+                        <span class="price-label">Праздники:</span>
+                        <span class="price-value highlight">${premise.priceHoliday} ₽</span>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                ${photosHtml}
+                <div class="area-badge">${premise.area} м²</div>
+                <div class="capacity-badge">${premise.capacity} чел.</div>
+                <div class="info">
+                    <div class="type">${premise.getTypeInRussian ? premise.getTypeInRussian() : premise.type}</div>
+                    ${amenitiesHtml}
+                    <div class="owner">${premise.contactFirstName} ${premise.contactLastName}</div>
+                    <div class="address">${premise.region}, ${premise.city}, ${premise.street} ${premise.building}</div>
+                    <div class="availability">
+                        <span class="availability-label">📅 Доступно:</span>
+                        <span class="availability-dates">
+                            ${new Date(premise.availableFrom).toLocaleDateString('ru-RU')} —
+                            ${new Date(premise.availableTo).toLocaleDateString('ru-RU')}
+                        </span>
+                    </div>
+                    <div class="prices">
+                        <div class="price-row">
+                            <span class="price-label">Будни:</span>
+                            <span class="price-value">${premise.priceWeekday} ₽</span>
+                        </div>
+                        ${weekendPriceHtml}
+                        ${holidayPriceHtml}
+                    </div>
+                    <a href="/premise/${premise.id}" class="details-btn">Подробнее →</a>
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+
+        // Инициализируем слайдеры после добавления карточек
+        document.querySelectorAll('.photos-slider').forEach(slider => {
+            const containerEl = slider.querySelector('.photos-container');
+            if (containerEl && containerEl.children.length > 0) {
+                containerEl.dataset.current = '0';
+                containerEl.style.transform = 'translateX(0%)';
+                addArrowsToSlider(slider);
+            }
+        });
+    }
+
+    // Функция сортировки
+    function sortPremises() {
+        const sorted = [...premisesData];
+
+        switch(currentSort) {
+            case 'newest':
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'oldest':
+                sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+            case 'price_asc':
+                sorted.sort((a, b) => (a.priceWeekday || 0) - (b.priceWeekday || 0));
+                break;
+            case 'price_desc':
+                sorted.sort((a, b) => (b.priceWeekday || 0) - (a.priceWeekday || 0));
+                break;
+            case 'area_asc':
+                sorted.sort((a, b) => (a.area || 0) - (b.area || 0));
+                break;
+            case 'area_desc':
+                sorted.sort((a, b) => (b.area || 0) - (a.area || 0));
+                break;
+            case 'capacity_asc':
+                sorted.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
+                break;
+            case 'capacity_desc':
+                sorted.sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
+                break;
+            default:
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        currentPremises = sorted;
+        renderCards();
+    }
+
+    // Функции для слайдера
     function openFullscreen(src) {
         document.getElementById('fullImg').src = src;
         document.getElementById('fullscreen').style.display = 'flex';
@@ -593,15 +740,25 @@
         }
     }
 
-    document.querySelectorAll('.photos-slider').forEach(slider => {
-        const container = slider.querySelector('.photos-container');
-        if (container && container.children.length > 0) {
-            container.dataset.current = '0';
-            container.style.transform = 'translateX(0%)';
-            addArrowsToSlider(slider);
-        }
+    // Слушатель изменения сортировки
+    document.getElementById('sortSelect').addEventListener('change', function(e) {
+        currentSort = e.target.value;
+        sortPremises();
     });
-</script>
 
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+        // Предварительно сортируем от новых к старым
+        premisesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        currentPremises = [...premisesData];
+        renderCards();
+    });
+
+    // Делаем функции глобальными
+    window.openFullscreen = openFullscreen;
+    window.prevPhoto = prevPhoto;
+    window.nextPhoto = nextPhoto;
+    /*]]>*/
+</script>
 </body>
 </html>

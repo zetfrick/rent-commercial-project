@@ -14,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -29,25 +28,11 @@ public class WebCatalogController {
     @Autowired
     private UserService userService;
 
+    // УПРОЩЁННО: types, amenities, typeInRussian, amenityInRussian добавляются автоматически через GlobalModelAdvice
     @GetMapping("/catalog")
     public String catalog(Model model) {
         List<PremiseDto> premises = catalogClient.getAllPremises();
         model.addAttribute("premises", premises);
-
-        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
-        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING", "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
-
-        model.addAttribute("typeInRussian", Map.of(
-                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
-                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
-        ));
-
-        model.addAttribute("amenityInRussian", Map.of(
-                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
-                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
-                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
-        ));
-
         return "future/catalog";
     }
 
@@ -90,18 +75,7 @@ public class WebCatalogController {
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("ownerLogin", ownerLogin);
 
-        // Для формы редактирования
-        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
-        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING", "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
-        model.addAttribute("typeInRussian", Map.of(
-                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
-                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
-        ));
-        model.addAttribute("amenityInRussian", Map.of(
-                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
-                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
-                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
-        ));
+        // types, amenities и прочее уже в модели через GlobalModelAdvice
 
         return "future/premise-detail";
     }
@@ -130,17 +104,7 @@ public class WebCatalogController {
         }
 
         model.addAttribute("premise", premise);
-        model.addAttribute("types", List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL"));
-        model.addAttribute("amenities", List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING", "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE"));
-        model.addAttribute("typeInRussian", Map.of(
-                "OFFICE", "Офисное", "TRADING", "Торговое", "WAREHOUSE", "Складское",
-                "PRODUCTION", "Производственное", "HOSPITALITY", "Гостиничное", "UNIVERSAL", "Универсальное"
-        ));
-        model.addAttribute("amenityInRussian", Map.of(
-                "CONDITIONER", "Кондиционер", "WI_FI", "Wi-Fi", "FURNITURE", "Мебель",
-                "PARKING", "Парковка", "SECURITY", "Охрана", "ELEVATOR", "Лифт",
-                "KITCHEN", "Кухня", "CONFERENCE", "Конференц-зал"
-        ));
+        // types, amenities и прочее уже в модели через GlobalModelAdvice
 
         return "future/premise-edit";
     }

@@ -1,6 +1,8 @@
 D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\entity\Premise.java
+D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\config\PremiseConfig.java
 D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\entity\Comment.java
 D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\dto\CommentDto.java
+D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\controller\ConfigController.java
 D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\repository\CommentRepository.java
 D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\dto\PremiseDto.java
 D:\rent-commercial-project\catalog-service\src\main\java\com\example\catalog\repository\PremiseRepository.java

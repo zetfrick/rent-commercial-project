@@ -43,12 +43,10 @@ public class MainController {
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
-        // Загружаем 6 последних добавленных помещений
         try {
             List<PremiseDto> latestPremises = catalogClient.getLatestPremises(6);
             model.addAttribute("latestPremises", latestPremises);
         } catch (Exception e) {
-            // Если сервис недоступен — передаём пустой список
             model.addAttribute("latestPremises", List.of());
         }
 
@@ -63,7 +61,6 @@ public class MainController {
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
-        // Загружаем 6 последних добавленных помещений и для неавторизованных тоже
         try {
             List<PremiseDto> latestPremises = catalogClient.getLatestPremises(6);
             model.addAttribute("latestPremises", latestPremises);

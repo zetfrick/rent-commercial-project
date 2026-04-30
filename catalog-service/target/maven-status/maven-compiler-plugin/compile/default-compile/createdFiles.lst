@@ -1,8 +1,10 @@
 com\example\catalog\dto\CommentDto.class
 com\example\catalog\dto\PremiseDto.class
 com\example\catalog\CatalogServiceApplication.class
+com\example\catalog\config\PremiseConfig.class
 com\example\catalog\controller\CatalogController.class
 com\example\catalog\repository\PremiseRepository.class
 com\example\catalog\entity\Premise.class
 com\example\catalog\repository\CommentRepository.class
 com\example\catalog\entity\Comment.class
+com\example\catalog\controller\ConfigController.class

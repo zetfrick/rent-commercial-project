@@ -448,6 +448,58 @@
             color: #999;
         }
 
+        /* Детали помещения (этаж, квартира) */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #f0f0f0;
+            overflow: hidden;
+        }
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #fafafa;
+        }
+        .detail-item.full-width {
+            grid-column: span 2;
+        }
+        .detail-icon {
+            width: 36px;
+            height: 36px;
+            background: #fff0e8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff5722;
+            font-size: 16px;
+        }
+        .detail-content {
+            flex: 1;
+        }
+        .detail-label {
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        .detail-value.empty {
+            color: #bbb;
+            font-weight: normal;
+        }
+
         /* Доступность */
         .availability-card {
             background: #e8f5e9;
@@ -664,6 +716,8 @@
             .comment-form { flex-direction: column; }
             .comment-form button { padding: 12px; }
             .specs-grid { grid-template-columns: 1fr; }
+            .details-grid { grid-template-columns: 1fr; }
+            .detail-item.full-width { grid-column: span 1; }
             .top-buttons { flex-direction: column; align-items: stretch; gap: 10px; }
             .edit-btn, .owner-profile-btn, .complaint-btn { margin-left: 0; justify-content: center; }
         }
@@ -935,6 +989,26 @@
                         <div class="spec-icon"><i class="fas fa-users"></i></div>
                         <div class="spec-label">Вместимость</div>
                         <div class="spec-value" th:text="${premise.capacity} + ' чел.'"></div>
+                    </div>
+                </div>
+
+                <!-- НОВЫЙ БЛОК: Этаж и Квартира/Офис -->
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">ЭТАЖ</div>
+                            <div class="detail-value" th:if="${premise.floor != null and premise.floor != ''}" th:text="${premise.floor}"></div>
+                            <div class="detail-value empty" th:unless="${premise.floor != null and premise.floor != ''}">не указан</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-door-open"></i></div>
+                        <div class="detail-content">
+                            <div class="detail-label">КВАРТИРА / ОФИС</div>
+                            <div class="detail-value" th:if="${premise.apartment != null and premise.apartment != ''}" th:text="${premise.apartment}"></div>
+                            <div class="detail-value empty" th:unless="${premise.apartment != null and premise.apartment != ''}">не указан</div>
+                        </div>
                     </div>
                 </div>
 
