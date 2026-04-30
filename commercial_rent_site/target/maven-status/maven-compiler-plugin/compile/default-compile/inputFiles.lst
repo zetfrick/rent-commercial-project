@@ -7,6 +7,7 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\PremiseForm.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\RentAppApplication.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\config\SwaggerConfig.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ComplaintApiController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\MainController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\CommentDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\advice\GlobalModelAdvice.java
@@ -16,6 +17,7 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\api\ApiCatalogController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ChatController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\CommentService.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\PremiseApiController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\ChatService.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\AdminController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\WebCatalogController.java
@@ -23,12 +25,17 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\ConfigService.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\client\CatalogClient.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\config\WebConfig.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\ComplaintDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\PremiseDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\UserService.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\config\DataInitializer.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\FileStorageService.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\ComplaintService.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ComplaintController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ConfigController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\AuthController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\ChatMessageRepository.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\Complaint.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ProfileController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\api\ApiAuthController.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\ComplaintRepository.java

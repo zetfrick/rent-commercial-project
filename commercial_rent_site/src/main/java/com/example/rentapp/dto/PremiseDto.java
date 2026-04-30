@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,9 @@ public class PremiseDto {
 
     private LocalDate createdAt;
 
+    // НОВОЕ ПОЛЕ: дата снятия с публикации
+    private LocalDateTime unpublishedAt;
+
     // Статические карты для переводов (будут заполняться из ConfigService)
     private static Map<String, String> typeRussianMap = Map.of();
     private static Map<String, String> amenityRussianMap = Map.of();
@@ -81,5 +85,20 @@ public class PremiseDto {
     public String getAmenityInRussian(String amenity) {
         if (amenity == null) return "";
         return amenityRussianMap.getOrDefault(amenity, amenity);
+    }
+
+    // Метод для получения даты удаления (через 60 дней после снятия)
+    public LocalDate getDeletionDate() {
+        if (unpublishedAt == null) return null;
+        return unpublishedAt.plusDays(60).toLocalDate();
+    }
+
+    // Метод для получения количества дней до удаления
+    public long getDaysUntilDeletion() {
+        if (unpublishedAt == null) return 0;
+        LocalDateTime deletionDate = unpublishedAt.plusDays(60);
+        LocalDateTime now = LocalDateTime.now();
+        if (deletionDate.isBefore(now)) return 0;
+        return java.time.Duration.between(now, deletionDate).toDays();
     }
 }

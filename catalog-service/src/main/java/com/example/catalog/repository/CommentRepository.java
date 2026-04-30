@@ -10,4 +10,7 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     List<Comment> findByPremiseIdOrderByCreatedAtDesc(Long premiseId);
+
+    // НОВЫЙ МЕТОД: удаление комментариев по ID помещения
+    void deleteByPremiseId(Long premiseId);
 }

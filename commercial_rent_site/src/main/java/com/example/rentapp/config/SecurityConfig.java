@@ -23,7 +23,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Отключаем CSRF для API и чатов и админских API
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/**", "/chats/**", "/admin/**")
                 )
@@ -34,13 +33,23 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/api/auth/register", "/api/auth/login",
                                 "/auth/check",
-                                "/premise/**")
+                                "/premise/**")  // Просмотр объявлений доступен всем
                         .permitAll()
+
                         // Защищённые страницы - только для авторизованных
                         .requestMatchers("/profile", "/profile/**", "/api/premise/**",
-                                "/chats/**", "/premise/add", "/premise/*/edit",
-                                "/admin/**")
+                                "/chats/**")
                         .authenticated()
+
+                        // ========== ДОБАВЬТЕ ЭТИ СТРОКИ ==========
+                        // Добавление и редактирование помещений - только для авторизованных
+                        .requestMatchers("/premise/add", "/premise/*/edit")
+                        .authenticated()
+                        // ========================================
+
+                        // Админ-панель - только для ADMIN и SUPER_ADMIN
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+
                         .anyRequest().permitAll()
                 )
                 .formLogin(form -> form

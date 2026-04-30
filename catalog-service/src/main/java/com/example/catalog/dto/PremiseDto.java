@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,8 +44,6 @@ public class PremiseDto {
     private String contactPhone;
     private String contactEmail;
 
-    // getters + setters
-    // Новые поля — очень важны для карточек на главной странице
     @Getter
     private Double latitude;
     @Getter
@@ -56,33 +55,7 @@ public class PremiseDto {
 
     private LocalDate createdAt;
 
-    // ==================== Методы перевода ====================
+    private LocalDateTime unpublishedAt;
 
-    public String getTypeInRussian() {
-        if (type == null) return "";
-        return switch (type) {
-            case "OFFICE" -> "Офисное";
-            case "TRADING" -> "Торговое";
-            case "WAREHOUSE" -> "Складское";
-            case "PRODUCTION" -> "Производственное";
-            case "HOSPITALITY" -> "Гостиничное";
-            case "UNIVERSAL" -> "Универсальное";
-            default -> type;
-        };
-    }
-
-    public String getAmenityInRussian(String english) {
-        if (english == null) return "";
-        return switch (english) {
-            case "CONDITIONER" -> "Кондиционер";
-            case "WI_FI" -> "Wi-Fi";
-            case "FURNITURE" -> "Мебель";
-            case "PARKING" -> "Парковка";
-            case "SECURITY" -> "Охрана";
-            case "ELEVATOR" -> "Лифт";
-            case "KITCHEN" -> "Кухня";
-            case "CONFERENCE" -> "Конференц-зал";
-            default -> english;
-        };
-    }
+    // Методы перевода УДАЛЕНЫ - они должны быть только в PremiseConfig!
 }

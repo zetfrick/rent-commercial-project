@@ -6,17 +6,30 @@ import com.example.catalog.entity.Comment;
 import com.example.catalog.entity.Premise;
 import com.example.catalog.repository.CommentRepository;
 import com.example.catalog.repository.PremiseRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
+@EnableScheduling
 public class CatalogController {
 
     @Autowired
@@ -25,22 +38,95 @@ public class CatalogController {
     @Autowired
     private CommentRepository commentRepository;
 
+    // Выполняется сразу после запуска приложения
+    @PostConstruct
+    public void init() {
+        System.out.println("=== Выполнение первоначальной проверки просроченных объявлений ===");
+        checkAndUnpublishExpiredPremises();
+        System.out.println("=== Выполнение первоначальной проверки удаления старых объявлений ===");
+        deleteOldUnpublishedPremises();
+        System.out.println("=== Первоначальная проверка завершена ===");
+    }
+
+    // Запускается каждый день в 00:00
+    @Scheduled(cron = "0 0 0 * * *")
+    public void checkAndUnpublishExpiredPremises() {
+        LocalDate today = LocalDate.now();
+        // Находим активные объявления, у которых дата окончания доступности уже прошла
+        List<Premise> expiredPremises = premiseRepository.findByActiveTrueAndAvailableToBefore(today);
+
+        System.out.println("Найдено просроченных объявлений: " + expiredPremises.size());
+        for (Premise premise : expiredPremises) {
+            premise.setActive(false);
+            premise.setUnpublishedAt(LocalDateTime.now());
+            premiseRepository.save(premise);
+            System.out.println("Объявление #" + premise.getId() + " снято с публикации (истек срок доступности)");
+        }
+    }
+
+    // Запускается каждый день в 01:00
+    @Scheduled(cron = "0 0 1 * * *")
+    public void deleteOldUnpublishedPremises() {
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(60);
+        // Находим неактивные объявления, которые были сняты более 60 дней назад
+        List<Premise> oldPremises = premiseRepository.findByActiveFalseAndUnpublishedAtBefore(cutoffDate);
+
+        System.out.println("Найдено объявлений для удаления: " + oldPremises.size());
+        for (Premise premise : oldPremises) {
+            // Удаляем фото с диска
+            List<String> photoPaths = premise.getPhotoPaths();
+            if (photoPaths != null && !photoPaths.isEmpty()) {
+                String uploadDir = "uploads/";
+                for (String photoPath : photoPaths) {
+                    try {
+                        Path filePath = Paths.get(uploadDir + photoPath);
+                        Files.deleteIfExists(filePath);
+                        System.out.println("Удалён файл: " + photoPath);
+                    } catch (IOException e) {
+                        System.err.println("Ошибка удаления файла: " + photoPath + " - " + e.getMessage());
+                    }
+                }
+            }
+
+            // Удаляем комментарии
+            commentRepository.deleteByPremiseId(premise.getId());
+
+            // Удаляем объявление
+            premiseRepository.delete(premise);
+            System.out.println("Объявление #" + premise.getId() + " полностью удалено (снято более 60 дней назад)");
+        }
+    }
+
     @GetMapping("/catalog")
-    public ResponseEntity<List<Premise>> getAll() {
-        return ResponseEntity.ok(premiseRepository.findAllByActiveTrueOrderByCreatedAtDesc());
+    public ResponseEntity<List<PremiseDto>> getAll() {
+        List<Premise> premises = premiseRepository.findAllByActiveTrueOrderByCreatedAtDesc();
+
+        List<PremiseDto> dtos = premises.stream().map(p -> {
+            PremiseDto dto = new PremiseDto();
+            BeanUtils.copyProperties(p, dto);
+            dto.setUnpublishedAt(p.getUnpublishedAt());
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/catalog/{id}")
-    public ResponseEntity<Premise> getById(@PathVariable Long id) {
+    public ResponseEntity<PremiseDto> getById(@PathVariable Long id) {
         return premiseRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .map(p -> {
+                    PremiseDto dto = new PremiseDto();
+                    BeanUtils.copyProperties(p, dto);
+                    dto.setUnpublishedAt(p.getUnpublishedAt());
+                    return ResponseEntity.ok(dto);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/premise/add")
     public ResponseEntity<Premise> addPremise(@RequestBody PremiseDto premiseDto) {
         Premise premise = new Premise();
-        BeanUtils.copyProperties(premiseDto, premise, "id", "createdAt");
+        BeanUtils.copyProperties(premiseDto, premise, "id", "createdAt", "unpublishedAt");
         premise.setLatitude(premiseDto.getLatitude());
         premise.setLongitude(premiseDto.getLongitude());
 
@@ -68,13 +154,20 @@ public class CatalogController {
     }
 
     @GetMapping("/premises/latest")
-    public ResponseEntity<List<Premise>> getLatestPremises(
+    public ResponseEntity<List<PremiseDto>> getLatestPremises(
             @RequestParam(value = "limit", defaultValue = "6") int limit) {
         List<Premise> latest = premiseRepository.findTop6ByActiveTrueOrderByCreatedAtDesc();
-        return ResponseEntity.ok(latest);
+
+        List<PremiseDto> dtos = latest.stream().map(p -> {
+            PremiseDto dto = new PremiseDto();
+            BeanUtils.copyProperties(p, dto);
+            dto.setUnpublishedAt(p.getUnpublishedAt());
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 
-    // НОВЫЙ МЕТОД: получение помещений по ID владельца
     @GetMapping("/premises/owner/{ownerId}")
     public ResponseEntity<List<PremiseDto>> getPremisesByOwnerId(@PathVariable Long ownerId) {
         List<Premise> premises = premiseRepository.findByOwnerId(ownerId);
@@ -82,10 +175,74 @@ public class CatalogController {
         List<PremiseDto> dtos = premises.stream().map(p -> {
             PremiseDto dto = new PremiseDto();
             BeanUtils.copyProperties(p, dto);
+            dto.setUnpublishedAt(p.getUnpublishedAt());
             return dto;
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/premise/{id}/toggle-publish")
+    public ResponseEntity<Map<String, Object>> togglePublish(@PathVariable Long id, @RequestBody Map<String, Boolean> request) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<Premise> premiseOpt = premiseRepository.findById(id);
+
+        if (premiseOpt.isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Помещение не найдено");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        Premise premise = premiseOpt.get();
+        Boolean active = request.get("active");
+
+        if (active != null) {
+            premise.setActive(active);
+            if (!active && premise.getUnpublishedAt() == null) {
+                premise.setUnpublishedAt(LocalDateTime.now());
+            }
+            premiseRepository.save(premise);
+            response.put("success", true);
+            response.put("active", active);
+        } else {
+            response.put("success", false);
+            response.put("message", "Не указан статус");
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/premise/{id}/delete")
+    public ResponseEntity<Map<String, Object>> deletePremise(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<Premise> premiseOpt = premiseRepository.findById(id);
+
+        if (premiseOpt.isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Помещение не найдено");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        Premise premise = premiseOpt.get();
+
+        List<String> photoPaths = premise.getPhotoPaths();
+        if (photoPaths != null && !photoPaths.isEmpty()) {
+            String uploadDir = "uploads/";
+            for (String photoPath : photoPaths) {
+                try {
+                    Path filePath = Paths.get(uploadDir + photoPath);
+                    Files.deleteIfExists(filePath);
+                } catch (IOException e) {
+                    System.err.println("Ошибка удаления файла: " + photoPath);
+                }
+            }
+        }
+
+        commentRepository.deleteByPremiseId(id);
+        premiseRepository.deleteById(id);
+
+        response.put("success", true);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/comments/premise/{premiseId}")

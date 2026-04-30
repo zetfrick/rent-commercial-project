@@ -14,7 +14,7 @@
             min-height: 100vh;
         }
 
-        /* ====================== HEADER (статичный, тонкий) ====================== */
+        /* ====================== HEADER ====================== */
         .header {
             display: flex;
             justify-content: space-between;
@@ -69,7 +69,6 @@
         }
         .city-list li a:hover { background: #ff5722; }
 
-        /* Профиль пользователя */
         .user-profile {
             display: flex;
             align-items: center;
@@ -146,14 +145,12 @@
         }
         .register-link:hover { background: #e64a19; }
 
-        /* Контейнер основного контента */
         .container {
             max-width: 1400px;
             margin: 30px auto;
             padding: 0 20px;
         }
 
-        /* Заголовок страницы */
         .page-title {
             margin-bottom: 30px;
             display: flex;
@@ -183,7 +180,28 @@
             color: white;
         }
 
-        /* Сортировка */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.3s;
+            color: #666;
+        }
+        .tab-btn:hover { background: #f0f0f0; }
+        .tab-btn.active { background: #ff5722; color: white; }
+
         .sort-control {
             display: flex;
             justify-content: flex-end;
@@ -207,7 +225,6 @@
             box-shadow: 0 0 0 2px rgba(255,87,34,0.1);
         }
 
-        /* Счётчик объявлений */
         .results-counter {
             margin: 20px 0;
             padding: 12px 25px;
@@ -230,7 +247,6 @@
             font-size: 20px;
         }
 
-        /* Каталог (такая же сетка как в основном каталоге) */
         .catalog-grid {
             margin: 20px 0;
             display: grid;
@@ -246,11 +262,55 @@
             transition: all 0.3s;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
-
+        .premise-card.inactive {
+            opacity: 0.85;
+            background: #fafafa;
+        }
         .premise-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 40px rgba(255,152,0,0.2);
+        }
+
+        .status-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 15;
+        }
+        .status-active {
+            background: #4caf50;
+            color: white;
+        }
+        .status-inactive {
+            background: #f44336;
+            color: white;
+        }
+
+        .deletion-info {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #fff3e0;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #e65100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #ff9800;
+        }
+        .deletion-info i {
+            font-size: 14px;
+        }
+        .deletion-info.warning {
+            background: #ffebee;
+            border-left-color: #f44336;
+            color: #c62828;
         }
 
         .photos-slider {
@@ -441,11 +501,9 @@
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
     <div class="nav-left">
         <a href="/about">О нас</a>
-
         <div class="city-dropdown">
             <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
             <ul class="city-list">
@@ -457,7 +515,6 @@
             </ul>
         </div>
     </div>
-
     <div class="nav-right">
         <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
             <a th:href="@{/profile}" class="user-info">
@@ -468,7 +525,6 @@
                 <button type="submit" class="logout-btn">Выйти</button>
             </form>
         </div>
-
         <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
             <a href="/auth/login" class="login-link">Вход</a>
             <a href="/auth/register" class="register-link">Регистрация</a>
@@ -476,7 +532,6 @@
     </div>
 </header>
 
-<!-- Основной контент -->
 <div class="container">
     <div class="page-title">
         <h1>
@@ -486,7 +541,12 @@
         <a href="/profile" class="back-btn"><i class="fas fa-arrow-left"></i> Вернуться в профиль</a>
     </div>
 
-    <!-- Управление сортировкой -->
+    <div class="tabs">
+        <button class="tab-btn active" data-status="active">📋 Опубликованные</button>
+        <button class="tab-btn" data-status="inactive">📁 Снятые с публикации</button>
+        <button class="tab-btn" data-status="all">📜 Все объявления</button>
+    </div>
+
     <div class="sort-control">
         <select id="sortSelect" class="sort-select">
             <option value="newest">📅 Новые (сначала новые)</option>
@@ -500,7 +560,6 @@
         </select>
     </div>
 
-    <!-- Счётчик объявлений -->
     <div class="results-counter">
         <div class="counter-text">📋 Всего объявлений:</div>
         <div>
@@ -508,13 +567,12 @@
         </div>
     </div>
 
-    <!-- Каталог с карточками -->
     <div class="catalog-grid" id="catalogGrid"></div>
 
     <div id="emptyState" class="empty-state" style="display: none;">
         <i class="fas fa-building"></i>
-        <p th:text="${isOwnProfile} ? 'У вас пока нет объявлений' : 'У пользователя пока нет объявлений'"></p>
-        <a th:if="${isOwnProfile}" href="/premise/add">Добавить объявление</a>
+        <p id="emptyMessage">Нет объявлений</p>
+        <a th:if="${isOwnProfile}" href="/premise/add" id="addLink">Добавить объявление</a>
     </div>
 </div>
 
@@ -524,37 +582,121 @@
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // Получаем данные с сервера
+    let typeInRussianMap = {};
+    let amenityInRussianMap = {};
+
+    const serverTypeInRussianRaw = /*[[${typeInRussian}]]*/ null;
+    const serverAmenityInRussianRaw = /*[[${amenityInRussian}]]*/ null;
+
+    if (serverTypeInRussianRaw && typeof serverTypeInRussianRaw === 'object') {
+        typeInRussianMap = serverTypeInRussianRaw;
+    }
+    if (serverAmenityInRussianRaw && typeof serverAmenityInRussianRaw === 'object') {
+        amenityInRussianMap = serverAmenityInRussianRaw;
+    }
+
+    function getTypeInRussian(type) {
+        if (!type) return '';
+        return typeInRussianMap[type] || type;
+    }
+
+    function getAmenityInRussian(amenity) {
+        if (!amenity) return '';
+        return amenityInRussianMap[amenity] || amenity;
+    }
+
     const premisesData = /*[[${premises}]]*/ [];
     console.log('Загружено объявлений:', premisesData.length);
 
-    // Сохраняем оригинальный порядок (как пришёл с сервера - обычно новые сверху)
     let currentPremises = [...premisesData];
     let currentSort = 'newest';
+    let currentStatus = 'active';
 
-    // Функция для рендеринга карточек
+    // Функция для расчёта дней до удаления
+    function getDaysUntilDeletion(unpublishedAt) {
+        if (!unpublishedAt) return null;
+        const deletionDate = new Date(unpublishedAt);
+        deletionDate.setDate(deletionDate.getDate() + 60);
+        const now = new Date();
+        const diffTime = deletionDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? diffDays : 0;
+    }
+
+    function filterByStatus() {
+        if (currentStatus === 'active') {
+            return premisesData.filter(p => p.active === true);
+        } else if (currentStatus === 'inactive') {
+            return premisesData.filter(p => p.active === false);
+        }
+        return [...premisesData];
+    }
+
+    function sortPremises() {
+        const filtered = filterByStatus();
+
+        switch(currentSort) {
+            case 'newest':
+                filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'oldest':
+                filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+            case 'price_asc':
+                filtered.sort((a, b) => (a.priceWeekday || 0) - (b.priceWeekday || 0));
+                break;
+            case 'price_desc':
+                filtered.sort((a, b) => (b.priceWeekday || 0) - (a.priceWeekday || 0));
+                break;
+            case 'area_asc':
+                filtered.sort((a, b) => (a.area || 0) - (b.area || 0));
+                break;
+            case 'area_desc':
+                filtered.sort((a, b) => (b.area || 0) - (a.area || 0));
+                break;
+            case 'capacity_asc':
+                filtered.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
+                break;
+            case 'capacity_desc':
+                filtered.sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
+                break;
+            default:
+                filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        currentPremises = filtered;
+        renderCards();
+    }
+
     function renderCards() {
         const container = document.getElementById('catalogGrid');
         const emptyState = document.getElementById('emptyState');
         const countSpan = document.getElementById('premisesCount');
+        const emptyMessage = document.getElementById('emptyMessage');
 
         if (!currentPremises || currentPremises.length === 0) {
             container.innerHTML = '';
             emptyState.style.display = 'block';
             countSpan.textContent = '0';
+
+            if (currentStatus === 'active') {
+                emptyMessage.textContent = 'Нет опубликованных объявлений';
+            } else if (currentStatus === 'inactive') {
+                emptyMessage.textContent = 'Нет снятых с публикации объявлений';
+            } else {
+                emptyMessage.textContent = 'Нет объявлений';
+            }
             return;
         }
 
         emptyState.style.display = 'none';
         countSpan.textContent = currentPremises.length;
-
         container.innerHTML = '';
 
         currentPremises.forEach(premise => {
             const card = document.createElement('div');
-            card.className = 'premise-card';
+            card.className = 'premise-card' + (premise.active ? '' : ' inactive');
 
-            // Фотографии
             let photosHtml = '';
             if (premise.photoPaths && premise.photoPaths.length > 0) {
                 photosHtml = `
@@ -570,17 +712,19 @@
                 photosHtml = `<div class="no-photo">📷 Нет фото</div>`;
             }
 
-            // Удобства
+            const statusHtml = premise.active
+                ? '<div class="status-label status-active">✓ Активно</div>'
+                : '<div class="status-label status-inactive">✗ Снято</div>';
+
             let amenitiesHtml = '';
             if (premise.amenities && premise.amenities.length > 0) {
                 amenitiesHtml = `
                     <div class="amenities">
-                        ${premise.amenities.map(a => `<span>${premise.getAmenityInRussian ? premise.getAmenityInRussian(a) : a}</span>`).join('')}
+                        ${premise.amenities.map(a => `<span>${getAmenityInRussian(a)}</span>`).join('')}
                     </div>
                 `;
             }
 
-            // Цены
             let weekendPriceHtml = '';
             if (premise.priceWeekend && premise.priceWeekend > 0) {
                 weekendPriceHtml = `
@@ -601,30 +745,58 @@
                 `;
             }
 
+            // Информация об удалении для снятых объявлений
+            let deletionHtml = '';
+            if (!premise.active && premise.unpublishedAt) {
+                const daysLeft = getDaysUntilDeletion(premise.unpublishedAt);
+                const deletionDate = new Date(premise.unpublishedAt);
+                deletionDate.setDate(deletionDate.getDate() + 60);
+                const formattedDate = deletionDate.toLocaleDateString('ru-RU');
+
+                if (daysLeft !== null && daysLeft > 0) {
+                    const warningClass = daysLeft <= 7 ? 'warning' : '';
+                    deletionHtml = `
+                        <div class="deletion-info ${warningClass}">
+                            <i class="fas fa-clock"></i>
+                            <span>Будет удалено ${formattedDate} (через ${daysLeft} дн.)</span>
+                        </div>
+                    `;
+                } else if (daysLeft === 0) {
+                    deletionHtml = `
+                        <div class="deletion-info warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Будет удалено сегодня!</span>
+                        </div>
+                    `;
+                }
+            }
+
             card.innerHTML = `
                 ${photosHtml}
+                ${statusHtml}
                 <div class="area-badge">${premise.area} м²</div>
                 <div class="capacity-badge">${premise.capacity} чел.</div>
                 <div class="info">
-                    <div class="type">${premise.getTypeInRussian ? premise.getTypeInRussian() : premise.type}</div>
+                    <div class="type">${getTypeInRussian(premise.type)}</div>
                     ${amenitiesHtml}
-                    <div class="owner">${premise.contactFirstName} ${premise.contactLastName}</div>
-                    <div class="address">${premise.region}, ${premise.city}, ${premise.street} ${premise.building}</div>
+                    <div class="owner">${premise.contactFirstName || ''} ${premise.contactLastName || ''}</div>
+                    <div class="address">${premise.region || ''}, ${premise.city || ''}, ${premise.street || ''} ${premise.building || ''}</div>
                     <div class="availability">
                         <span class="availability-label">📅 Доступно:</span>
                         <span class="availability-dates">
-                            ${new Date(premise.availableFrom).toLocaleDateString('ru-RU')} —
-                            ${new Date(premise.availableTo).toLocaleDateString('ru-RU')}
+                            ${premise.availableFrom ? new Date(premise.availableFrom).toLocaleDateString('ru-RU') : '—'} —
+                            ${premise.availableTo ? new Date(premise.availableTo).toLocaleDateString('ru-RU') : '—'}
                         </span>
                     </div>
                     <div class="prices">
                         <div class="price-row">
                             <span class="price-label">Будни:</span>
-                            <span class="price-value">${premise.priceWeekday} ₽</span>
+                            <span class="price-value">${premise.priceWeekday || 0} ₽</span>
                         </div>
                         ${weekendPriceHtml}
                         ${holidayPriceHtml}
                     </div>
+                    ${deletionHtml}
                     <a href="/premise/${premise.id}" class="details-btn">Подробнее →</a>
                 </div>
             `;
@@ -632,7 +804,6 @@
             container.appendChild(card);
         });
 
-        // Инициализируем слайдеры после добавления карточек
         document.querySelectorAll('.photos-slider').forEach(slider => {
             const containerEl = slider.querySelector('.photos-container');
             if (containerEl && containerEl.children.length > 0) {
@@ -643,44 +814,6 @@
         });
     }
 
-    // Функция сортировки
-    function sortPremises() {
-        const sorted = [...premisesData];
-
-        switch(currentSort) {
-            case 'newest':
-                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                break;
-            case 'oldest':
-                sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                break;
-            case 'price_asc':
-                sorted.sort((a, b) => (a.priceWeekday || 0) - (b.priceWeekday || 0));
-                break;
-            case 'price_desc':
-                sorted.sort((a, b) => (b.priceWeekday || 0) - (a.priceWeekday || 0));
-                break;
-            case 'area_asc':
-                sorted.sort((a, b) => (a.area || 0) - (b.area || 0));
-                break;
-            case 'area_desc':
-                sorted.sort((a, b) => (b.area || 0) - (a.area || 0));
-                break;
-            case 'capacity_asc':
-                sorted.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
-                break;
-            case 'capacity_desc':
-                sorted.sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
-                break;
-            default:
-                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
-
-        currentPremises = sorted;
-        renderCards();
-    }
-
-    // Функции для слайдера
     function openFullscreen(src) {
         document.getElementById('fullImg').src = src;
         document.getElementById('fullscreen').style.display = 'flex';
@@ -740,21 +873,25 @@
         }
     }
 
-    // Слушатель изменения сортировки
     document.getElementById('sortSelect').addEventListener('change', function(e) {
         currentSort = e.target.value;
         sortPremises();
     });
 
-    // Инициализация
-    document.addEventListener('DOMContentLoaded', () => {
-        // Предварительно сортируем от новых к старым
-        premisesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        currentPremises = [...premisesData];
-        renderCards();
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentStatus = this.dataset.status;
+            sortPremises();
+        });
     });
 
-    // Делаем функции глобальными
+    document.addEventListener('DOMContentLoaded', () => {
+        premisesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        sortPremises();
+    });
+
     window.openFullscreen = openFullscreen;
     window.prevPhoto = prevPhoto;
     window.nextPhoto = nextPhoto;

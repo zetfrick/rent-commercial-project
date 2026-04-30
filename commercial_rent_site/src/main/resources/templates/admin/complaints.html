@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Жалобы | Админ-панель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            color: white;
+        }
+        .nav-left { display: flex; align-items: center; gap: 25px; }
+        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
+        .nav-left a:hover { color: #ffcc80; }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 6px 4px 4px;
+            border-radius: 40px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: white;
+            padding: 3px 12px 3px 6px;
+            border-radius: 40px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .logout-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .page-header h1 {
+            font-size: 28px;
+            color: #ff5722;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .back-btn {
+            background: #f5f5f5;
+            color: #666;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: #e0e0e0;
+            color: #ff5722;
+        }
+
+        /* Статистика администратора */
+        .admin-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none;
+            color: white;
+        }
+        .admin-stats.show {
+            display: block;
+        }
+        .admin-stats h4 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.25);
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            display: block;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 5px;
+            display: block;
+            color: rgba(255,255,255,0.9);
+        }
+        /* Убираем цветные цифры, оставляем только белые */
+        .stat-card.resolved .stat-number,
+        .stat-card.rejected .stat-number,
+        .stat-card.resolved-rejected .stat-number,
+        .stat-card.in-work .stat-number {
+            color: white;
+        }
+
+        .user-search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .user-search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .user-search-header h3 {
+            font-size: 16px;
+            color: #2196f3;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-search-fields {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .user-search-fields.show { display: grid; }
+        .user-search-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .user-search-field label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+        .user-search-field input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .user-search-field input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33,150,243,0.1);
+        }
+        .user-search-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .user-search-btn:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+        .search-results-badge {
+            background: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .clear-search-btn {
+            background: none;
+            border: none;
+            color: #2196f3;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .admin-search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .admin-search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .admin-search-header h3 {
+            font-size: 16px;
+            color: #ff5722;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toggle-icon { transition: transform 0.3s; }
+        .admin-search-fields {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .admin-search-fields.show { display: grid; }
+        .admin-search-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .admin-search-field label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+        .admin-search-field input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .admin-search-field input:focus {
+            outline: none;
+            border-color: #ff5722;
+            box-shadow: 0 0 0 2px rgba(255,87,34,0.1);
+        }
+
+        .admin-filter-section {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .admin-filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .admin-filter-btn {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+        }
+        .admin-filter-btn.active {
+            background: #ff5722;
+            color: white;
+            border-color: #ff5722;
+        }
+        .admin-filter-btn.rejected-filter.active {
+            background: #f44336;
+            border-color: #f44336;
+        }
+        .admin-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #f0f0f0;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+        .admin-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-item:hover { background: #fffaf5; }
+        .admin-item.selected {
+            background: #fff0e8;
+            border-left: 3px solid #ff5722;
+        }
+        .admin-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .admin-info { flex: 1; }
+        .admin-name { font-weight: 600; font-size: 14px; color: #333; }
+        .admin-details { font-size: 12px; color: #999; }
+        .selected-admin-badge {
+            background: #e8f5e9;
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .clear-admin-btn {
+            background: none;
+            border: none;
+            color: #ff5722;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.3s;
+            color: #666;
+        }
+        .tab-btn:hover { background: #f0f0f0; }
+        .tab-btn.active { background: #ff5722; color: white; }
+        .sort-control {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .sort-btn, .filter-rejected-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .sort-btn:hover, .filter-rejected-btn:hover {
+            border-color: #ff5722;
+            color: #ff5722;
+        }
+        .filter-rejected-btn.active {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        .complaints-table {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 16px 20px;
+            background: #fafafa;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 1px solid #eee;
+        }
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        tr:hover td { background: #fffaf5; }
+        tr.in-work td { background: #fff8e1; }
+        tr.in-work:hover td { background: #fff3c4; }
+        tr.resolved td { background: #e8f5e9; }
+        tr.resolved:hover td { background: #c8e6c9; }
+        tr.rejected-by-admin td { background: #ffebee; }
+        tr.rejected-by-admin:hover td { background: #ffcdd2; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active { background: #ffebee; color: #f44336; }
+        .status-resolved { background: #e8f5e9; color: #4caf50; }
+        .status-in-work { background: #fff3e0; color: #ff9800; }
+        .reject-circle {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #f44336;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 0 2px white;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .type-premise { background: #fff3e0; color: #ff9800; }
+        .type-user { background: #e3f2fd; color: #2196f3; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state i { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 24px;
+            animation: modalFadeIn 0.3s ease;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 24px 24px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .modal-body { padding: 24px; }
+        .detail-row {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .detail-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .detail-value {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .detail-link {
+            color: #ff5722;
+            text-decoration: none;
+        }
+        .detail-link:hover { text-decoration: underline; }
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .take-work-btn {
+            flex: 1;
+            padding: 14px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .take-work-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+        .reject-btn {
+            flex: 1;
+            padding: 14px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .reject-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+        .resolve-btn {
+            flex: 1;
+            padding: 14px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .resolve-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        .resolved-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+        .rejected-info {
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+        @media (max-width: 768px) {
+            .header { padding: 8px 16px; }
+            th, td { padding: 12px; }
+            .complaints-table { overflow-x: auto; }
+            table { min-width: 600px; }
+            .admin-search-fields, .user-search-fields { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+            .admin-filter-section { justify-content: flex-start; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="nav-left">
+        <a href="/admin/admins">Администраторы</a>
+        <a href="/admin/complaints" style="color: #ffcc80;">Жалобы</a>
+        <a href="/catalog">Каталог</a>
+    </div>
+    <div class="user-profile">
+        <a href="/profile" class="user-info">
+            <span class="user-avatar">👤</span>
+            <span class="user-name" th:text="${#authentication.name}"></span>
+        </a>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit" class="logout-btn">Выйти</button>
+        </form>
+    </div>
+</header>
+
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-exclamation-triangle"></i> Управление жалобами</h1>
+        <a href="/admin/admins" class="back-btn"><i class="fas fa-arrow-left"></i> Назад</a>
+    </div>
+
+    <!-- ПОИСК ПО ПОЛЬЗОВАТЕЛЮ (ЖАЛОБЩИКУ) -->
+    <div class="user-search-section">
+        <div class="user-search-header" onclick="toggleUserSearch()">
+            <h3><i class="fas fa-user-search"></i> Поиск жалоб по пользователю</h3>
+            <i class="fas fa-chevron-down toggle-icon" id="userToggleIcon"></i>
+        </div>
+        <div class="user-search-fields" id="userSearchFields">
+            <div class="user-search-field">
+                <label><i class="fas fa-at"></i> Логин пользователя</label>
+                <input type="text" id="searchByUsername" placeholder="Введите логин..." autocomplete="off">
+            </div>
+            <div class="user-search-field" style="display: flex; justify-content: flex-end; align-items: flex-end;">
+                <button class="user-search-btn" onclick="searchByUsername()">
+                    <i class="fas fa-search"></i> Найти жалобы
+                </button>
+            </div>
+        </div>
+        <div id="searchResultInfo" class="search-results-badge" style="display: none;">
+            <span><i class="fas fa-user"></i> Жалобы пользователя: <strong id="searchedUsername"></strong></span>
+            <button class="clear-search-btn" onclick="clearUserSearch()">✕ Очистить</button>
+        </div>
+    </div>
+
+    <!-- Поиск по администраторам -->
+    <div class="admin-search-section">
+        <div class="admin-search-header" onclick="toggleAdminSearch()">
+            <h3><i class="fas fa-user-shield"></i> Администраторы</h3>
+            <i class="fas fa-chevron-down toggle-icon" id="adminToggleIcon"></i>
+        </div>
+        <div class="admin-search-fields" id="adminSearchFields">
+            <div class="admin-search-field">
+                <label><i class="fas fa-user"></i> Имя</label>
+                <input type="text" id="searchFirstName" placeholder="Имя..." autocomplete="off">
+            </div>
+            <div class="admin-search-field">
+                <label><i class="fas fa-user-tag"></i> Фамилия</label>
+                <input type="text" id="searchLastName" placeholder="Фамилия..." autocomplete="off">
+            </div>
+            <div class="admin-search-field">
+                <label><i class="fas fa-at"></i> Логин</label>
+                <input type="text" id="searchLogin" placeholder="Логин..." autocomplete="off">
+            </div>
+            <div class="admin-search-field">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="text" id="searchEmail" placeholder="Email..." autocomplete="off">
+            </div>
+        </div>
+        <div id="selectedAdminInfo" class="selected-admin-badge" style="display: none;">
+            <span><i class="fas fa-check-circle"></i> Выбран администратор: <strong id="selectedAdminName"></strong></span>
+            <button class="clear-admin-btn" onclick="clearSelectedAdmin()">✕ Очистить</button>
+        </div>
+
+        <!-- Статистика администратора -->
+        <div id="adminStats" class="admin-stats">
+            <h4><i class="fas fa-chart-line"></i> Статистика администратора</h4>
+            <div class="stats-grid">
+                <div class="stat-card resolved">
+                    <span class="stat-number" id="statResolved">0</span>
+                    <span class="stat-label">✅ Решено жалоб</span>
+                </div>
+                <div class="stat-card rejected">
+                    <span class="stat-number" id="statRejected">0</span>
+                    <span class="stat-label">❌ Отказано</span>
+                </div>
+                <div class="stat-card resolved-rejected">
+                    <span class="stat-number" id="statResolvedRejected">0</span>
+                    <span class="stat-label">🔄 Решено (после отказов)</span>
+                </div>
+                <div class="stat-card in-work">
+                    <span class="stat-number" id="statInWork">0</span>
+                    <span class="stat-label">🟡 В работе</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Фильтры для выбранного администратора -->
+        <div id="adminFilterSection" class="admin-filter-section" style="display: none;">
+            <div class="admin-filter-buttons">
+                <button class="admin-filter-btn" data-filter="all">📋 Все жалобы админа</button>
+                <button class="admin-filter-btn" data-filter="resolved">✅ Решённые им</button>
+                <button class="admin-filter-btn rejected-filter" data-filter="rejected">❌ Отказанные им</button>
+            </div>
+        </div>
+
+        <div class="admin-list" id="adminList">
+            <div class="empty-state" style="padding: 30px;">
+                <i class="fas fa-spinner fa-pulse"></i>
+                <p>Загрузка администраторов...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-status="active">📋 Поступившие</button>
+        <button class="tab-btn" data-status="in_work">🟡 В работе</button>
+        <button class="tab-btn" data-status="resolved">✅ Завершённые</button>
+        <button class="tab-btn" data-status="all">📜 Все жалобы</button>
+    </div>
+
+    <div class="sort-control">
+        <button class="sort-btn" id="sortBtn">
+            <i class="fas fa-sort-amount-down"></i> Новые сверху
+        </button>
+        <button class="filter-rejected-btn" id="filterRejectedBtn">
+            <i class="fas fa-times-circle"></i> Только с отказами
+        </button>
+    </div>
+
+    <div class="complaints-table">
+        <table id="complaintsTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Тип</th>
+                <th>Тема</th>
+                <th>На что жалуются</th>
+                <th>Жалобщик</th>
+                <th>Дата</th>
+                <th>Статус</th>
+            </tr>
+            </thead>
+            <tbody id="complaintsBody">
+            <tr>
+                <td colspan="7" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Загрузка жалоб...</p>
+                </td>
+            </tr>
+            </tbody>
+            <tr>
+    </div>
+</div>
+
+<div id="complaintModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-flag"></i> Детали жалобы</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    let currentStatus = 'active';
+    let currentSort = 'desc';
+    let showOnlyRejected = false;
+    let allComplaints = [];
+    let allAdmins = [];
+    let selectedAdminId = null;
+    let selectedAdminName = '';
+    let adminFilterType = 'all';
+    let searchUsername = null;
+
+    // Переключение поиска по пользователям
+    let userSearchVisible = false;
+    function toggleUserSearch() {
+        const fields = document.getElementById('userSearchFields');
+        const icon = document.getElementById('userToggleIcon');
+        userSearchVisible = !userSearchVisible;
+        if (userSearchVisible) {
+            fields.classList.add('show');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            fields.classList.remove('show');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function searchByUsername() {
+        const username = document.getElementById('searchByUsername').value.trim();
+        if (!username) {
+            showNotification('Введите логин пользователя', true);
+            return;
+        }
+        searchUsername = username;
+        document.getElementById('searchedUsername').textContent = username;
+        document.getElementById('searchResultInfo').style.display = 'flex';
+        loadComplaints();
+    }
+
+    function clearUserSearch() {
+        searchUsername = null;
+        document.getElementById('searchByUsername').value = '';
+        document.getElementById('searchResultInfo').style.display = 'none';
+        loadComplaints();
+    }
+
+    // Загрузка администраторов
+    function loadAdmins() {
+        fetch('/admin/api/admins')
+            .then(response => response.json())
+            .then(data => {
+                allAdmins = data;
+                filterAndRenderAdmins();
+            })
+            .catch(error => {
+                console.error('Error loading admins:', error);
+                document.getElementById('adminList').innerHTML = `<div class="empty-state" style="padding: 30px;"><i class="fas fa-exclamation-circle"></i><p>Ошибка загрузки администраторов</p></div>`;
+            });
+    }
+
+    function filterAndRenderAdmins() {
+        const firstNameFilter = document.getElementById('searchFirstName').value.toLowerCase();
+        const lastNameFilter = document.getElementById('searchLastName').value.toLowerCase();
+        const loginFilter = document.getElementById('searchLogin').value.toLowerCase();
+        const emailFilter = document.getElementById('searchEmail').value.toLowerCase();
+
+        let filtered = allAdmins.filter(admin => {
+            const matchFirstName = !firstNameFilter || (admin.firstName && admin.firstName.toLowerCase().includes(firstNameFilter));
+            const matchLastName = !lastNameFilter || (admin.lastName && admin.lastName.toLowerCase().includes(lastNameFilter));
+            const matchLogin = !loginFilter || (admin.login && admin.login.toLowerCase().includes(loginFilter));
+            const matchEmail = !emailFilter || (admin.email && admin.email.toLowerCase().includes(emailFilter));
+            return matchFirstName && matchLastName && matchLogin && matchEmail;
+        });
+
+        const adminList = document.getElementById('adminList');
+        if (filtered.length === 0) {
+            adminList.innerHTML = `<div class="empty-state" style="padding: 30px;"><i class="fas fa-search"></i><p>Администраторы не найдены</p></div>`;
+            return;
+        }
+
+        adminList.innerHTML = filtered.map(admin => `
+            <div class="admin-item ${selectedAdminId === admin.id ? 'selected' : ''}" onclick="selectAdmin(${admin.id}, '${escapeHtml(admin.firstName || '')} ${escapeHtml(admin.lastName || '')}', '${escapeHtml(admin.login)}')">
+                <div class="admin-avatar"><i class="fas fa-user-shield"></i></div>
+                <div class="admin-info">
+                    <div class="admin-name">${escapeHtml(admin.firstName || '')} ${escapeHtml(admin.lastName || '')} (${escapeHtml(admin.login)})</div>
+                    <div class="admin-details">${escapeHtml(admin.email)}</div>
+                </div>
+                ${selectedAdminId === admin.id ? '<i class="fas fa-check-circle" style="color: #4caf50;"></i>' : ''}
+            </div>
+        `).join('');
+    }
+
+    async function loadAdminStats(adminId, adminName) {
+        try {
+            const response = await fetch(`/admin/api/complaints/stats/${adminId}`);
+            const stats = await response.json();
+
+            document.getElementById('statResolved').textContent = stats.resolved || 0;
+            document.getElementById('statRejected').textContent = stats.rejected || 0;
+            document.getElementById('statResolvedRejected').textContent = stats.resolvedAfterRejection || 0;
+            document.getElementById('statInWork').textContent = stats.inWork || 0;
+
+            document.getElementById('adminStats').classList.add('show');
+            selectedAdminName = adminName;
+        } catch (error) {
+            console.error('Error loading admin stats:', error);
+        }
+    }
+
+    function selectAdmin(id, name, login) {
+        selectedAdminId = id;
+        adminFilterType = 'all';
+        const selectedInfo = document.getElementById('selectedAdminInfo');
+        const selectedNameSpan = document.getElementById('selectedAdminName');
+        selectedNameSpan.innerHTML = `${name} (${login})`;
+        selectedInfo.style.display = 'flex';
+
+        // Загружаем статистику администратора
+        loadAdminStats(id, name);
+
+        // Показываем фильтры для выбранного администратора
+        const filterSection = document.getElementById('adminFilterSection');
+        filterSection.style.display = 'flex';
+
+        // Обновляем активный класс на кнопке "Все"
+        document.querySelectorAll('.admin-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.filter === 'all') {
+                btn.classList.add('active');
+            }
+        });
+
+        filterAndRenderAdmins();
+        loadComplaints();
+    }
+
+    function clearSelectedAdmin() {
+        selectedAdminId = null;
+        adminFilterType = 'all';
+        document.getElementById('selectedAdminInfo').style.display = 'none';
+        document.getElementById('adminFilterSection').style.display = 'none';
+        document.getElementById('adminStats').classList.remove('show');
+        filterAndRenderAdmins();
+        loadComplaints();
+    }
+
+    // Настройка фильтров для администратора
+    function setupAdminFilters() {
+        document.querySelectorAll('.admin-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.admin-filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                adminFilterType = this.dataset.filter;
+                loadComplaints();
+            });
+        });
+    }
+
+    let searchTimeout;
+    function setupAdminSearchListeners() {
+        const fields = ['searchFirstName', 'searchLastName', 'searchLogin', 'searchEmail'];
+        fields.forEach(field => {
+            document.getElementById(field).addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => filterAndRenderAdmins(), 300);
+            });
+        });
+    }
+
+    let adminSearchVisible = false;
+    function toggleAdminSearch() {
+        const fields = document.getElementById('adminSearchFields');
+        const icon = document.getElementById('adminToggleIcon');
+        adminSearchVisible = !adminSearchVisible;
+        if (adminSearchVisible) {
+            fields.classList.add('show');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            fields.classList.remove('show');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function loadComplaints() {
+        let url = `/admin/api/complaints?status=${currentStatus}`;
+        if (selectedAdminId && adminFilterType !== 'all') {
+            url += `&adminId=${selectedAdminId}&adminFilter=${adminFilterType}`;
+        } else if (selectedAdminId) {
+            url += `&adminId=${selectedAdminId}`;
+        }
+        if (searchUsername) {
+            url += `&username=${encodeURIComponent(searchUsername)}`;
+        }
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                allComplaints = data;
+                renderTable();
+
+                // Если выбран администратор, обновляем статистику с учётом фильтра
+                if (selectedAdminId && adminFilterType === 'all') {
+                    loadAdminStats(selectedAdminId, selectedAdminName);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading complaints:', error);
+                document.getElementById('complaintsBody').innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Ошибка загрузки жалоб</p></td></tr>`;
+            });
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('complaintsBody');
+        let filtered = [...allComplaints];
+
+        if (showOnlyRejected) {
+            filtered = filtered.filter(c => c.rejectedBy && c.rejectedBy.length > 0);
+        }
+
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.createdAt);
+            const dateB = new Date(b.createdAt);
+            return currentSort === 'desc' ? dateB - dateA : dateA - dateB;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><i class="fas fa-inbox"></i><p>Нет жалоб</p></td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(complaint => {
+            let rowClass = '';
+            if (complaint.status === 'IN_WORK') rowClass = 'in-work';
+            else if (complaint.resolved) rowClass = 'resolved';
+            else if (complaint.rejectedBy && complaint.rejectedBy.length > 0 && !complaint.resolved && complaint.status !== 'IN_WORK') rowClass = 'rejected-by-admin';
+
+            const hasRejections = complaint.rejectedBy && complaint.rejectedBy.length > 0;
+
+            return `
+                <tr class="${rowClass}" onclick="openModal(${complaint.id})">
+                    <td>${hasRejections ? '<span class="reject-circle"></span>' : ''}#${complaint.id}</td>
+                    <td><span class="type-badge ${complaint.type === 'PREMISE' ? 'type-premise' : 'type-user'}"><i class="fas ${complaint.type === 'PREMISE' ? 'fa-building' : 'fa-user'}"></i> ${complaint.type === 'PREMISE' ? 'Помещение' : 'Пользователь'}</span></td>
+                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(complaint.subject)}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(complaint.targetName)}</td>
+                    <td>${escapeHtml(complaint.complainantName)}</td>
+                    <td>${new Date(complaint.createdAt).toLocaleDateString('ru-RU')}</td>
+                    <td><span class="status-badge ${complaint.resolved ? 'status-resolved' : (complaint.status === 'IN_WORK' ? 'status-in-work' : 'status-active')}">${complaint.resolved ? '✅ Завершена' : (complaint.status === 'IN_WORK' ? '🟡 В работе' : '⏳ Поступила')}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function openModal(id) {
+        const response = await fetch(`/admin/api/complaints/${id}`);
+        const complaint = await response.json();
+        const modalBody = document.getElementById('modalBody');
+
+        let targetLink = '';
+        if (complaint.type === 'PREMISE' && complaint.premiseId) {
+            targetLink = `<a href="/premise/${complaint.premiseId}" target="_blank" class="detail-link">Перейти к объявлению →</a>`;
+        } else if (complaint.type === 'USER' && complaint.userId) {
+            targetLink = `<a href="/profile?username=${encodeURIComponent(complaint.targetName)}" target="_blank" class="detail-link">Перейти к профилю →</a>`;
+        }
+
+        let rejectedInfo = '';
+        let hasRejections = complaint.rejectedBy && complaint.rejectedBy.length > 0;
+        if (hasRejections) {
+            rejectedInfo = `
+                <div class="rejected-info">
+                    <i class="fas fa-times-circle"></i>
+                    <strong>Отказались от решения (${complaint.rejectedBy.length} раз):</strong><br>
+                    ${complaint.rejectedBy.map(r => `${new Date(r.rejectedAt).toLocaleString('ru-RU')} - <a href="/profile?username=${encodeURIComponent(r.adminName)}" class="detail-link" target="_blank">${escapeHtml(r.adminName)}</a>`).join('<br>')}
+                </div>
+            `;
+        }
+
+        let resolvedInfo = '';
+        if (complaint.resolved && complaint.resolvedByName) {
+            resolvedInfo = `
+                <div class="resolved-info">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Завершена:</strong> ${new Date(complaint.resolvedAt).toLocaleString('ru-RU')}<br>
+                    <strong>Администратор:</strong> <a href="/profile?username=${encodeURIComponent(complaint.resolvedByName)}" class="detail-link" target="_blank">${escapeHtml(complaint.resolvedByName)}</a>
+                </div>
+            `;
+        }
+
+        let actionButtons = '';
+        if (!complaint.resolved) {
+            if (complaint.status === 'IN_WORK') {
+                actionButtons = `
+                    <div class="action-buttons">
+                        <button class="reject-btn" onclick="rejectComplaint(${complaint.id})"><i class="fas fa-times"></i> Отказаться</button>
+                        <button class="resolve-btn" onclick="resolveComplaint(${complaint.id})"><i class="fas fa-check"></i> Завершить</button>
+                    </div>
+                `;
+            } else {
+                actionButtons = `
+                    <div class="action-buttons">
+                        <button class="take-work-btn" onclick="takeWorkComplaint(${complaint.id})"><i class="fas fa-hand-paper"></i> Взять в работу</button>
+                    </div>
+                `;
+            }
+        }
+
+        modalBody.innerHTML = `
+            <div class="detail-row"><div class="detail-label">Тема жалобы</div><div class="detail-value"><strong>${escapeHtml(complaint.subject)}</strong></div></div>
+            <div class="detail-row"><div class="detail-label">Дата создания</div><div class="detail-value">${new Date(complaint.createdAt).toLocaleString('ru-RU')}</div></div>
+            <div class="detail-row"><div class="detail-label">Тип жалобы</div><div class="detail-value">${complaint.type === 'PREMISE' ? '📦 На объявление' : '👤 На пользователя'}</div></div>
+            <div class="detail-row"><div class="detail-label">Объект жалобы</div><div class="detail-value">${escapeHtml(complaint.targetName)}${targetLink ? `<div style="margin-top: 8px;">${targetLink}</div>` : ''}</div></div>
+            <div class="detail-row"><div class="detail-label">Жалобщик</div><div class="detail-value"><a href="/profile?username=${encodeURIComponent(complaint.complainantName)}" class="detail-link" target="_blank">${escapeHtml(complaint.complainantName)}</a></div></div>
+            <div class="detail-row"><div class="detail-label">Подробное описание</div><div class="detail-value" style="white-space: pre-wrap; background: #f9f9f9; padding: 12px; border-radius: 12px;">${escapeHtml(complaint.reason)}</div></div>
+            ${rejectedInfo}
+            ${resolvedInfo}
+            ${actionButtons}
+        `;
+
+        document.getElementById('complaintModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('complaintModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    async function takeWorkComplaint(id) {
+        const response = await fetch(`/admin/api/complaints/${id}/take-work`, { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Жалоба взята в работу!');
+            closeModal();
+            loadComplaints();
+        } else {
+            showNotification(result.message || 'Ошибка', true);
+        }
+    }
+
+    async function rejectComplaint(id) {
+        if (!confirm('Вы уверены, что хотите отказаться от решения этой жалобы?')) return;
+        const response = await fetch(`/admin/api/complaints/${id}/reject`, { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Вы отказались от жалобы');
+            closeModal();
+            loadComplaints();
+        } else {
+            showNotification(result.message || 'Ошибка', true);
+        }
+    }
+
+    async function resolveComplaint(id) {
+        if (!confirm('Вы уверены, что хотите завершить эту жалобу?')) return;
+        const response = await fetch(`/admin/api/complaints/${id}/resolve`, { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Жалоба завершена!');
+            closeModal();
+            loadComplaints();
+        } else {
+            showNotification(result.message || 'Ошибка при завершении жалобы', true);
+        }
+    }
+
+    function cleanupOldResolvedComplaints() {
+        fetch('/admin/api/complaints/cleanup', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => { if (data.deletedCount > 0) loadComplaints(); })
+            .catch(error => console.error('Error cleaning up complaints:', error));
+    }
+
+    function showNotification(message, isError = false) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `position: fixed; bottom: 20px; right: 20px; background: ${isError ? '#f44336' : '#4caf50'}; color: white; padding: 14px 22px; border-radius: 10px; z-index: 10001; animation: slideIn 0.4s ease; box-shadow: 0 6px 20px rgba(0,0,0,0.4);`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => { notification.style.opacity = '0'; setTimeout(() => notification.remove(), 300); }, 3000);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+    }
+
+    document.getElementById('sortBtn').addEventListener('click', function() {
+        currentSort = currentSort === 'desc' ? 'asc' : 'desc';
+        this.innerHTML = currentSort === 'desc' ? '<i class="fas fa-sort-amount-down"></i> Новые сверху' : '<i class="fas fa-sort-amount-up"></i> Старые сверху';
+        renderTable();
+    });
+
+    document.getElementById('filterRejectedBtn').addEventListener('click', function() {
+        showOnlyRejected = !showOnlyRejected;
+        this.classList.toggle('active');
+        renderTable();
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentStatus = this.dataset.status;
+            currentSort = 'desc';
+            document.getElementById('sortBtn').innerHTML = '<i class="fas fa-sort-amount-down"></i> Новые сверху';
+            loadComplaints();
+        });
+    });
+
+    window.onclick = event => { if (event.target === document.getElementById('complaintModal')) closeModal(); };
+
+    loadAdmins();
+    setupAdminSearchListeners();
+    setupAdminFilters();
+    loadComplaints();
+    cleanupOldResolvedComplaints();
+    setInterval(cleanupOldResolvedComplaints, 3600000);
+</script>
+
+<style>
+    @keyframes slideIn {
+        from { transform: translateX(120%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+</body>
+</html>

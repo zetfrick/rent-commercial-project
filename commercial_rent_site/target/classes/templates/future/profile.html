@@ -31,30 +31,17 @@
             overflow-x: hidden;
         }
 
-        /* Анимации для контента профиля */
         @keyframes profileFadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes profileSlideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
-        /* ====================== HEADER (статичный, тонкий) ====================== */
+        /* ====================== HEADER ====================== */
         .header {
             display: flex;
             justify-content: space-between;
@@ -109,7 +96,6 @@
         }
         .city-list li a:hover { background: #ff5722; }
 
-        /* Профиль пользователя */
         .user-profile {
             display: flex;
             align-items: center;
@@ -186,7 +172,7 @@
         }
         .register-link:hover { background: #e64a19; }
 
-        /* Контейнер профиля */
+        /* ====================== ПРОФИЛЬ ====================== */
         .profile-container {
             position: relative;
             background: linear-gradient(135deg, #fff5eb 0%, #ffe0cc 100%);
@@ -262,7 +248,6 @@
             font-size: 22px;
         }
 
-        /* ====================== ОСНОВНОЙ КОНТЕНТ ====================== */
         .profile-content {
             display: flex;
             justify-content: space-between;
@@ -325,7 +310,6 @@
             letter-spacing: -0.3px;
         }
 
-        /* Стиль для бейджа роли */
         .profile-role-badge {
             display: inline-block;
             background: rgba(255, 255, 255, 0.25);
@@ -517,7 +501,6 @@
             transform: translateY(-2px);
         }
 
-        /* Правая панель с кнопками */
         .profile-right-buttons {
             display: flex;
             flex-direction: column;
@@ -579,9 +562,7 @@
             transform: translateX(5px);
         }
 
-        /* ====================== ОСОБЫЕ АДМИНИСТРАТИВНЫЕ КНОПКИ ====================== */
-
-        /* Кнопка Администраторы - премиум стиль */
+        /* Специальные стили для кнопок */
         .admin-premium-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -603,7 +584,6 @@
             box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
         }
 
-        /* Кнопка Жалобы (для админов) - опасный стиль */
         .complaint-danger-btn {
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
             color: white;
@@ -625,7 +605,6 @@
             box-shadow: 0 12px 35px rgba(238, 90, 36, 0.4);
         }
 
-        /* Кнопка пожаловаться на пользователя - красный стиль */
         .report-user-btn {
             background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
             color: white;
@@ -647,7 +626,6 @@
             box-shadow: 0 12px 35px rgba(244, 67, 54, 0.4);
         }
 
-        /* Бейдж для чатов - аккуратный кружок */
         .chat-badge {
             display: inline-flex;
             align-items: center;
@@ -745,56 +723,16 @@
             box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
         }
 
-        /* Адаптивность */
         @media (max-width: 900px) {
-            .profile-overlay {
-                padding: 20px 16px 40px;
-            }
-
-            .no-header .profile-overlay {
-                padding: 0 16px;
-            }
-
-            .profile-container.no-header {
-                padding-top: 50px;
-                padding-bottom: 50px;
-            }
-
-            .profile-content {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .profile-user-info {
-                min-width: auto;
-            }
-
-            .profile-right-buttons {
-                min-width: auto;
-            }
-
-            .profile-info-row {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .profile-label {
-                min-width: auto;
-            }
-
-            .profile-value {
-                text-align: left;
-                width: 100%;
-            }
-
-            .profile-button-group {
-                flex-direction: column;
-            }
-
-            .profile-save-btn, .profile-cancel-btn {
-                width: 100%;
-            }
+            .profile-overlay { padding: 20px 16px 40px; }
+            .profile-content { flex-direction: column; align-items: stretch; }
+            .profile-user-info { min-width: auto; }
+            .profile-right-buttons { min-width: auto; }
+            .profile-info-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .profile-label { min-width: auto; }
+            .profile-value { text-align: left; width: 100%; }
+            .profile-button-group { flex-direction: column; }
+            .profile-save-btn, .profile-cancel-btn { width: 100%; }
         }
 
         @media (max-width: 768px) {
@@ -803,35 +741,18 @@
         }
 
         @media (max-width: 480px) {
-            .profile-body {
-                padding: 20px;
-            }
-
-            .profile-action-btn {
-                padding: 16px 22px;
-                font-size: 15px;
-            }
-
-            .profile-action-btn i {
-                font-size: 22px;
-                width: 28px;
-            }
-
-            .profile-container.no-header {
-                padding-top: 30px;
-                padding-bottom: 30px;
-            }
+            .profile-body { padding: 20px; }
+            .profile-action-btn { padding: 16px 22px; font-size: 15px; }
+            .profile-action-btn i { font-size: 22px; width: 28px; }
         }
     </style>
 </head>
 <body>
 
-<!-- HEADER (статичный, тонкий, как на главной) -->
+<!-- HEADER -->
 <header class="header">
     <div class="nav-left">
         <a href="/about">О нас</a>
-
-        <!-- Выбор города -->
         <div class="city-dropdown">
             <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
             <ul class="city-list">
@@ -843,9 +764,7 @@
             </ul>
         </div>
     </div>
-
     <div class="nav-right">
-        <!-- Если пользователь авторизован -->
         <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
             <a th:href="@{/profile}" class="user-info">
                 <span class="user-avatar">👤</span>
@@ -855,8 +774,6 @@
                 <button type="submit" class="logout-btn">Выйти</button>
             </form>
         </div>
-
-        <!-- Если пользователь не авторизован -->
         <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
             <a href="/auth/login" class="login-link">Вход</a>
             <a href="/auth/register" class="register-link">Регистрация</a>
@@ -864,7 +781,7 @@
     </div>
 </header>
 
-<!-- Основной контент профиля -->
+<!-- ОСНОВНОЙ КОНТЕНТ ПРОФИЛЯ -->
 <div class="profile-container">
     <div class="profile-overlay">
         <div th:if="${param.updated}" class="profile-success">
@@ -873,7 +790,7 @@
         </div>
 
         <div class="profile-content">
-            <!-- Левая колонка - информация о пользователе -->
+            <!-- Левая колонка -->
             <div class="profile-user-info">
                 <div class="profile-header">
                     <div class="profile-avatar-wrapper">
@@ -882,8 +799,6 @@
                         </div>
                     </div>
                     <h1 th:text="${profileUser?.firstName != null and profileUser?.firstName != ''} ? ${profileUser.firstName} : ${profileUser.login}">Пользователь</h1>
-
-                    <!-- Бейдж с ролью вместо "Аккаунт подтверждён" -->
                     <div class="profile-role-badge">
                         <i class="fas fa-user-shield"></i>
                         <span th:text="${profileUser.role.name() == 'USER' ? 'Пользователь' : (profileUser.role.name() == 'ADMIN' ? 'Администратор' : 'Главный администратор')}"></span>
@@ -906,7 +821,6 @@
                 </div>
 
                 <div class="profile-body">
-                    <!-- Режим редактирования -->
                     <form th:object="${profileUser}" th:action="@{/profile/edit}" method="post" th:if="${editMode}">
                         <div class="profile-form-group">
                             <label><i class="fas fa-user"></i> Имя</label>
@@ -932,18 +846,12 @@
                             <label><i class="fas fa-at"></i> Логин</label>
                             <div class="profile-readonly-field" th:text="*{login}"></div>
                         </div>
-
                         <div class="profile-button-group">
-                            <button type="submit" class="profile-save-btn">
-                                <i class="fas fa-save"></i> Сохранить изменения
-                            </button>
-                            <a th:href="@{/profile}" class="profile-cancel-btn">
-                                <i class="fas fa-times"></i> Отмена
-                            </a>
+                            <button type="submit" class="profile-save-btn"><i class="fas fa-save"></i> Сохранить изменения</button>
+                            <a th:href="@{/profile}" class="profile-cancel-btn"><i class="fas fa-times"></i> Отмена</a>
                         </div>
                     </form>
 
-                    <!-- Режим просмотра -->
                     <div th:unless="${editMode}">
                         <div class="profile-info-row">
                             <span class="profile-label"><i class="fas fa-user"></i> Имя</span>
@@ -969,8 +877,6 @@
                             <span class="profile-label"><i class="fas fa-at"></i> Логин</span>
                             <span class="profile-value" th:text="${profileUser.login}"></span>
                         </div>
-
-                        <!-- Кнопка редактирования только для владельца -->
                         <button th:if="${isOwnProfile}" class="profile-edit-btn" onclick="window.location.href='/profile/edit'">
                             <i class="fas fa-pen"></i> Редактировать профиль
                         </button>
@@ -978,23 +884,21 @@
                 </div>
             </div>
 
-            <!-- Правая панель с действиями -->
+            <!-- Правая панель -->
             <div class="profile-right-buttons">
-                <!-- ЧАТЫ - только для владельца -->
                 <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="window.location.href='/chats'" style="border-left: 5px solid #4caf50;" id="chatsButton">
                     <i class="fas fa-comments"></i>
                     <span class="btn-text">Сообщения и чаты <span id="chatsBadge" class="chat-badge" style="display: none;"></span></span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ИЗБРАННОЕ - только для владельца -->
                 <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="alert('⭐ Избранное — в разработке')" style="border-left: 5px solid #ff5722;">
                     <i class="fas fa-heart"></i>
                     <span class="btn-text">Избранное</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- АДМИНИСТРАТОРЫ - только для SUPER_ADMIN, ОСОБЫЙ ДИЗАЙН -->
+                <!-- АДМИНИСТРАТОРЫ - для SUPER_ADMIN -->
                 <button th:if="${profileUser.role.name() == 'SUPER_ADMIN'}"
                         class="profile-action-btn admin-premium-btn"
                         onclick="window.location.href='/admin/admins'">
@@ -1003,16 +907,16 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ЖАЛОБЫ - для ADMIN и SUPER_ADMIN, ОСОБЫЙ ДИЗАЙН -->
+                <!-- ЖАЛОБЫ - для ADMIN и SUPER_ADMIN (теперь открывает страницу жалоб) -->
                 <button th:if="${profileUser.role.name() == 'ADMIN' or profileUser.role.name() == 'SUPER_ADMIN'}"
                         class="profile-action-btn complaint-danger-btn"
-                        onclick="alert('⚠️ Жалобы на объявления — в разработке')">
+                        onclick="window.location.href='/admin/complaints'">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span class="btn-text">Жалобы</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ПОЖАЛОВАТЬСЯ НА ПОЛЬЗОВАТЕЛЯ - только когда смотрим чужой профиль и у текущего пользователя НЕ АДМИНИСТРАТОР -->
+                <!-- ПОЖАЛОВАТЬСЯ НА ПОЛЬЗОВАТЕЛЯ -->
                 <button th:if="${!isOwnProfile and (#authorization.expression('isAuthenticated()')) and profileUser.role.name() != 'ADMIN' and profileUser.role.name() != 'SUPER_ADMIN'}"
                         class="profile-action-btn report-user-btn"
                         onclick="openUserReportModal()">
@@ -1021,7 +925,7 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ОБЪЯВЛЕНИЯ (меняем текст в зависимости от владельца) -->
+                <!-- ОБЪЯВЛЕНИЯ -->
                 <a th:if="${isOwnProfile}"
                    th:href="@{/profile/{username}/premises(username=${profileUser.login})}"
                    class="profile-action-btn"
@@ -1040,14 +944,12 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </a>
 
-                <!-- АРЕНДОВАННЫЕ ПОМЕЩЕНИЯ - только для владельца -->
                 <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="alert('📋 Арендованные помещения — в разработке')" style="border-left: 5px solid #ffc107;">
                     <i class="fas fa-building"></i>
                     <span class="btn-text">Арендованные помещения</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ИСТОРИЯ ОБЪЯВЛЕНИЙ - для всех (видна и владельцу, и гостю) -->
                 <button class="profile-action-btn" onclick="alert('📜 История объявлений — в разработке')" style="border-left: 5px solid #ff6f00;">
                     <i class="fas fa-history"></i>
                     <span class="btn-text">История объявлений</span>
@@ -1066,20 +968,26 @@
             <button class="report-modal-close" onclick="closeUserReportModal()">&times;</button>
         </div>
         <div class="report-modal-body">
-            <textarea id="userReportReason" placeholder="Опишите причину жалобы на пользователя..."></textarea>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Тема жалобы <span style="color: #f44336;">*</span></label>
+                <input type="text" id="userReportSubject" maxlength="100" placeholder="Кратко опишите суть жалобы (до 100 символов)" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px;">
+                <small style="color: #999; display: block; margin-top: 5px;">Максимум 100 символов. Осталось: <span id="userSubjectCounter">100</span></small>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Подробное описание <span style="color: #f44336;">*</span></label>
+                <textarea id="userReportReason" placeholder="Опишите причину жалобы подробно..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; resize: vertical; min-height: 120px;"></textarea>
+                <small style="color: #999; display: block; margin-top: 5px;">Максимум 2000 символов</small>
+            </div>
             <button class="report-submit-btn" onclick="submitUserReport()">Отправить жалобу</button>
         </div>
     </div>
 </div>
 
 <script>
-    // Функция для обновления бейджа на кнопке "Сообщения и чаты"
     function updateChatButtonBadge() {
         const badgeElement = document.getElementById('chatsBadge');
         if (!badgeElement) return;
-
         const unreadCount = localStorage.getItem('unreadChatsCount');
-
         if (unreadCount && parseInt(unreadCount) > 0) {
             badgeElement.textContent = unreadCount;
             badgeElement.style.display = 'inline-flex';
@@ -1088,7 +996,6 @@
         }
     }
 
-    // Функция для загрузки количества чатов с непрочитанными сообщениями
     function loadUnreadChatsCount() {
         fetch('/chats/api/chats')
             .then(response => response.json())
@@ -1100,7 +1007,6 @@
             .catch(error => console.error('Error loading unread chats count:', error));
     }
 
-    // Слушаем событие обновления количества непрочитанных чатов
     window.addEventListener('unreadChatsUpdate', function(e) {
         if (e.detail && e.detail.count !== undefined) {
             localStorage.setItem('unreadChatsCount', e.detail.count);
@@ -1108,8 +1014,23 @@
         updateChatButtonBadge();
     });
 
-    // Функции для модального окна жалобы на пользователя
+    // Счётчик символов для темы
+    document.getElementById('userReportSubject')?.addEventListener('input', function() {
+        const maxLength = 100;
+        const currentLength = this.value.length;
+        const remaining = maxLength - currentLength;
+        const counter = document.getElementById('userSubjectCounter');
+        if (counter) counter.textContent = remaining;
+        if (remaining < 0) {
+            this.value = this.value.substring(0, maxLength);
+            if (counter) counter.textContent = 0;
+        }
+    });
+
     function openUserReportModal() {
+        document.getElementById('userReportSubject').value = '';
+        document.getElementById('userReportReason').value = '';
+        document.getElementById('userSubjectCounter').textContent = '100';
         document.getElementById('userReportModal').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
@@ -1117,34 +1038,62 @@
     function closeUserReportModal() {
         document.getElementById('userReportModal').style.display = 'none';
         document.body.style.overflow = 'auto';
-        document.getElementById('userReportReason').value = '';
     }
 
     function submitUserReport() {
+        const subject = document.getElementById('userReportSubject').value.trim();
         const reason = document.getElementById('userReportReason').value.trim();
         const reportedUsername = '[[${profileUser.login}]]';
+        const reportedUserId = '[[${profileUser.id}]]';
+
+        if (!subject) {
+            showNotification('Пожалуйста, укажите тему жалобы', true);
+            return;
+        }
+
+        if (subject.length > 100) {
+            showNotification('Тема жалобы не должна превышать 100 символов', true);
+            return;
+        }
 
         if (!reason) {
             showNotification('Пожалуйста, укажите причину жалобы', true);
             return;
         }
 
-        // Заглушка - здесь будет отправка на сервер
-        console.log('Жалоба на пользователя:', reportedUsername);
-        console.log('Причина:', reason);
+        if (reason.length > 2000) {
+            showNotification('Описание жалобы не должно превышать 2000 символов', true);
+            return;
+        }
 
-        showNotification('Жалоба отправлена администратору. Спасибо за бдительность!');
-        closeUserReportModal();
+        fetch('/api/complaints', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                subject: subject,
+                reason: reason,
+                type: 'USER',
+                userId: reportedUserId,
+                targetName: reportedUsername
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Жалоба отправлена администратору. Спасибо за бдительность!');
+                closeUserReportModal();
+            } else {
+                showNotification(data.message || 'Ошибка при отправке жалобы', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Не удалось отправить жалобу', true);
+        });
     }
 
     function showNotification(message, isError = false) {
-        const existing = document.querySelector('.profile-success');
-        if (existing && existing !== document.querySelector('.profile-success')) {
-            // Не удаляем основной success
-        }
         const notification = document.createElement('div');
-        notification.className = `notification ${isError ? 'error' : ''}`;
-        notification.textContent = message;
         notification.style.position = 'fixed';
         notification.style.bottom = '20px';
         notification.style.right = '20px';
@@ -1154,15 +1103,14 @@
         notification.style.borderRadius = '10px';
         notification.style.zIndex = '10000';
         notification.style.animation = 'slideIn 0.4s ease';
+        notification.textContent = message;
         document.body.appendChild(notification);
-
         setTimeout(() => {
             notification.style.opacity = '0';
             setTimeout(() => notification.remove(), 600);
         }, 5000);
     }
 
-    // Закрытие модального окна при клике вне его
     window.onclick = function(event) {
         const modal = document.getElementById('userReportModal');
         if (event.target === modal) {
@@ -1170,12 +1118,18 @@
         }
     }
 
-    // При загрузке страницы
     document.addEventListener('DOMContentLoaded', function() {
         loadUnreadChatsCount();
         setInterval(loadUnreadChatsCount, 10000);
     });
 </script>
+
+<style>
+    @keyframes slideIn {
+        from { transform: translateX(120%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
 
 </body>
 </html>

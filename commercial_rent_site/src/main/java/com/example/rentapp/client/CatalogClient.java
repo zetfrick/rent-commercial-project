@@ -38,4 +38,10 @@ public interface CatalogClient {
     // НОВЫЙ МЕТОД: получение конфигурации
     @GetMapping("/api/config/all")
     Map<String, Object> getAllConfig();
+
+    @PostMapping("/api/premise/{id}/toggle-publish")
+    Map<String, Object> togglePublish(@PathVariable("id") Long id, @RequestBody Map<String, Boolean> request);
+
+    @DeleteMapping("/api/premise/{id}/delete")
+    Map<String, Object> deletePremise(@PathVariable("id") Long id);
 }

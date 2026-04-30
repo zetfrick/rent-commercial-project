@@ -195,6 +195,44 @@
             transform: translateY(-2px);
         }
 
+        /* Кнопка Снять с публикации */
+        .unpublish-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .unpublish-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
+        /* Кнопка публиковать снова */
+        .publish-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .publish-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
         /* Кнопка пожаловаться */
         .complaint-btn {
             display: inline-flex;
@@ -213,6 +251,25 @@
         }
         .complaint-btn:hover {
             background: #d32f2f;
+            transform: translateY(-2px);
+        }
+
+        /* Кнопка удаления для админа */
+        .admin-delete-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #d32f2f;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .admin-delete-btn:hover {
+            background: #b71c1c;
             transform: translateY(-2px);
         }
 
@@ -701,6 +758,24 @@
             padding: 40px 0;
         }
 
+        /* Бейдж статуса активности */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 15px;
+        }
+        .status-badge.active {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+        .status-badge.inactive {
+            background: #ffebee;
+            color: #f44336;
+        }
+
         @media (max-width: 992px) {
             .main-grid { grid-template-columns: 1fr; }
             .photos-slider { height: 380px; }
@@ -719,7 +794,7 @@
             .details-grid { grid-template-columns: 1fr; }
             .detail-item.full-width { grid-column: span 1; }
             .top-buttons { flex-direction: column; align-items: stretch; gap: 10px; }
-            .edit-btn, .owner-profile-btn, .complaint-btn { margin-left: 0; justify-content: center; }
+            .edit-btn, .owner-profile-btn, .complaint-btn, .unpublish-btn, .publish-btn, .admin-delete-btn { margin-left: 0; justify-content: center; }
         }
 
         .top-buttons {
@@ -847,12 +922,10 @@
 </head>
 <body>
 
-<!-- HEADER (статичный, тонкий, как на главной) -->
+<!-- HEADER -->
 <header class="header">
     <div class="nav-left">
         <a href="/about">О нас</a>
-
-        <!-- Выбор города -->
         <div class="city-dropdown">
             <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
             <ul class="city-list">
@@ -864,9 +937,7 @@
             </ul>
         </div>
     </div>
-
     <div class="nav-right">
-        <!-- Если пользователь авторизован -->
         <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
             <a th:href="@{/profile}" class="user-info">
                 <span class="user-avatar">👤</span>
@@ -876,8 +947,6 @@
                 <button type="submit" class="logout-btn">Выйти</button>
             </form>
         </div>
-
-        <!-- Если пользователь не авторизован -->
         <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
             <a href="/auth/login" class="login-link">Вход</a>
             <a href="/auth/register" class="register-link">Регистрация</a>
@@ -889,26 +958,65 @@
 <div class="container">
     <div class="top-buttons" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap;">
         <a href="/catalog" class="back-btn"><i class="fas fa-arrow-left"></i> Назад в каталог</a>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <!-- Кнопка профиля владельца -->
             <a th:href="@{/profile(username=${ownerLogin})}" class="owner-profile-btn">
                 <i class="fas fa-user-circle"></i> Профиль владельца
             </a>
-            <!-- Кнопка редактирования - видна только владельцу -->
+
+            <!-- Кнопка Снять с публикации / Опубликовать - для владельца -->
+            <button th:if="${isOwner and premise.active}"
+                    class="unpublish-btn"
+                    onclick="togglePublish(false)">
+                <i class="fas fa-eye-slash"></i> Снять с публикации
+            </button>
+            <button th:if="${isOwner and not premise.active}"
+                    class="publish-btn"
+                    onclick="togglePublish(true)">
+                <i class="fas fa-eye"></i> Опубликовать снова
+            </button>
+
+            <!-- Кнопка редактирования - для владельца -->
             <a th:if="${isOwner}" th:href="@{/premise/{id}/edit(id=${premise.id})}" class="edit-btn">
-                <i class="fas fa-pen"></i> Редактировать объявление
+                <i class="fas fa-pen"></i> Редактировать
             </a>
-            <!-- Кнопка пожаловаться - видна всем авторизованным пользователям (кроме владельца) -->
+
+            <!-- Кнопка пожаловаться - для авторизованных (кроме владельца) -->
             <button th:if="${#authorization.expression('isAuthenticated()') and !isOwner}"
                     class="complaint-btn"
-                    onclick="openComplaintModal()">
+                    onclick="openComplaintModal('premise')">
                 <i class="fas fa-flag"></i> Пожаловаться
+            </button>
+
+            <!-- Кнопка удаления - только для ADMIN и SUPER_ADMIN -->
+            <button th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''SUPER_ADMIN'')')}"
+                    class="admin-delete-btn"
+                    onclick="deletePremise()">
+                <i class="fas fa-trash-alt"></i> Удалить объявление
             </button>
         </div>
     </div>
 
+    <!-- Бейдж статуса активности -->
+    <div style="margin-bottom: 15px;">
+        <span th:if="${premise.active}" class="status-badge active">
+            <i class="fas fa-check-circle"></i> Активно
+        </span>
+        <span th:unless="${premise.active}" class="status-badge inactive">
+            <i class="fas fa-ban"></i> Снято с публикации
+        </span>
+    </div>
+
     <div th:if="${param.updated}" class="notification" style="background: #4caf50; display: block;">
         <i class="fas fa-check-circle"></i> Объявление успешно обновлено!
+    </div>
+
+    <div th:if="${param.unpublished}" class="notification" style="background: #ff9800; display: block;">
+        <i class="fas fa-eye-slash"></i> Объявление снято с публикации
+    </div>
+
+    <div th:if="${param.published}" class="notification" style="background: #4caf50; display: block;">
+        <i class="fas fa-eye"></i> Объявление опубликовано снова
     </div>
 
     <h1 th:text="${premise.getTypeInRussian() ?: premise.type}"></h1>
@@ -917,7 +1025,6 @@
     <div class="main-grid">
         <!-- ЛЕВАЯ КОЛОНКА: Фото + Удобства под ними -->
         <div class="photos-amenities-block">
-            <!-- Слайдер с фотографиями -->
             <div th:if="${!premise.photoPaths.isEmpty()}" class="photos-slider" id="mainSlider">
                 <div class="photos-container" id="photosContainer">
                     <img th:each="photo, iterStat : ${premise.photoPaths}"
@@ -939,7 +1046,6 @@
                 <span>Фотографии отсутствуют</span>
             </div>
 
-            <!-- Удобства под слайдером -->
             <div class="amenities-under-photos">
                 <h3><i class="fas fa-star-of-life"></i> Оснащение и удобства</h3>
                 <div class="amenities-chips" th:if="${!premise.amenities.isEmpty()}">
@@ -954,7 +1060,7 @@
             </div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА: Карта + Цена + Характеристики -->
+        <!-- ПРАВАЯ КОЛОНКА -->
         <div>
             <div class="map-container">
                 <div class="map-label"><i class="fas fa-map-marker-alt"></i> Расположение на карте</div>
@@ -978,7 +1084,6 @@
                     </div>
                 </div>
 
-                <!-- ХАРАКТЕРИСТИКИ ПОМЕЩЕНИЯ -->
                 <div class="specs-grid">
                     <div class="spec-item">
                         <div class="spec-icon"><i class="fas fa-arrows-alt"></i></div>
@@ -992,7 +1097,6 @@
                     </div>
                 </div>
 
-                <!-- НОВЫЙ БЛОК: Этаж и Квартира/Офис -->
                 <div class="details-grid">
                     <div class="detail-item">
                         <div class="detail-icon"><i class="fas fa-layer-group"></i></div>
@@ -1012,7 +1116,6 @@
                     </div>
                 </div>
 
-                <!-- ДОСТУПНОСТЬ -->
                 <div class="availability-card">
                     <span class="label"><i class="fas fa-calendar-alt"></i> Доступно для аренды</span>
                     <span class="dates">
@@ -1021,7 +1124,6 @@
                     </span>
                 </div>
 
-                <!-- ИНФОРМАЦИЯ О ВЛАДЕЛЬЦЕ -->
                 <div class="owner-card">
                     <h3><i class="fas fa-user-circle"></i> Контактные данные владельца</h3>
                     <div class="owner-details">
@@ -1076,7 +1178,7 @@
         </div>
     </div>
 
-    <!-- ====================== КОММЕНТАРИИ ====================== -->
+    <!-- КОММЕНТАРИИ -->
     <div class="comments-section">
         <h2><i class="fas fa-comments"></i> Комментарии и вопросы</h2>
 
@@ -1105,7 +1207,16 @@
             <button class="complaint-modal-close" onclick="closeComplaintModal()">&times;</button>
         </div>
         <div class="complaint-modal-body">
-            <textarea id="complaintReason" placeholder="Опишите причину жалобы..."></textarea>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Тема жалобы <span style="color: #f44336;">*</span></label>
+                <input type="text" id="complaintSubject" maxlength="100" placeholder="Кратко опишите суть жалобы (до 100 символов)" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px;">
+                <small style="color: #999; display: block; margin-top: 5px;">Максимум 100 символов. Осталось: <span id="subjectCounter">100</span></small>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Подробное описание <span style="color: #f44336;">*</span></label>
+                <textarea id="complaintReason" placeholder="Опишите причину жалобы подробно..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; resize: vertical; min-height: 120px;"></textarea>
+                <small style="color: #999; display: block; margin-top: 5px;">Максимум 2000 символов</small>
+            </div>
             <button class="complaint-submit-btn" onclick="submitComplaint()">Отправить жалобу</button>
         </div>
     </div>
@@ -1219,8 +1330,64 @@
         window.location.href = '/chats/premise/' + premiseId;
     }
 
+    // ======================== УПРАВЛЕНИЕ ПУБЛИКАЦИЕЙ ========================
+    function togglePublish(active) {
+        const action = active ? 'опубликовать' : 'снять с публикации';
+        if (!confirm(`Вы уверены, что хотите ${action} это объявление?`)) return;
+
+        fetch(`/api/premise/${premiseId}/toggle-publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active: active })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = `/premise/${premiseId}?${active ? 'published' : 'unpublished'}=true`;
+            } else {
+                showNotification(data.message || 'Ошибка при изменении статуса', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Не удалось изменить статус объявления', true);
+        });
+    }
+
+    // ======================== УДАЛЕНИЕ ОБЪЯВЛЕНИЯ (ДЛЯ АДМИНОВ) ========================
+    function deletePremise() {
+        if (!confirm('ВНИМАНИЕ! Вы собираетесь полностью удалить это объявление.\n\nЭто действие НЕЛЬЗЯ будет отменить.\n\nВсе фотографии будут удалены безвозвратно.\n\nВы уверены?')) return;
+
+        if (!confirm('Пожалуйста, подтвердите удаление ещё раз.')) return;
+
+        fetch(`/api/premise/${premiseId}/delete`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Объявление успешно удалено!');
+                setTimeout(() => {
+                    window.location.href = '/catalog';
+                }, 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при удалении', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Не удалось удалить объявление', true);
+        });
+    }
+
     // ======================== ФУНКЦИИ ДЛЯ ЖАЛОБЫ ========================
-    function openComplaintModal() {
+    let currentComplaintType = 'premise';
+
+    function openComplaintModal(type) {
+        currentComplaintType = type;
+        document.getElementById('complaintSubject').value = '';
+        document.getElementById('complaintReason').value = '';
+        document.getElementById('subjectCounter').textContent = '100';
         document.getElementById('complaintModal').style.display = 'block';
         document.body.style.overflow = 'hidden';
     }
@@ -1228,31 +1395,66 @@
     function closeComplaintModal() {
         document.getElementById('complaintModal').style.display = 'none';
         document.body.style.overflow = 'auto';
-        document.getElementById('complaintReason').value = '';
     }
 
+    document.getElementById('complaintSubject')?.addEventListener('input', function() {
+        const maxLength = 100;
+        const currentLength = this.value.length;
+        const remaining = maxLength - currentLength;
+        document.getElementById('subjectCounter').textContent = remaining;
+        if (remaining < 0) {
+            this.value = this.value.substring(0, maxLength);
+            document.getElementById('subjectCounter').textContent = 0;
+        }
+    });
+
     function submitComplaint() {
+        const subject = document.getElementById('complaintSubject').value.trim();
         const reason = document.getElementById('complaintReason').value.trim();
 
+        if (!subject) {
+            showNotification('Пожалуйста, укажите тему жалобы', true);
+            return;
+        }
+        if (subject.length > 100) {
+            showNotification('Тема жалобы не должна превышать 100 символов', true);
+            return;
+        }
         if (!reason) {
             showNotification('Пожалуйста, укажите причину жалобы', true);
             return;
         }
-
-        // Заглушка - здесь будет отправка на сервер
-        console.log('Жалоба на объявление ID:', premiseId);
-        console.log('Причина:', reason);
-
-        showNotification('Жалоба отправлена администратору. Спасибо за бдительность!');
-        closeComplaintModal();
-    }
-
-    // Закрытие модального окна при клике вне его
-    window.onclick = function(event) {
-        const modal = document.getElementById('complaintModal');
-        if (event.target === modal) {
-            closeComplaintModal();
+        if (reason.length > 2000) {
+            showNotification('Описание жалобы не должно превышать 2000 символов', true);
+            return;
         }
+
+        const complaintData = {
+            subject: subject,
+            reason: reason,
+            type: currentComplaintType.toUpperCase(),
+            premiseId: premiseId,
+            targetName: document.querySelector('h1')?.innerText + ', ' + document.querySelector('.address')?.innerText || 'Объявление'
+        };
+
+        fetch('/api/complaints', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(complaintData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Жалоба отправлена администратору. Спасибо за бдительность!');
+                closeComplaintModal();
+            } else {
+                showNotification(data.message || 'Ошибка при отправке жалобы', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Не удалось отправить жалобу', true);
+        });
     }
 
     let notificationTimeout = null;
@@ -1336,7 +1538,6 @@
             if (!res.ok) throw new Error('Failed to fetch');
 
             const comments = await res.json();
-
             list.innerHTML = '';
 
             if (!comments || comments.length === 0) {

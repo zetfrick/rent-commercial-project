@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +17,6 @@ public class Premise {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Вместо @ManyToOne User owner — просто ID владельца
     private Long ownerId;
 
     private String type;
@@ -61,32 +61,7 @@ public class Premise {
     @Column(name = "created_at", updatable = false)
     private LocalDate createdAt = LocalDate.now();
 
-    // Методы getTypeInRussian() и getAmenityInRussian() оставь как есть
-    public String getTypeInRussian() {
-        if (type == null) return "";
-        return switch (type) {
-            case "OFFICE" -> "Офисное";
-            case "TRADING" -> "Торговое";
-            case "WAREHOUSE" -> "Складское";
-            case "PRODUCTION" -> "Производственное";
-            case "HOSPITALITY" -> "Гостиничное";
-            case "UNIVERSAL" -> "Универсальное";
-            default -> type;
-        };
-    }
+    private LocalDateTime unpublishedAt;
 
-    public String getAmenityInRussian(String english) {
-        if (english == null) return "";
-        return switch (english) {
-            case "CONDITIONER" -> "Кондиционер";
-            case "WI_FI" -> "Wi-Fi";
-            case "FURNITURE" -> "Мебель";
-            case "PARKING" -> "Парковка";
-            case "SECURITY" -> "Охрана";
-            case "ELEVATOR" -> "Лифт";
-            case "KITCHEN" -> "Кухня";
-            case "CONFERENCE" -> "Конференц-зал";
-            default -> english;
-        };
-    }
+    // Методы перевода УДАЛЕНЫ - они должны быть только в PremiseConfig!
 }
