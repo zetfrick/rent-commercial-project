@@ -33,7 +33,7 @@ public class ComplaintService {
                     dto.getComplainantName(),
                     dto.getTargetName()
             );
-        } else {
+        } else if ("USER".equals(dto.getType())) {
             complaint = new Complaint(
                     dto.getSubject(),
                     dto.getReason(),
@@ -43,6 +43,33 @@ public class ComplaintService {
                     dto.getTargetName(),
                     true
             );
+        } else {  // "COMMENT"
+            complaint = new Complaint(
+                    dto.getSubject(),
+                    dto.getReason(),
+                    dto.getCommentId(),
+                    dto.getPremiseId(),
+                    dto.getComplainantId(),
+                    dto.getComplainantName(),
+                    dto.getTargetName()
+            );
+            // Сохраняем текст комментария и имя автора прямо в жалобу
+            if (dto.getCommentDetails() != null) {
+                complaint.setCommentText(dto.getCommentDetails().getText());
+                complaint.setCommentAuthor(dto.getCommentDetails().getAuthorName());
+            } else {
+                // Извлекаем имя автора из targetName (формат: "Комментарий от admin: текст")
+                String targetName = dto.getTargetName();
+                if (targetName != null && targetName.startsWith("Комментарий от ")) {
+                    int authorEndIndex = targetName.indexOf(":", 15);
+                    if (authorEndIndex > 0) {
+                        String author = targetName.substring(15, authorEndIndex).trim();
+                        complaint.setCommentAuthor(author);
+                    }
+                    String text = targetName.substring(targetName.indexOf(":") + 1).trim();
+                    complaint.setCommentText(text);
+                }
+            }
         }
 
         Complaint saved = complaintRepository.save(complaint);
@@ -94,10 +121,8 @@ public class ComplaintService {
 
     @Transactional
     public void rejectComplaint(Long complaintId, Long adminId, String adminName) {
-        // Получаем жалобу
         Complaint complaint = complaintRepository.findById(complaintId).orElseThrow();
 
-        // Добавляем запись об отказе
         List<RejectedBy> rejectedBy = complaint.getRejectedBy();
         if (rejectedBy == null) {
             rejectedBy = new ArrayList<>();
@@ -105,11 +130,9 @@ public class ComplaintService {
         rejectedBy.add(new RejectedBy(adminId, adminName, LocalDateTime.now()));
         complaint.setRejectedBy(rejectedBy);
 
-        // Меняем статус обратно на ACTIVE
         complaint.setStatus("ACTIVE");
         complaint.setResolved(false);
 
-        // Сохраняем
         complaintRepository.save(complaint);
     }
 
@@ -128,19 +151,27 @@ public class ComplaintService {
         ComplaintDto dto = new ComplaintDto();
         BeanUtils.copyProperties(complaint, dto);
 
-        // Устанавливаем статус для фронтенда
         if (complaint.isResolved()) {
             dto.setStatus("RESOLVED");
         } else {
             dto.setStatus(complaint.getStatus());
         }
 
-        // Конвертируем список отказов
         if (complaint.getRejectedBy() != null && !complaint.getRejectedBy().isEmpty()) {
             List<RejectedByDto> rejectedDtos = complaint.getRejectedBy().stream()
                     .map(r -> new RejectedByDto(r.getAdminId(), r.getAdminName(), r.getRejectedAt()))
                     .collect(Collectors.toList());
             dto.setRejectedBy(rejectedDtos);
+        }
+
+        // Для жалоб на комментарии используем сохранённые данные
+        if ("COMMENT".equals(complaint.getType())) {
+            ComplaintDto.CommentDetails details = new ComplaintDto.CommentDetails();
+            details.setId(complaint.getCommentId() != null ? complaint.getCommentId() : 0L);
+            details.setAuthorName(complaint.getCommentAuthor() != null ? complaint.getCommentAuthor() : "неизвестен");
+            details.setText(complaint.getCommentText() != null ? complaint.getCommentText() : "Текст комментария не сохранён");
+            details.setCreatedAt(complaint.getCreatedAt());
+            dto.setCommentDetails(details);
         }
 
         return dto;

@@ -233,7 +233,7 @@
             transform: translateY(-2px);
         }
 
-        /* Кнопка пожаловаться */
+        /* Кнопка пожаловаться на объявление */
         .complaint-btn {
             display: inline-flex;
             align-items: center;
@@ -254,7 +254,7 @@
             transform: translateY(-2px);
         }
 
-        /* Кнопка удаления для админа */
+        /* Кнопка удаления объявления для админа */
         .admin-delete-btn {
             display: inline-flex;
             align-items: center;
@@ -731,10 +731,12 @@
             padding: 20px;
             border-radius: 16px;
             border-left: 5px solid #ff9800;
+            position: relative;
         }
         .comment-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 10px;
             font-size: 14px;
         }
@@ -749,7 +751,39 @@
             text-decoration: underline;
         }
         .comment-date { color: #888; }
-        .comment-text { line-height: 1.6; color: #444; }
+        .comment-text { line-height: 1.6; color: #444; margin-bottom: 10px; }
+        .comment-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .comment-action-btn {
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 15px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .comment-action-btn.report {
+            color: #f44336;
+        }
+        .comment-action-btn.report:hover {
+            background: #ffebee;
+        }
+        .comment-action-btn.delete {
+            color: #d32f2f;
+        }
+        .comment-action-btn.delete:hover {
+            background: #ffebee;
+        }
 
         .no-comments {
             text-align: center;
@@ -795,6 +829,7 @@
             .detail-item.full-width { grid-column: span 1; }
             .top-buttons { flex-direction: column; align-items: stretch; gap: 10px; }
             .edit-btn, .owner-profile-btn, .complaint-btn, .unpublish-btn, .publish-btn, .admin-delete-btn { margin-left: 0; justify-content: center; }
+            .comment-actions { justify-content: flex-start; }
         }
 
         .top-buttons {
@@ -839,7 +874,7 @@
             object-fit: contain;
         }
 
-        /* Модальное окно для жалобы */
+        /* Модальное окно для жалобы на объявление */
         .complaint-modal {
             display: none;
             position: fixed;
@@ -918,6 +953,74 @@
             background: #d32f2f;
             transform: translateY(-2px);
         }
+
+        /* Модальное окно для жалобы на комментарий */
+        .comment-complaint-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .comment-complaint-modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            animation: modalFadeIn 0.3s ease;
+        }
+        .comment-complaint-modal-header {
+            padding: 20px;
+            background: #f44336;
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .comment-complaint-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comment-complaint-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .comment-complaint-modal-body {
+            padding: 20px;
+        }
+        .comment-complaint-modal-body textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+            margin-bottom: 15px;
+        }
+        .comment-complaint-submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -981,14 +1084,14 @@
                 <i class="fas fa-pen"></i> Редактировать
             </a>
 
-            <!-- Кнопка пожаловаться - для авторизованных (кроме владельца) -->
+            <!-- Кнопка пожаловаться на объявление - для авторизованных (кроме владельца) -->
             <button th:if="${#authorization.expression('isAuthenticated()') and !isOwner}"
                     class="complaint-btn"
                     onclick="openComplaintModal('premise')">
-                <i class="fas fa-flag"></i> Пожаловаться
+                <i class="fas fa-flag"></i> Пожаловаться на объявление
             </button>
 
-            <!-- Кнопка удаления - только для ADMIN и SUPER_ADMIN -->
+            <!-- Кнопка удаления объявления - только для ADMIN и SUPER_ADMIN -->
             <button th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''SUPER_ADMIN'')')}"
                     class="admin-delete-btn"
                     onclick="deletePremise()">
@@ -1182,24 +1285,33 @@
     <div class="comments-section">
         <h2><i class="fas fa-comments"></i> Комментарии и вопросы</h2>
 
-        <sec:authorize access="isAuthenticated()">
+        <!-- Блок для авторизованных пользователей -->
+        <div th:if="${#authorization.expression('isAuthenticated()')}">
+            <div style="background: #e3f2fd; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-info-circle" style="color: #2196f3; font-size: 20px;"></i>
+                <span style="color: #1565c0; font-size: 14px;">✍️ Здесь вы можете оставить свой комментарий</span>
+            </div>
             <form id="commentForm" class="comment-form">
                 <textarea id="commentText" placeholder="Напишите ваш комментарий или вопрос..." required></textarea>
                 <button type="submit">Отправить</button>
             </form>
-        </sec:authorize>
+        </div>
 
-        <sec:authorize access="!isAuthenticated()">
-            <p style="text-align:center; color:#666; padding:20px;">
-                Чтобы оставить комментарий, <a href="/auth/login" style="color:#ff5722;">войдите в аккаунт</a>
-            </p>
-        </sec:authorize>
+        <!-- Блок для неавторизованных пользователей -->
+        <div th:unless="${#authorization.expression('isAuthenticated()')}">
+            <div style="background: #fff3e0; padding: 16px 20px; border-radius: 16px; text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-lock" style="color: #ff9800; font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                <p style="color: #666; margin: 0;">
+                    Чтобы оставить комментарий, <a href="/auth/login" style="color:#ff5722; font-weight: 600;">войдите в аккаунт</a>
+                </p>
+            </div>
+        </div>
 
         <div class="comment-list" id="commentsList"></div>
     </div>
 </div>
 
-<!-- Модальное окно для жалобы -->
+<!-- Модальное окно для жалобы на объявление -->
 <div id="complaintModal" class="complaint-modal">
     <div class="complaint-modal-content">
         <div class="complaint-modal-header">
@@ -1222,6 +1334,29 @@
     </div>
 </div>
 
+<!-- Модальное окно для жалобы на комментарий -->
+<div id="commentComplaintModal" class="comment-complaint-modal">
+    <div class="comment-complaint-modal-content">
+        <div class="comment-complaint-modal-header">
+            <h3><i class="fas fa-flag"></i> Пожаловаться на комментарий</h3>
+            <button class="comment-complaint-modal-close" onclick="closeCommentComplaintModal()">&times;</button>
+        </div>
+        <div class="comment-complaint-modal-body">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Тема жалобы <span style="color: #f44336;">*</span></label>
+                <input type="text" id="commentComplaintSubject" maxlength="100" placeholder="Кратко опишите суть жалобы (до 100 символов)" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px;">
+                <small style="color: #999; display: block; margin-top: 5px;">Максимум 100 символов</small>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Подробное описание <span style="color: #f44336;">*</span></label>
+                <textarea id="commentComplaintReason" placeholder="Опишите причину жалобы подробно..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; resize: vertical; min-height: 120px;"></textarea>
+                <small style="color: #999; display: block; margin-top: 5px;">Максимум 2000 символов</small>
+            </div>
+            <button class="comment-complaint-submit-btn" onclick="submitCommentComplaint()">Отправить жалобу</button>
+        </div>
+    </div>
+</div>
+
 <div id="fullscreen" onclick="this.style.display='none'">
     <img id="fullImg" src="">
 </div>
@@ -1229,6 +1364,8 @@
 <script th:inline="javascript">
     const premiseId = /*[[${premise.id}]]*/ null;
     const ownerUsername = /*[[${premise.contactFirstName != null ? premise.contactFirstName : ''}]]*/ null;
+    const currentUsername = /*[[${#authentication.name}]]*/ null;
+    const isAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'', ''SUPER_ADMIN'')')}]]*/ false;
     const premiseData = {
         region: /*[[${premise.region}]]*/ null,
         city: /*[[${premise.city}]]*/ null,
@@ -1357,7 +1494,6 @@
     // ======================== УДАЛЕНИЕ ОБЪЯВЛЕНИЯ (ДЛЯ АДМИНОВ) ========================
     function deletePremise() {
         if (!confirm('ВНИМАНИЕ! Вы собираетесь полностью удалить это объявление.\n\nЭто действие НЕЛЬЗЯ будет отменить.\n\nВсе фотографии будут удалены безвозвратно.\n\nВы уверены?')) return;
-
         if (!confirm('Пожалуйста, подтвердите удаление ещё раз.')) return;
 
         fetch(`/api/premise/${premiseId}/delete`, {
@@ -1367,9 +1503,7 @@
         .then(data => {
             if (data.success) {
                 showNotification('Объявление успешно удалено!');
-                setTimeout(() => {
-                    window.location.href = '/catalog';
-                }, 1500);
+                setTimeout(() => { window.location.href = '/catalog'; }, 1500);
             } else {
                 showNotification(data.message || 'Ошибка при удалении', true);
             }
@@ -1380,7 +1514,7 @@
         });
     }
 
-    // ======================== ФУНКЦИИ ДЛЯ ЖАЛОБЫ ========================
+    // ======================== ФУНКЦИИ ДЛЯ ЖАЛОБЫ НА ОБЪЯВЛЕНИЕ ========================
     let currentComplaintType = 'premise';
 
     function openComplaintModal(type) {
@@ -1454,6 +1588,108 @@
         .catch(error => {
             console.error('Error:', error);
             showNotification('Не удалось отправить жалобу', true);
+        });
+    }
+
+    // ======================== ФУНКЦИИ ДЛЯ ЖАЛОБЫ НА КОММЕНТАРИЙ ========================
+    let currentCommentId = null;
+    let currentCommentAuthor = null;
+    let currentCommentText = null;
+
+    function openCommentComplaintModal(commentId, authorName, commentText) {
+        currentCommentId = commentId;
+        currentCommentAuthor = authorName;
+        currentCommentText = commentText;
+        document.getElementById('commentComplaintSubject').value = '';
+        document.getElementById('commentComplaintReason').value = '';
+        document.getElementById('commentComplaintModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCommentComplaintModal() {
+        document.getElementById('commentComplaintModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        currentCommentId = null;
+        currentCommentAuthor = null;
+        currentCommentText = null;
+    }
+
+    function submitCommentComplaint() {
+        const subject = document.getElementById('commentComplaintSubject').value.trim();
+        const reason = document.getElementById('commentComplaintReason').value.trim();
+
+        if (!subject) {
+            showNotification('Пожалуйста, укажите тему жалобы', true);
+            return;
+        }
+        if (subject.length > 100) {
+            showNotification('Тема жалобы не должна превышать 100 символов', true);
+            return;
+        }
+        if (!reason) {
+            showNotification('Пожалуйста, укажите причину жалобы', true);
+            return;
+        }
+        if (reason.length > 2000) {
+            showNotification('Описание жалобы не должно превышать 2000 символов', true);
+            return;
+        }
+
+        const complaintData = {
+            subject: subject,
+            reason: reason,
+            type: 'COMMENT',
+            commentId: currentCommentId,
+            premiseId: premiseId,
+            targetName: 'Комментарий от ' + currentCommentAuthor + ': ' + (currentCommentText?.substring(0, 100) || ''),
+            // Передаём детали комментария, чтобы сохранить их в БД
+            commentDetails: {
+                id: currentCommentId,
+                authorName: currentCommentAuthor,
+                text: currentCommentText,
+                createdAt: new Date().toISOString()
+            }
+        };
+
+        fetch('/api/complaints', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(complaintData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Жалоба на комментарий отправлена администратору!');
+                closeCommentComplaintModal();
+            } else {
+                showNotification(data.message || 'Ошибка при отправке жалобы', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Не удалось отправить жалобу', true);
+        });
+    }
+
+    // ======================== УДАЛЕНИЕ КОММЕНТАРИЯ ========================
+    function deleteComment(commentId) {
+        if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) return;
+
+        fetch(`/api/comments/${commentId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Комментарий удалён!');
+                loadComments();  // Перезагружаем комментарии
+            } else {
+                showNotification(data.message || 'Ошибка при удалении комментария', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Не удалось удалить комментарий', true);
         });
     }
 
@@ -1546,6 +1782,9 @@
             }
 
             comments.forEach(c => {
+                const isCommentAuthor = currentUsername === c.authorName;
+                const canDelete = isCommentAuthor || isAdmin;
+
                 const div = document.createElement('div');
                 div.className = 'comment';
                 div.innerHTML = `
@@ -1558,6 +1797,14 @@
                         <span class="comment-date">${new Date(c.createdAt).toLocaleString('ru-RU')}</span>
                     </div>
                     <div class="comment-text">${escapeHtml(c.text)}</div>
+                    <div class="comment-actions">
+                        <button class="comment-action-btn report" onclick="openCommentComplaintModal(${c.id}, '${escapeHtml(c.authorName)}', '${escapeHtml(c.text)}')">
+                            <i class="fas fa-flag"></i> Пожаловаться
+                        </button>
+                        ${canDelete ? `<button class="comment-action-btn delete" onclick="deleteComment(${c.id})">
+                            <i class="fas fa-trash-alt"></i> Удалить
+                        </button>` : ''}
+                    </div>
                 `;
                 list.appendChild(div);
             });

@@ -1,8 +1,8 @@
 package com.example.rentapp.controller;
 
 import com.example.rentapp.dto.RegisterRequest;
-import com.example.rentapp.entity.User;
 import com.example.rentapp.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,13 @@ public class AuthController {
     private UserService userService;
 
     @GetMapping("/login")
-    public String login() {
+    public String login(HttpServletRequest request, Model model) {
+        // Сохраняем страницу, с которой пришли
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.contains("/auth/login") && !referer.contains("/auth/register")) {
+            request.getSession().setAttribute("redirectAfterLogin", referer);
+            System.out.println("Saved redirect URL: " + referer);
+        }
         return "auth/login";
     }
 
@@ -40,17 +46,20 @@ public class AuthController {
                            BindingResult bindingResult,
                            Model model) {
 
+        // Проверка на ошибки валидации (например, пустые поля)
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }
 
+        // Проверка, занят ли логин
         if (userService.existsByLogin(request.getLogin())) {
-            model.addAttribute("error", "Логин уже занят");
+            model.addAttribute("loginError", "Логин уже занят");
             return "auth/register";
         }
 
+        // Проверка, занят ли email
         if (userService.existsByEmail(request.getEmail())) {
-            model.addAttribute("error", "Этот email уже зарегистрирован");
+            model.addAttribute("emailError", "Этот email уже зарегистрирован");
             return "auth/register";
         }
 
@@ -66,7 +75,7 @@ public class AuthController {
         return "redirect:/auth/login?registered";
     }
 
-    // НОВЫЙ ЭНДПОИНТ: проверка авторизации для AJAX-запросов
+    // Проверка авторизации для AJAX-запросов
     @GetMapping("/check")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> checkAuth(@AuthenticationPrincipal UserDetails userDetails) {

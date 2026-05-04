@@ -27,11 +27,20 @@ public class Complaint {
     private String reason;
 
     @Column(nullable = false)
-    private String type;      // "PREMISE" или "USER"
+    private String type;      // "PREMISE", "USER" или "COMMENT"
 
     private Long premiseId;
 
     private Long userId;
+
+    private Long commentId;
+
+    // Сохраняем текст комментария и имя автора для жалоб на комментарии
+    @Column(length = 2000)
+    private String commentText;
+
+    @Column(length = 100)
+    private String commentAuthor;
 
     @Column(nullable = false)
     private Long complainantId;
@@ -98,6 +107,19 @@ public class Complaint {
         this.reason = reason;
         this.type = "USER";
         this.userId = userId;
+        this.complainantId = complainantId;
+        this.complainantName = complainantName;
+        this.targetName = targetName;
+        this.status = "ACTIVE";
+    }
+
+    // Конструктор для жалобы на комментарий
+    public Complaint(String subject, String reason, Long commentId, Long premiseId, Long complainantId, String complainantName, String targetName) {
+        this.subject = subject;
+        this.reason = reason;
+        this.type = "COMMENT";
+        this.commentId = commentId;
+        this.premiseId = premiseId;
         this.complainantId = complainantId;
         this.complainantName = complainantName;
         this.targetName = targetName;

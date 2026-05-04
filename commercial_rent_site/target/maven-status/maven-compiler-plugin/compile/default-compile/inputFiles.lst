@@ -37,5 +37,6 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\ChatMessageRepository.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\Complaint.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\ProfileController.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\CommentApiController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\api\ApiAuthController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\ComplaintRepository.java

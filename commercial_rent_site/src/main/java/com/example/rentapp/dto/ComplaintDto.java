@@ -18,6 +18,7 @@ public class ComplaintDto {
     private String type;
     private Long premiseId;
     private Long userId;
+    private Long commentId;        // НОВОЕ ПОЛЕ: ID комментария
     private Long complainantId;
     private String complainantName;
     private String targetName;
@@ -29,6 +30,9 @@ public class ComplaintDto {
     private LocalDateTime createdAt;
     private List<RejectedByDto> rejectedBy;
 
+    // НОВОЕ ПОЛЕ: детали комментария для отображения в админке
+    private CommentDetails commentDetails;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -36,5 +40,15 @@ public class ComplaintDto {
         private Long adminId;
         private String adminName;
         private LocalDateTime rejectedAt;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CommentDetails {
+        private Long id;
+        private String authorName;
+        private String text;
+        private LocalDateTime createdAt;
     }
 }

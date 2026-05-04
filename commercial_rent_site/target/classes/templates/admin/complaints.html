@@ -154,7 +154,6 @@
             display: block;
             color: rgba(255,255,255,0.9);
         }
-        /* Убираем цветные цифры, оставляем только белые */
         .stat-card.resolved .stat-number,
         .stat-card.rejected .stat-number,
         .stat-card.resolved-rejected .stat-number,
@@ -485,6 +484,7 @@
         }
         .type-premise { background: #fff3e0; color: #ff9800; }
         .type-user { background: #e3f2fd; color: #2196f3; }
+        .type-comment { background: #f3e5f5; color: #9c27b0; }
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -507,7 +507,7 @@
             margin: 5% auto;
             padding: 0;
             width: 90%;
-            max-width: 600px;
+            max-width: 650px;
             border-radius: 24px;
             animation: modalFadeIn 0.3s ease;
             max-height: 85vh;
@@ -619,6 +619,21 @@
             padding: 15px;
             border-radius: 12px;
             margin-top: 15px;
+        }
+        .comment-info-block {
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 10px;
+            border-left: 4px solid #9c27b0;
+        }
+        .comment-text-preview {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
         }
         @media (max-width: 768px) {
             .header { padding: 8px 16px; }
@@ -786,7 +801,7 @@
                 </td>
             </tr>
             </tbody>
-            <tr>
+        </table>
     </div>
 </div>
 
@@ -916,14 +931,11 @@
         selectedNameSpan.innerHTML = `${name} (${login})`;
         selectedInfo.style.display = 'flex';
 
-        // Загружаем статистику администратора
         loadAdminStats(id, name);
 
-        // Показываем фильтры для выбранного администратора
         const filterSection = document.getElementById('adminFilterSection');
         filterSection.style.display = 'flex';
 
-        // Обновляем активный класс на кнопке "Все"
         document.querySelectorAll('.admin-filter-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.filter === 'all') {
@@ -945,7 +957,6 @@
         loadComplaints();
     }
 
-    // Настройка фильтров для администратора
     function setupAdminFilters() {
         document.querySelectorAll('.admin-filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -998,7 +1009,6 @@
                 allComplaints = data;
                 renderTable();
 
-                // Если выбран администратор, обновляем статистику с учётом фильтра
                 if (selectedAdminId && adminFilterType === 'all') {
                     loadAdminStats(selectedAdminId, selectedAdminName);
                 }
@@ -1036,10 +1046,27 @@
 
             const hasRejections = complaint.rejectedBy && complaint.rejectedBy.length > 0;
 
+            let typeIcon = '';
+            let typeLabel = '';
+            let typeClass = '';
+            if (complaint.type === 'PREMISE') {
+                typeIcon = 'fa-building';
+                typeLabel = 'Помещение';
+                typeClass = 'type-premise';
+            } else if (complaint.type === 'USER') {
+                typeIcon = 'fa-user';
+                typeLabel = 'Пользователь';
+                typeClass = 'type-user';
+            } else {
+                typeIcon = 'fa-comment';
+                typeLabel = 'Комментарий';
+                typeClass = 'type-comment';
+            }
+
             return `
                 <tr class="${rowClass}" onclick="openModal(${complaint.id})">
                     <td>${hasRejections ? '<span class="reject-circle"></span>' : ''}#${complaint.id}</td>
-                    <td><span class="type-badge ${complaint.type === 'PREMISE' ? 'type-premise' : 'type-user'}"><i class="fas ${complaint.type === 'PREMISE' ? 'fa-building' : 'fa-user'}"></i> ${complaint.type === 'PREMISE' ? 'Помещение' : 'Пользователь'}</span></td>
+                    <td><span class="type-badge ${typeClass}"><i class="fas ${typeIcon}"></i> ${typeLabel}</span></td>
                     <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(complaint.subject)}</td>
                     <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(complaint.targetName)}</td>
                     <td>${escapeHtml(complaint.complainantName)}</td>
@@ -1056,10 +1083,24 @@
         const modalBody = document.getElementById('modalBody');
 
         let targetLink = '';
-        if (complaint.type === 'PREMISE' && complaint.premiseId) {
-            targetLink = `<a href="/premise/${complaint.premiseId}" target="_blank" class="detail-link">Перейти к объявлению →</a>`;
-        } else if (complaint.type === 'USER' && complaint.userId) {
-            targetLink = `<a href="/profile?username=${encodeURIComponent(complaint.targetName)}" target="_blank" class="detail-link">Перейти к профилю →</a>`;
+        let typeDisplay = '';
+        let typeIcon = '';
+
+        if (complaint.type === 'PREMISE') {
+            typeDisplay = '📦 На объявление';
+            typeIcon = 'fa-building';
+            if (complaint.premiseId) {
+                targetLink = `<a href="/premise/${complaint.premiseId}" target="_blank" class="detail-link">Перейти к объявлению →</a>`;
+            }
+        } else if (complaint.type === 'USER') {
+            typeDisplay = '👤 На пользователя';
+            typeIcon = 'fa-user';
+            if (complaint.userId) {
+                targetLink = `<a href="/profile?username=${encodeURIComponent(complaint.targetName)}" target="_blank" class="detail-link">Перейти к профилю →</a>`;
+            }
+        } else if (complaint.type === 'COMMENT') {
+            typeDisplay = ' На комментарий';
+            typeIcon = 'fa-comment';
         }
 
         let rejectedInfo = '';
@@ -1103,17 +1144,49 @@
             }
         }
 
-        modalBody.innerHTML = `
+        let modalHtml = `
             <div class="detail-row"><div class="detail-label">Тема жалобы</div><div class="detail-value"><strong>${escapeHtml(complaint.subject)}</strong></div></div>
             <div class="detail-row"><div class="detail-label">Дата создания</div><div class="detail-value">${new Date(complaint.createdAt).toLocaleString('ru-RU')}</div></div>
-            <div class="detail-row"><div class="detail-label">Тип жалобы</div><div class="detail-value">${complaint.type === 'PREMISE' ? '📦 На объявление' : '👤 На пользователя'}</div></div>
+            <div class="detail-row"><div class="detail-label">Тип жалобы</div><div class="detail-value"><i class="fas ${typeIcon}"></i> ${typeDisplay}</div></div>
             <div class="detail-row"><div class="detail-label">Объект жалобы</div><div class="detail-value">${escapeHtml(complaint.targetName)}${targetLink ? `<div style="margin-top: 8px;">${targetLink}</div>` : ''}</div></div>
             <div class="detail-row"><div class="detail-label">Жалобщик</div><div class="detail-value"><a href="/profile?username=${encodeURIComponent(complaint.complainantName)}" class="detail-link" target="_blank">${escapeHtml(complaint.complainantName)}</a></div></div>
-            <div class="detail-row"><div class="detail-label">Подробное описание</div><div class="detail-value" style="white-space: pre-wrap; background: #f9f9f9; padding: 12px; border-radius: 12px;">${escapeHtml(complaint.reason)}</div></div>
-            ${rejectedInfo}
-            ${resolvedInfo}
-            ${actionButtons}
         `;
+
+        if (complaint.type === 'COMMENT' && complaint.commentDetails) {
+            modalHtml += `
+                <div class="detail-row">
+                    <div class="detail-label">Информация о комментарии</div>
+                    <div class="detail-value">
+                        <div class="comment-info-block">
+                            <div style="margin-bottom: 12px;">
+                                <i class="fas fa-user" style="color: #9c27b0;"></i> <strong>Автор комментария:</strong><br>
+                                <a href="/profile?username=${encodeURIComponent(complaint.commentDetails.authorName)}" class="detail-link" target="_blank" style="margin-top: 5px; display: inline-block;">
+                                    ${escapeHtml(complaint.commentDetails.authorName)}
+                                </a>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <i class="fas fa-building" style="color: #ff5722;"></i> <strong>Под объявлением:</strong><br>
+                                <a href="/premise/${complaint.premiseId}" class="detail-link" target="_blank" style="margin-top: 5px; display: inline-block;">
+                                    Посмотреть объявление →
+                                </a>
+                            </div>
+                            <div>
+                                <i class="fas fa-quote-left" style="color: #9c27b0;"></i> <strong>Текст комментария:</strong>
+                                <div class="comment-text-preview">
+                                    ${escapeHtml(complaint.commentDetails.text)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            modalHtml += `<div class="detail-row"><div class="detail-label">Подробное описание</div><div class="detail-value" style="white-space: pre-wrap; background: #f9f9f9; padding: 12px; border-radius: 12px;">${escapeHtml(complaint.reason)}</div></div>`;
+        }
+
+        modalHtml += `${rejectedInfo}${resolvedInfo}${actionButtons}`;
+
+        modalBody.innerHTML = modalHtml;
 
         document.getElementById('complaintModal').style.display = 'block';
         document.body.style.overflow = 'hidden';

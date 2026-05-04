@@ -286,4 +286,21 @@ public class CatalogController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @DeleteMapping("/comments/{id}")
+    public ResponseEntity<Map<String, Object>> deleteComment(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+
+        Optional<Comment> commentOpt = commentRepository.findById(id);
+        if (commentOpt.isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Комментарий не найден");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        commentRepository.deleteById(id);
+        response.put("success", true);
+        return ResponseEntity.ok(response);
+    }
+
 }

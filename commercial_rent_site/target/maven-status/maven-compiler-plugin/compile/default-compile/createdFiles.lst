@@ -1,3 +1,4 @@
+com\example\rentapp\dto\ComplaintDto$CommentDetails.class
 com\example\rentapp\controller\ComplaintController.class
 com\example\rentapp\config\DataInitializer.class
 com\example\rentapp\controller\MainController.class
@@ -30,6 +31,7 @@ com\example\rentapp\config\SwaggerConfig.class
 com\example\rentapp\entity\ChatMessage.class
 com\example\rentapp\repository\UserRepository.class
 com\example\rentapp\config\SecurityConfig.class
+com\example\rentapp\config\SecurityConfig$1.class
 com\example\rentapp\entity\User$Role.class
 com\example\rentapp\dto\RegisterRequest.class
 com\example\rentapp\repository\ComplaintRepository.class
@@ -39,5 +41,6 @@ com\example\rentapp\dto\PremiseForm.class
 com\example\rentapp\controller\WebCatalogController.class
 com\example\rentapp\dto\PremiseDto.class
 com\example\rentapp\controller\ChatController$ChatInfo.class
+com\example\rentapp\controller\CommentApiController.class
 com\example\rentapp\dto\CommentDto.class
 com\example\rentapp\controller\ComplaintApiController.class

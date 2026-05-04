@@ -7,18 +7,58 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Autowired @Lazy private UserService userService;
+
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return new AuthenticationSuccessHandler() {
+            @Override
+            public void onAuthenticationSuccess(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                Authentication authentication) throws IOException, ServletException {
+
+                String redirectUrl = "/main/landing-logged"; // URL по умолчанию
+
+                // Пытаемся получить сохранённый URL из сессии
+                HttpSession session = request.getSession(false);
+                if (session != null) {
+                    String savedUrl = (String) session.getAttribute("redirectAfterLogin");
+                    if (savedUrl != null && !savedUrl.isEmpty()) {
+                        redirectUrl = savedUrl;
+                        session.removeAttribute("redirectAfterLogin"); // очищаем после использования
+                        System.out.println("=== LOGIN SUCCESS ===");
+                        System.out.println("Redirecting to saved URL: " + redirectUrl);
+                    } else {
+                        System.out.println("=== LOGIN SUCCESS ===");
+                        System.out.println("No saved URL, redirecting to default: " + redirectUrl);
+                    }
+                } else {
+                    System.out.println("=== LOGIN SUCCESS ===");
+                    System.out.println("No session, redirecting to default: " + redirectUrl);
+                }
+
+                response.sendRedirect(redirectUrl);
+            }
+        };
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -41,11 +81,9 @@ public class SecurityConfig {
                                 "/chats/**")
                         .authenticated()
 
-                        // ========== ДОБАВЬТЕ ЭТИ СТРОКИ ==========
                         // Добавление и редактирование помещений - только для авторизованных
                         .requestMatchers("/premise/add", "/premise/*/edit")
                         .authenticated()
-                        // ========================================
 
                         // Админ-панель - только для ADMIN и SUPER_ADMIN
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
@@ -55,7 +93,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/auth/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/main/landing-logged", true)
+                        .successHandler(authenticationSuccessHandler())
                         .failureUrl("/auth/login?error")
                         .permitAll()
                 )

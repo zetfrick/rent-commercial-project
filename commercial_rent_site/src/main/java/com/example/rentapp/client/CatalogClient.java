@@ -44,4 +44,7 @@ public interface CatalogClient {
 
     @DeleteMapping("/api/premise/{id}/delete")
     Map<String, Object> deletePremise(@PathVariable("id") Long id);
+
+    @DeleteMapping("/api/comments/{id}")
+    Map<String, Object> deleteComment(@PathVariable("id") Long id);
 }
