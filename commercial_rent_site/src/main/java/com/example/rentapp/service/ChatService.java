@@ -47,6 +47,29 @@ public class ChatService {
         return chatMessageRepository.save(message);
     }
 
+    // НОВЫЙ МЕТОД: отправка системного сообщения
+    public ChatMessage sendSystemMessage(Long senderId, Long receiverId, String text) {
+        ChatMessage message = new ChatMessage(
+                senderId,
+                receiverId,
+                "Система",
+                text
+        );
+        return chatMessageRepository.save(message);
+    }
+
+    // НОВЫЙ МЕТОД: отправка системного сообщения с привязкой к помещению
+    public ChatMessage sendSystemMessageWithPremise(Long senderId, Long receiverId, String text, Long premiseId) {
+        ChatMessage message = new ChatMessage(
+                senderId,
+                receiverId,
+                "Система",
+                text,
+                premiseId
+        );
+        return chatMessageRepository.save(message);
+    }
+
     public List<ChatMessage> getChatBetween(Long userId1, Long userId2) {
         return chatMessageRepository.findChatBetweenUsers(userId1, userId2);
     }

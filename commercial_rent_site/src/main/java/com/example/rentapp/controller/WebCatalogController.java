@@ -1,9 +1,11 @@
 package com.example.rentapp.controller;
 
 import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.CommentDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.CommentService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +15,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 public class WebCatalogController {
@@ -27,6 +32,9 @@ public class WebCatalogController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private BookingService bookingService;
 
     // УПРОЩЁННО: types, amenities, typeInRussian, amenityInRussian добавляются автоматически через GlobalModelAdvice
     @GetMapping("/catalog")
@@ -71,9 +79,31 @@ public class WebCatalogController {
             }
         }
 
+        // Получаем занятые даты (только APPROVED) - для проверки доступности и отображения обычным пользователям
+        List<LocalDate> bookedDates = bookingService.getBookedDates(id);
+
+        // Получаем диапазоны занятых дат для компактного отображения (только APPROVED)
+        List<Map<String, Object>> bookedDateRanges = bookingService.getBookedDateRanges(id);
+
+        // Получаем ВСЕ бронирования (включая CANCELLED) - удаляем отменённые для отображения
+        List<BookingDto> allBookings = bookingService.getBookingsWithDetails(id);
+
+        // Фильтруем: показываем только бронирования со статусами PENDING, APPROVED, REJECTED (НЕ показываем CANCELLED)
+        List<BookingDto> activeBookings = allBookings.stream()
+                .filter(b -> !"CANCELLED".equals(b.getStatus()))
+                .collect(Collectors.toList());
+
+        // Устанавливаем данные в DTO
+        premise.setBookedDates(bookedDates);
+        premise.setBookings(activeBookings);
+
+        // Добавляем атрибуты в модель
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("ownerLogin", ownerLogin);
+        model.addAttribute("bookedDates", bookedDates);                     // для всех пользователей
+        model.addAttribute("bookedDateRanges", bookedDateRanges);           // для компактного отображения (только APPROVED)
+        model.addAttribute("activeBookings", isOwner ? activeBookings : List.of()); // активные бронирования (без CANCELLED)
 
         // types, amenities и прочее уже в модели через GlobalModelAdvice
 

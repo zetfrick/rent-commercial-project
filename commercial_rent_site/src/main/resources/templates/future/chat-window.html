@@ -56,12 +56,11 @@
             margin-right: 8px;
         }
 
-        /* Кликабельное имя собеседника */
         .chat-partner-name {
             color: white;
             text-decoration: none;
             cursor: pointer;
-            transition: opacity 0.2s, text-decoration 0.2s;
+            transition: opacity 0.2s;
             font-weight: 500;
             display: inline-flex;
             align-items: center;
@@ -91,70 +90,106 @@
             background: rgba(255,255,255,0.3);
         }
 
+        .owner-deal-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .owner-deal-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .renter-request-btn {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .renter-request-btn:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
         .chat-wrapper {
             display: flex;
             flex: 1;
             min-height: 0;
             overflow: hidden;
+            gap: 20px;
+            padding: 20px;
         }
 
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 20px;
+            max-width: 800px;
+            margin: 0;
             min-height: 0;
             overflow: hidden;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
         }
 
-        /* Карточка объявления в правой части (как в каталоге) */
-        .premise-sidebar {
-            width: 320px;
-            background: white;
-            margin: 20px 20px 20px 0;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            overflow: hidden;
+        .right-panel {
+            width: 360px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            flex-shrink: 0;
-            height: fit-content;
-            max-height: calc(100vh - 100px);
-            position: sticky;
-            top: 80px;
-            transition: transform 0.3s;
+            gap: 20px;
+            overflow-y: auto;
         }
 
-        .premise-sidebar:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(255,152,0,0.2);
-        }
-
-        .premise-sidebar .sidebar-photos-slider {
-            position: relative;
-            height: 220px;
+        .premise-card {
+            background: white;
+            border-radius: 20px;
             overflow: hidden;
-            cursor: grab;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .premise-card .photos-slider {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
             background: #f0f0f0;
         }
 
-        .premise-sidebar .sidebar-photos-container {
+        .premise-card .photos-container {
             display: flex;
             width: 100%;
             height: 100%;
             transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
 
-        .premise-sidebar .sidebar-photo-item {
+        .premise-card .photo-item {
             min-width: 100%;
             height: 100%;
             object-fit: cover;
+            cursor: pointer;
         }
 
-        .premise-sidebar .sidebar-slider-arrow {
+        .premise-card .slider-arrow {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
@@ -168,91 +203,83 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            font-weight: bold;
             cursor: pointer;
             z-index: 20;
             opacity: 0;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
 
-        .premise-sidebar:hover .sidebar-slider-arrow {
+        .premise-card:hover .slider-arrow {
             opacity: 0.9;
         }
 
-        .premise-sidebar .sidebar-slider-arrow:hover {
+        .premise-card .slider-arrow:hover {
             background: #ff5722;
-            transform: translateY(-50%) scale(1.1);
-            opacity: 1;
         }
 
-        .premise-sidebar .sidebar-arrow-left { left: 10px; }
-        .premise-sidebar .sidebar-arrow-right { right: 10px; }
+        .premise-card .arrow-left { left: 10px; }
+        .premise-card .arrow-right { right: 10px; }
 
-        .premise-sidebar .sidebar-no-photo {
-            height: 220px;
+        .premise-card .no-photo {
+            height: 200px;
             background: #f0f0f0;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #aaa;
-            font-size: 18px;
         }
 
-        .premise-sidebar .sidebar-area-badge {
+        .premise-card .area-badge {
             position: absolute;
-            top: 12px;
-            left: 12px;
+            top: 10px;
+            left: 10px;
             background: rgba(0,0,0,0.7);
             color: white;
             padding: 4px 10px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             z-index: 15;
         }
 
-        .premise-sidebar .sidebar-capacity-badge {
+        .premise-card .capacity-badge {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 10px;
+            right: 10px;
             background: rgba(0,0,0,0.7);
             color: white;
             padding: 4px 10px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             z-index: 15;
         }
 
-        .premise-sidebar .sidebar-info {
+        .premise-card .info {
             padding: 16px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
         }
 
-        .premise-sidebar .sidebar-type {
-            font-size: 18px;
+        .premise-card .type {
+            font-size: 16px;
             font-weight: bold;
             color: #ff9800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
-        .premise-sidebar .sidebar-address {
+        .premise-card .address {
             font-size: 12px;
             color: #777;
             margin-bottom: 8px;
-            line-height: 1.3;
         }
 
-        .premise-sidebar .sidebar-owner {
-            font-size: 13px;
+        .premise-card .owner {
+            font-size: 12px;
             font-weight: 500;
             color: #333;
             margin-bottom: 8px;
         }
 
-        .premise-sidebar .sidebar-availability {
+        .premise-card .availability {
             background: #e8f5e9;
             padding: 6px 8px;
             border-radius: 8px;
@@ -261,61 +288,134 @@
             border-left: 3px solid #4caf50;
         }
 
-        .premise-sidebar .sidebar-prices {
+        .premise-card .prices {
             background: #f9f9f9;
             padding: 8px;
             border-radius: 8px;
             margin: 8px 0;
         }
 
-        .premise-sidebar .sidebar-price-row {
+        .premise-card .price-row {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 12px;
             margin: 4px 0;
         }
 
-        .premise-sidebar .sidebar-price-value {
+        .premise-card .price-value {
             font-weight: bold;
             color: #ff5722;
         }
 
-        .premise-sidebar .sidebar-detail-link {
+        .premise-card .detail-link {
             display: block;
             text-align: center;
             background: #ff5722;
             color: white;
-            padding: 10px;
+            padding: 8px;
             border-radius: 30px;
             text-decoration: none;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 12px;
             margin-top: 10px;
             transition: all 0.3s;
         }
 
-        .premise-sidebar .sidebar-detail-link:hover {
+        .premise-card .detail-link:hover {
             background: #e64a19;
-            transform: translateY(-2px);
+        }
+
+        .requests-card {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .requests-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #ff5722;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .requests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .request-item {
+            background: #fef7e0;
+            border-radius: 12px;
+            padding: 12px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .request-dates {
+            font-weight: bold;
+            color: #ff5722;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .request-renter {
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .request-renter a {
+            color: #2196f3;
+            text-decoration: none;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .approve-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .reject-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .empty-requests {
+            text-align: center;
+            padding: 30px;
+            color: #999;
         }
 
         .messages {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
             gap: 8px;
-            min-height: 0;
         }
 
         .date-separator {
             text-align: center;
-            margin: 16px 0 12px 0;
-            position: relative;
+            margin: 16px 0 12px;
         }
 
         .date-separator span {
@@ -332,13 +432,6 @@
             padding: 10px 14px;
             border-radius: 18px;
             word-wrap: break-word;
-            animation: fadeIn 0.3s ease;
-            position: relative;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .my-message {
@@ -346,7 +439,6 @@
             color: white;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
-            margin-left: auto;
         }
 
         .their-message {
@@ -354,7 +446,6 @@
             color: #333;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
-            margin-right: auto;
         }
 
         .message-header {
@@ -363,53 +454,43 @@
             opacity: 0.7;
         }
 
-        .my-message .message-header {
-            text-align: right;
-        }
-
-        .their-message .message-header {
-            text-align: left;
-        }
+        .my-message .message-header { text-align: right; }
+        .their-message .message-header { text-align: left; }
 
         .message-author-link {
             color: inherit;
             text-decoration: none;
             font-weight: 600;
             cursor: pointer;
-            transition: opacity 0.2s;
-            display: inline-block;
         }
 
-        .message-author-link:hover {
-            text-decoration: underline;
-            opacity: 0.8;
+        .message-text { font-size: 14px; line-height: 1.4; }
+        .message-time { font-size: 10px; margin-top: 4px; opacity: 0.6; }
+
+        /* Стиль для системных сообщений */
+        .message.system-message {
+            background: #e3f2fd;
+            color: #1565c0;
+            align-self: center;
+            max-width: 85%;
+            text-align: center;
+            font-size: 13px;
+            padding: 10px 18px;
+            border-radius: 20px;
+            border-left: none;
         }
 
-        .my-message .message-author-link {
-            color: white;
+        .message.system-message .message-header {
+            display: none;
         }
 
-        .their-message .message-author-link {
-            color: #ff5722;
+        .message.system-message .message-text strong {
+            color: #0d47a1;
+            font-weight: 700;
         }
 
-        .message-text {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .message-time {
-            font-size: 10px;
-            margin-top: 4px;
-            opacity: 0.6;
-        }
-
-        .my-message .message-time {
-            text-align: right;
-        }
-
-        .their-message .message-time {
-            text-align: left;
+        .message.system-message .message-text br {
+            margin: 4px 0;
         }
 
         .empty-chat {
@@ -418,31 +499,22 @@
             padding: 60px 20px;
         }
 
-        .empty-chat i {
-            font-size: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
         .input-area {
             display: flex;
             gap: 12px;
-            margin-top: 20px;
-            background: white;
             padding: 16px;
-            border-radius: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            background: white;
+            border-top: 1px solid #eee;
             flex-shrink: 0;
         }
 
         .input-area input {
             flex: 1;
-            padding: 14px 20px;
+            padding: 12px 16px;
             border: 1px solid #e0e0e0;
             border-radius: 30px;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.3s;
         }
 
         .input-area input:focus {
@@ -453,20 +525,10 @@
             background: linear-gradient(135deg, #ff5722, #ff9800);
             color: white;
             border: none;
-            padding: 12px 28px;
+            padding: 12px 24px;
             border-radius: 30px;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .input-area button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255,87,34,0.4);
-        }
-
-        .input-area button:active {
-            transform: translateY(0);
         }
 
         .notification {
@@ -479,7 +541,6 @@
             border-radius: 10px;
             z-index: 1001;
             animation: slideIn 0.3s ease;
-            font-size: 14px;
         }
 
         .notification.error {
@@ -491,39 +552,191 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        @media (max-width: 900px) {
-            .premise-sidebar {
-                display: none;
-            }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
         }
 
-        @media (max-width: 768px) {
-            .message { max-width: 85%; }
-            .chat-header { padding: 12px 16px; }
-            .chat-header h2 { font-size: 1rem; }
-            .input-area { padding: 12px; }
-            .input-area button { padding: 10px 20px; }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            width: 90%;
+            max-width: 550px;
+            border-radius: 24px;
+            animation: fadeIn 0.3s;
+            max-height: 85vh;
+            overflow-y: auto;
         }
 
-        .messages::-webkit-scrollbar {
-            width: 6px;
+        .modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 24px 24px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .messages::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
         }
 
-        .messages::-webkit-scrollbar-thumb {
+        .modal-body { padding: 20px; }
+
+        .date-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: all 0.3s;
+            background-color: white;
+        }
+        .date-group input:focus {
+            border-color: #ff5722;
+            outline: none;
+        }
+
+        .date-group input::-webkit-calendar-picker-indicator {
+            filter: invert(0.5);
+            cursor: pointer;
+        }
+
+        .date-range-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .date-group { flex: 1; }
+        .date-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .booked-ranges-list {
+            background: #fff3e0;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .booked-ranges-list h4 {
+            font-size: 13px;
+            color: #ff9800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .booked-ranges-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .booked-date-range-badge {
+            background: #ffebee;
+            color: #f44336;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .booked-date-range-badge i {
+            margin-right: 6px;
+        }
+
+        .availability-indicator {
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .availability-indicator.available {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .availability-indicator.unavailable {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .modal-submit-btn {
+            width: 100%;
+            padding: 14px;
             background: #ff5722;
-            border-radius: 3px;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-submit-btn:hover:not(:disabled) {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        .modal-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .premise-mini-card {
+            background: #f9f9f9;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .premise-mini-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 900px) {
+            .right-panel { display: none; }
+        }
+        @media (max-width: 768px) {
+            .date-range-row { flex-direction: column; gap: 10px; }
         }
     </style>
 </head>
 <body>
 <div class="chat-header">
     <a href="/chats" class="back-btn"><i class="fas fa-arrow-left"></i></a>
-    <div class="user-avatar" style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+    <div class="user-avatar" style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
         <i class="fas fa-user"></i>
     </div>
     <h2>
@@ -536,6 +749,12 @@
     <a th:if="${premiseId != null}" th:href="@{/premise/{id}(id=${premiseId})}" class="premise-link">
         <i class="fas fa-building"></i> К объявлению
     </a>
+    <button th:if="${isOwner}" id="showOwnerModalBtn" class="owner-deal-btn">
+        <i class="fas fa-handshake"></i> Договорились о сделке
+    </button>
+    <button th:if="${not isOwner}" id="showRenterModalBtn" class="renter-request-btn">
+        <i class="fas fa-calendar-plus"></i> Предложить аренду
+    </button>
 </div>
 
 <div class="chat-wrapper">
@@ -547,451 +766,589 @@
         </div>
     </div>
 
-    <!-- Карточка объявления в правой части (как в каталоге) -->
-    <div th:if="${premise != null and premise.id != null}" class="premise-sidebar">
-        <div th:if="${!premise.photoPaths.isEmpty()}" class="sidebar-photos-slider" id="sidebarSlider">
-            <div class="sidebar-photos-container" id="sidebarPhotosContainer">
-                <img th:each="photo : ${premise.photoPaths}"
-                     th:src="@{'/uploads/' + ${photo}}"
-                     class="sidebar-photo-item"
-                     onclick="openFullscreen(this.src)"
-                     onerror="this.src='/images/no-photo.jpg';"
-                     alt="Фото помещения">
+    <div class="right-panel">
+        <div th:if="${premise != null and premise.id != null}" class="premise-card">
+            <div th:if="${!premise.photoPaths.isEmpty()}" class="photos-slider" id="premiseSlider">
+                <div class="photos-container" id="premisePhotosContainer">
+                    <img th:each="photo : ${premise.photoPaths}"
+                         th:src="@{'/uploads/' + ${photo}}"
+                         class="photo-item"
+                         onclick="openFullscreen(this.src)"
+                         onerror="this.src='/images/no-photo.jpg';"
+                         alt="Фото">
+                </div>
+                <div class="slider-arrow arrow-left" id="premiseArrowLeft"><i class="fas fa-chevron-left"></i></div>
+                <div class="slider-arrow arrow-right" id="premiseArrowRight"><i class="fas fa-chevron-right"></i></div>
+                <div class="area-badge" th:text="${premise.area} + ' м²'"></div>
+                <div class="capacity-badge" th:text="${premise.capacity} + ' чел.'"></div>
             </div>
-            <div class="sidebar-slider-arrow sidebar-arrow-left" id="sidebarArrowLeft"><i class="fas fa-chevron-left"></i></div>
-            <div class="sidebar-slider-arrow sidebar-arrow-right" id="sidebarArrowRight"><i class="fas fa-chevron-right"></i></div>
-            <div class="sidebar-area-badge" th:text="${premise.area} + ' м²'"></div>
-            <div class="sidebar-capacity-badge" th:text="${premise.capacity} + ' чел.'"></div>
+            <div th:unless="${!premise.photoPaths.isEmpty()}" class="no-photo">
+                <i class="fas fa-camera-retro"></i> Нет фото
+            </div>
+            <div class="info">
+                <div class="type" th:text="${premise.getTypeInRussian()}"></div>
+                <div class="owner" th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></div>
+                <div class="address" th:text="${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
+                <div class="availability">
+                    📅 Доступно: <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')} + ' — ' + ${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
+                </div>
+                <div class="prices">
+                    <div class="price-row"><span>Будни:</span><span class="price-value" th:text="${premise.priceWeekday} + ' ₽'"></span></div>
+                    <div class="price-row" th:if="${premise.priceWeekend != null && premise.priceWeekend > 0}"><span>Выходные:</span><span class="price-value" th:text="${premise.priceWeekend} + ' ₽'"></span></div>
+                    <div class="price-row" th:if="${premise.priceHoliday != null && premise.priceHoliday > 0}"><span>Праздники:</span><span class="price-value" th:text="${premise.priceHoliday} + ' ₽'"></span></div>
+                </div>
+                <a th:href="@{/premise/{id}(id=${premise.id})}" class="detail-link" target="_blank">Подробнее →</a>
+            </div>
         </div>
-        <div th:unless="${!premise.photoPaths.isEmpty()}" class="sidebar-no-photo">
-            <i class="fas fa-camera-retro"></i> Нет фото
-        </div>
-        <div class="sidebar-info">
-            <div class="sidebar-type" th:text="${premise.getTypeInRussian()}"></div>
-            <div class="sidebar-owner" th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></div>
-            <div class="sidebar-address" th:text="${premise.region} + ', ' + ${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
-            <div class="sidebar-availability">
-                <span>📅 Доступно: </span>
-                <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')} + ' — ' + ${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
+
+        <div th:if="${isOwner}" class="requests-card">
+            <h3><i class="fas fa-clock"></i> Запросы на аренду</h3>
+            <div id="pendingRequestsList" class="requests-list">
+                <div class="empty-requests"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
             </div>
-            <div class="sidebar-prices">
-                <div class="sidebar-price-row">
-                    <span>Будни:</span>
-                    <span class="sidebar-price-value" th:text="${premise.priceWeekday} + ' ₽'"></span>
-                </div>
-                <div class="sidebar-price-row" th:if="${premise.priceWeekend != null && premise.priceWeekend > 0}">
-                    <span>Выходные:</span>
-                    <span class="sidebar-price-value" th:text="${premise.priceWeekend} + ' ₽'"></span>
-                </div>
-                <div class="sidebar-price-row" th:if="${premise.priceHoliday != null && premise.priceHoliday > 0}">
-                    <span>Праздники:</span>
-                    <span class="sidebar-price-value" th:text="${premise.priceHoliday} + ' ₽'"></span>
-                </div>
-            </div>
-            <a th:href="@{/premise/{id}(id=${premise.id})}" class="sidebar-detail-link" target="_blank">Подробнее →</a>
         </div>
     </div>
 </div>
 
-<div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
-    <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
+<div id="bookingModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fas fa-handshake"></i> Оформление аренды</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="previewCard" class="premise-mini-card" style="display: none;">
+                <img id="previewImage" src="" alt="">
+                <div class="premise-mini-card-info">
+                    <h4 id="previewTitle"></h4>
+                    <p id="previewAddress"></p>
+                </div>
+            </div>
+
+            <div id="bookedRangesContainer" class="booked-ranges-list" style="display: none;">
+                <h4><i class="fas fa-calendar-times"></i> Уже занятые периоды</h4>
+                <div id="bookedRangesItems" class="booked-ranges-items"></div>
+            </div>
+
+            <div class="date-range-row">
+                <div class="date-group">
+                    <label><i class="fas fa-calendar-alt"></i> Дата начала</label>
+                    <input type="date" id="startDate" min="">
+                </div>
+                <div class="date-group">
+                    <label><i class="fas fa-calendar-check"></i> Дата окончания</label>
+                    <input type="date" id="endDate" min="">
+                </div>
+            </div>
+
+            <div id="availabilityIndicator" class="availability-indicator" style="display: none;"></div>
+
+            <button id="submitBtn" class="modal-submit-btn" onclick="submitBooking()" disabled>
+                <i class="fas fa-check-circle"></i> Подтвердить
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:10000; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
+    <img id="fullImg" style="max-width:95%; max-height:95%;">
 </div>
 
 <script th:inline="javascript">
-    /*<![CDATA[*/
     const receiverId = /*[[${otherUser.id}]]*/ null;
     const currentUserId = /*[[${currentUser.id}]]*/ null;
     const currentUsername = /*[[${currentUser.login}]]*/ null;
     const initialMessages = /*[[${messages}]]*/ [];
     const premiseId = /*[[${premiseId}]]*/ null;
-    const otherUserLogin = /*[[${otherUser.login}]]*/ null;
-    /*]]>*/
+    const isOwner = /*[[${isOwner}]]*/ false;
+    const premiseAvailableFrom = /*[[${premise != null ? premise.availableFrom : null}]]*/ null;
+    const premiseAvailableTo = /*[[${premise != null ? premise.availableTo : null}]]*/ null;
 
     let notificationTimeout = null;
     let pollingInterval = null;
-    let isPolling = false;
     let lastMessageCount = 0;
+    let bookedRanges = [];
+    let currentAvailability = false;
 
-    // ======================== СЛАЙДЕР ФОТОГРАФИЙ В КАРТОЧКЕ ========================
-    let sidebarCurrentPhotoIndex = 0;
-    let sidebarTotalPhotos = 0;
-    let sidebarPhotosContainer = null;
-    let sidebarAutoSlideInterval = null;
+    const premiseData = {
+        id: /*[[${premise != null ? premise.id : null}]]*/ null,
+        typeInRussian: /*[[${premise != null ? premise.getTypeInRussian() : null}]]*/ null,
+        city: /*[[${premise != null ? premise.city : null}]]*/ null,
+        street: /*[[${premise != null ? premise.street : null}]]*/ null,
+        building: /*[[${premise != null ? premise.building : null}]]*/ null,
+        availableFrom: /*[[${premise != null ? premise.availableFrom : null}]]*/ null,
+        availableTo: /*[[${premise != null ? premise.availableTo : null}]]*/ null,
+        photoPaths: /*[[${premise != null ? premise.photoPaths : null}]]*/ null
+    };
 
-    function updateSidebarSliderUI() {
-        if (!sidebarPhotosContainer) return;
-        const total = sidebarTotalPhotos;
-        if (total === 0) return;
-        sidebarPhotosContainer.style.transform = `translateX(-${sidebarCurrentPhotoIndex * 100}%)`;
+    let currentPhotoIndex = 0, totalPhotos = 0, photosContainer = null, autoSlideInterval = null;
 
-        const leftArrow = document.getElementById('sidebarArrowLeft');
-        const rightArrow = document.getElementById('sidebarArrowRight');
-        if (leftArrow && rightArrow && total <= 1) {
+    function updateSliderUI() {
+        if (!photosContainer) return;
+        photosContainer.style.transform = `translateX(-${currentPhotoIndex * 100}%)`;
+        const leftArrow = document.getElementById('premiseArrowLeft');
+        const rightArrow = document.getElementById('premiseArrowRight');
+        if (leftArrow && rightArrow && totalPhotos <= 1) {
             leftArrow.style.opacity = '0';
-            leftArrow.style.pointerEvents = 'none';
             rightArrow.style.opacity = '0';
-            rightArrow.style.pointerEvents = 'none';
-        } else if (leftArrow && rightArrow) {
+        } else {
             leftArrow.style.opacity = '0.9';
-            leftArrow.style.pointerEvents = 'auto';
             rightArrow.style.opacity = '0.9';
-            rightArrow.style.pointerEvents = 'auto';
         }
     }
 
-    function sidebarPrevPhoto() {
-        if (sidebarTotalPhotos <= 1) return;
-        sidebarCurrentPhotoIndex = (sidebarCurrentPhotoIndex - 1 + sidebarTotalPhotos) % sidebarTotalPhotos;
-        updateSidebarSliderUI();
-        resetSidebarAutoSlide();
-    }
+    function prevPhoto() { if (totalPhotos <= 1) return; currentPhotoIndex = (currentPhotoIndex - 1 + totalPhotos) % totalPhotos; updateSliderUI(); }
+    function nextPhoto() { if (totalPhotos <= 1) return; currentPhotoIndex = (currentPhotoIndex + 1) % totalPhotos; updateSliderUI(); }
 
-    function sidebarNextPhoto() {
-        if (sidebarTotalPhotos <= 1) return;
-        sidebarCurrentPhotoIndex = (sidebarCurrentPhotoIndex + 1) % sidebarTotalPhotos;
-        updateSidebarSliderUI();
-        resetSidebarAutoSlide();
-    }
-
-    function resetSidebarAutoSlide() {
-        if (sidebarAutoSlideInterval) clearInterval(sidebarAutoSlideInterval);
-        if (sidebarTotalPhotos > 1) sidebarAutoSlideInterval = setInterval(() => sidebarNextPhoto(), 4000);
-    }
-
-    function initSidebarPhotoSlider() {
-        sidebarPhotosContainer = document.getElementById('sidebarPhotosContainer');
-        if (!sidebarPhotosContainer) return;
-        const photos = sidebarPhotosContainer.querySelectorAll('.sidebar-photo-item');
-        sidebarTotalPhotos = photos.length;
-        if (sidebarTotalPhotos === 0) return;
-
-        sidebarCurrentPhotoIndex = 0;
-        updateSidebarSliderUI();
-
-        const leftArrow = document.getElementById('sidebarArrowLeft');
-        const rightArrow = document.getElementById('sidebarArrowRight');
-        if (leftArrow) leftArrow.addEventListener('click', (e) => { e.stopPropagation(); sidebarPrevPhoto(); });
-        if (rightArrow) rightArrow.addEventListener('click', (e) => { e.stopPropagation(); sidebarNextPhoto(); });
-
-        resetSidebarAutoSlide();
-
-        const slider = document.getElementById('sidebarSlider');
-        if (slider) {
-            slider.addEventListener('mouseenter', () => { if (sidebarAutoSlideInterval) { clearInterval(sidebarAutoSlideInterval); sidebarAutoSlideInterval = null; } });
-            slider.addEventListener('mouseleave', () => { if (sidebarTotalPhotos > 1 && !sidebarAutoSlideInterval) sidebarAutoSlideInterval = setInterval(() => sidebarNextPhoto(), 4000); });
-        }
+    function initPremiseSlider() {
+        photosContainer = document.getElementById('premisePhotosContainer');
+        if (!photosContainer) return;
+        const photos = photosContainer.querySelectorAll('.photo-item');
+        totalPhotos = photos.length;
+        if (totalPhotos === 0) return;
+        currentPhotoIndex = 0;
+        updateSliderUI();
+        document.getElementById('premiseArrowLeft')?.addEventListener('click', prevPhoto);
+        document.getElementById('premiseArrowRight')?.addEventListener('click', nextPhoto);
     }
 
     function openFullscreen(src) {
-        const fullImg = document.getElementById('fullImg');
-        const fullscreen = document.getElementById('fullscreen');
-        if (fullImg && fullscreen) { fullImg.src = src; fullscreen.style.display = 'flex'; }
+        document.getElementById('fullImg').src = src;
+        document.getElementById('fullscreen').style.display = 'flex';
     }
 
-    // Функция для перехода в профиль пользователя
     function goToProfile(username) {
-        if (username) {
-            window.location.href = `/profile?username=${encodeURIComponent(username)}`;
-        }
+        if (username) window.location.href = `/profile?username=${encodeURIComponent(username)}`;
     }
 
-    // Функция для пометки сообщений как прочитанных на сервере
     async function markMessagesAsRead() {
         try {
             let url = `/chats/api/messages/mark-read?with=${receiverId}`;
-            if (premiseId) {
-                url += `&premiseId=${premiseId}`;
-            }
-            const response = await fetch(url, { method: 'POST' });
-            if (response.ok) {
-                console.log('Messages marked as read');
-            }
-        } catch (error) {
-            console.error('Error marking messages as read:', error);
-        }
-    }
-
-    // Функция для обновления бейджа
-    function updateChatBadge() {
-        fetch('/chats/api/chats')
-            .then(response => response.json())
-            .then(chats => {
-                const chatsWithUnread = chats.filter(chat => chat.unreadCount > 0).length;
-                localStorage.setItem('unreadChatsCount', chatsWithUnread);
-                window.dispatchEvent(new CustomEvent('unreadChatsUpdate', { detail: { count: chatsWithUnread } }));
-            })
-            .catch(error => console.error('Error fetching chats for badge:', error));
+            if (premiseId) url += `&premiseId=${premiseId}`;
+            await fetch(url, { method: 'POST' });
+        } catch(e) { console.error(e); }
     }
 
     function showNotification(message, isError = false) {
-        const existing = document.querySelector('.notification');
-        if (existing) existing.remove();
+        document.querySelector('.notification')?.remove();
         if (notificationTimeout) clearTimeout(notificationTimeout);
-
-        const notification = document.createElement('div');
-        notification.className = `notification ${isError ? 'error' : ''}`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-
-        notificationTimeout = setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-
-    function getDisplayDate(date) {
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        const messageDate = new Date(date);
-        messageDate.setHours(0, 0, 0, 0);
-
-        const todayDate = new Date(today);
-        todayDate.setHours(0, 0, 0, 0);
-        const yesterdayDate = new Date(yesterday);
-        yesterdayDate.setHours(0, 0, 0, 0);
-
-        if (messageDate.getTime() === todayDate.getTime()) {
-            return 'Сегодня';
-        } else if (messageDate.getTime() === yesterdayDate.getTime()) {
-            return 'Вчера';
-        } else {
-            return messageDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-        }
-    }
-
-    function getDateKey(date) {
-        const d = new Date(date);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const n = document.createElement('div');
+        n.className = `notification ${isError ? 'error' : ''}`;
+        n.textContent = message;
+        document.body.appendChild(n);
+        notificationTimeout = setTimeout(() => n.remove(), 3000);
     }
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
     }
 
     function scrollToBottom() {
-        const messagesContainer = document.getElementById('messages');
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        const container = document.getElementById('messages');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function formatDate(date) {
+        return new Date(date).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDateRu(dateStr) {
+        if (!dateStr) return '';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}.${m}.${y}`;
+    }
+
+    function getDateKey(date) {
+        const d = new Date(date);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
 
     function renderMessages(messages) {
         const container = document.getElementById('messages');
         if (!container) return;
-
         container.innerHTML = '';
-
         if (!messages || messages.length === 0) {
-            container.innerHTML = `
-                <div class="empty-chat">
-                    <i class="fas fa-comments"></i>
-                    <p>У вас пока нет сообщений</p>
-                    <p style="font-size: 12px; margin-top: 8px;">Напишите что-нибудь, чтобы начать диалог</p>
-                </div>
-            `;
+            container.innerHTML = '<div class="empty-chat"><i class="fas fa-comments"></i><p>У вас пока нет сообщений</p></div>';
             return;
         }
-
         let lastDateKey = null;
-
-        messages.forEach((msg) => {
+        messages.sort((a,b) => new Date(a.sentAt) - new Date(b.sentAt));
+        messages.forEach(msg => {
             const currentDateKey = getDateKey(msg.sentAt);
-
             if (lastDateKey !== currentDateKey) {
                 const dateDiv = document.createElement('div');
                 dateDiv.className = 'date-separator';
-                dateDiv.innerHTML = `<span>${getDisplayDate(msg.sentAt)}</span>`;
+                dateDiv.innerHTML = `<span>${new Date(msg.sentAt).toLocaleDateString('ru-RU', {day:'numeric',month:'long'})}</span>`;
                 container.appendChild(dateDiv);
                 lastDateKey = currentDateKey;
             }
 
+            // Проверяем, является ли сообщение системным
+            const isSystem = msg.senderLogin === 'Система';
             const isCurrentUser = msg.senderId == currentUserId;
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isCurrentUser ? 'my-message' : 'their-message'}`;
 
-            const sentAt = new Date(msg.sentAt);
-            const timeStr = sentAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const div = document.createElement('div');
+            div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')}`;
 
-            const authorLink = `<a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>`;
-
-            messageDiv.innerHTML = `
-                <div class="message-header">
-                    <span>${authorLink}</span>
-                </div>
-                <div class="message-text">${escapeHtml(msg.text)}</div>
-                <div class="message-time">${timeStr}</div>
-            `;
-
-            container.appendChild(messageDiv);
+            if (isSystem) {
+                // Для системных сообщений НЕ экранируем HTML, чтобы теги работали
+                div.innerHTML = `
+                    <div class="message-text">${msg.text}</div>
+                    <div class="message-time">${formatDate(msg.sentAt)}</div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="message-header">
+                        <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>
+                    </div>
+                    <div class="message-text">${escapeHtml(msg.text)}</div>
+                    <div class="message-time">${formatDate(msg.sentAt)}</div>
+                `;
+            }
+            container.appendChild(div);
         });
-
         scrollToBottom();
     }
 
-    function addMessageToChat(senderId, senderLogin, text, isCurrentUser, sentAt) {
-        const container = document.getElementById('messages');
-        if (!container) return;
-
-        const emptyDiv = container.querySelector('.empty-chat');
-        if (emptyDiv) emptyDiv.remove();
-
-        const newDateKey = getDateKey(sentAt);
-        const lastSeparator = container.querySelector('.date-separator:last-child');
-        let lastDateKey = null;
-
-        if (lastSeparator) {
-            const separatorText = lastSeparator.querySelector('span').textContent;
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            if (separatorText === 'Сегодня') {
-                lastDateKey = getDateKey(today);
-            } else if (separatorText === 'Вчера') {
-                lastDateKey = getDateKey(yesterday);
-            } else {
-                lastDateKey = null;
+    async function loadNewMessages() {
+        try {
+            let url = `/chats/api/messages?with=${receiverId}`;
+            if (premiseId) url += `&premiseId=${premiseId}`;
+            const response = await fetch(url);
+            if (response.ok) {
+                const messages = await response.json();
+                if (messages.length !== lastMessageCount) {
+                    renderMessages(messages);
+                    lastMessageCount = messages.length;
+                    await markMessagesAsRead();
+                }
             }
-        }
-
-        if (lastDateKey !== newDateKey) {
-            loadNewMessages();
-            return;
-        }
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isCurrentUser ? 'my-message' : 'their-message'}`;
-        messageDiv.style.animation = 'fadeIn 0.3s ease';
-
-        const timeStr = new Date(sentAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
-        const authorLink = `<a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(senderLogin)}')" class="message-author-link">${escapeHtml(senderLogin)}</a>`;
-
-        messageDiv.innerHTML = `
-            <div class="message-header">
-                <span>${authorLink}</span>
-            </div>
-            <div class="message-text">${escapeHtml(text)}</div>
-            <div class="message-time">${timeStr}</div>
-        `;
-
-        container.appendChild(messageDiv);
-        scrollToBottom();
+        } catch(e) { console.error(e); }
     }
 
     function sendMessage() {
         const input = document.getElementById('messageInput');
         const text = input.value.trim();
         if (!text) return;
-
         const btn = document.querySelector('.input-area button');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Отправка...';
-
         let url = `/chats/send?receiverId=${receiverId}&text=${encodeURIComponent(text)}`;
-        if (premiseId) {
-            url += `&premiseId=${premiseId}`;
-        }
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                addMessageToChat(currentUserId, currentUsername, text, true, new Date());
+        if (premiseId) url += `&premiseId=${premiseId}`;
+        fetch(url, { method: 'POST' })
+            .then(() => {
                 input.value = '';
+                loadNewMessages();
                 showNotification('Сообщение отправлено');
-                updateChatBadge();
-            } else {
-                showNotification('Ошибка при отправке сообщения. Код: ' + response.status, true);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Ошибка соединения', true);
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Отправить';
-        });
+            })
+            .catch(() => showNotification('Ошибка', true))
+            .finally(() => btn.disabled = false);
     }
 
-    async function loadNewMessages() {
-        if (isPolling) return;
-        isPolling = true;
+    // ======================== БРОНИРОВАНИЕ ========================
+    async function loadBookedRanges() {
+        if (!premiseId) return;
+        try {
+            const response = await fetch(`/api/bookings/premise/${premiseId}/booked-ranges`);
+            if (response.ok) {
+                bookedRanges = await response.json();
+                displayBookedRanges();
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function displayBookedRanges() {
+        const container = document.getElementById('bookedRangesContainer');
+        const items = document.getElementById('bookedRangesItems');
+        if (bookedRanges && bookedRanges.length > 0) {
+            container.style.display = 'block';
+            items.innerHTML = bookedRanges.map(range =>
+                `<span class="booked-date-range-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    ${formatDateRu(range.start)} — ${formatDateRu(range.end)}
+                </span>`
+            ).join('');
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function updateDatePickerLimits() {
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        const today = new Date().toISOString().split('T')[0];
+
+        let minDate = today;
+        let maxDate = null;
+
+        if (premiseData.availableFrom && premiseData.availableFrom > today) {
+            minDate = premiseData.availableFrom;
+        }
+        if (premiseData.availableTo) {
+            maxDate = premiseData.availableTo;
+        }
+
+        startInput.min = minDate;
+        endInput.min = minDate;
+
+        if (maxDate) {
+            startInput.max = maxDate;
+            endInput.max = maxDate;
+        }
+
+        applyDatePickerStyles();
+    }
+
+    function applyDatePickerStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .date-group input {
+                background-color: white;
+            }
+            .date-group input::-webkit-calendar-picker-indicator {
+                filter: invert(0.5);
+                cursor: pointer;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    async function checkAvailability() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const indicator = document.getElementById('availabilityIndicator');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (!startDate || !endDate) {
+            indicator.style.display = 'none';
+            submitBtn.disabled = true;
+            currentAvailability = false;
+            return;
+        }
+
+        // Проверка границ доступного периода
+        if (premiseData.availableFrom && startDate < premiseData.availableFrom) {
+            indicator.style.display = 'block';
+            indicator.className = 'availability-indicator unavailable';
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата начала не может быть раньше ${formatDateRu(premiseData.availableFrom)}`;
+            submitBtn.disabled = true;
+            currentAvailability = false;
+            return;
+        }
+
+        if (premiseData.availableTo && endDate > premiseData.availableTo) {
+            indicator.style.display = 'block';
+            indicator.className = 'availability-indicator unavailable';
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата окончания не может быть позже ${formatDateRu(premiseData.availableTo)}`;
+            submitBtn.disabled = true;
+            currentAvailability = false;
+            return;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        let hasConflict = false;
+        let conflictingRanges = [];
+
+        for (const range of bookedRanges) {
+            const rangeStart = new Date(range.start);
+            const rangeEnd = new Date(range.end);
+
+            if (start <= rangeEnd && end >= rangeStart) {
+                hasConflict = true;
+                conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)}`);
+            }
+        }
+
+        if (hasConflict) {
+            indicator.style.display = 'block';
+            indicator.className = 'availability-indicator unavailable';
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Выбранные даты пересекаются с занятыми периодами:<br> ${conflictingRanges.join(', ')}`;
+            submitBtn.disabled = true;
+            currentAvailability = false;
+        } else {
+            indicator.style.display = 'block';
+            indicator.className = 'availability-indicator available';
+            const diff = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000*60*60*24)) + 1;
+            indicator.innerHTML = `<i class="fas fa-check-circle"></i> Период свободен! (${diff} дн.)`;
+            submitBtn.disabled = false;
+            currentAvailability = true;
+        }
+    }
+
+    async function submitBooking() {
+        if (!currentAvailability) {
+            showNotification('Даты недоступны', true);
+            return;
+        }
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (!startDate || !endDate) {
+            showNotification('Выберите даты', true);
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Обработка...';
+
+        let url;
+        if (isOwner) {
+            url = `/api/bookings/create?premiseId=${premiseId}&renterId=${receiverId}&startDate=${startDate}&endDate=${endDate}`;
+        } else {
+            url = `/api/bookings/request?premiseId=${premiseId}&ownerId=${receiverId}&startDate=${startDate}&endDate=${endDate}`;
+        }
 
         try {
-            let url = `/chats/api/messages?with=${receiverId}`;
-            if (premiseId) {
-                url += `&premiseId=${premiseId}`;
-            }
-            const response = await fetch(url);
-            if (response.ok) {
-                const messages = await response.json();
-                const currentCount = messages.length;
-
-                if (currentCount !== lastMessageCount) {
-                    messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
-                    renderMessages(messages);
-                    lastMessageCount = currentCount;
-
-                    await markMessagesAsRead();
-                    updateChatBadge();
+            const response = await fetch(url, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                // Отправляем системное сообщение в чат
+                if (!isOwner) {
+                    // Арендатор отправил запрос -> уведомляем владельца
+                    await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=booking_request&premiseId=${premiseId}&startDate=${startDate}&endDate=${endDate}`, {
+                        method: 'POST'
+                    });
+                } else {
+                    // Владелец создал бронирование -> уведомляем арендатора
+                    await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=booking_approved&premiseId=${premiseId}`, {
+                        method: 'POST'
+                    });
                 }
+
+                showNotification(isOwner ? 'Аренда оформлена!' : 'Запрос отправлен владельцу!');
+                closeModal();
+                await loadBookedRanges();
+                if (isOwner) loadPendingRequests();
+
+                // Обновляем сообщения в чате
+                await loadNewMessages();
+            } else {
+                showNotification(data.message || 'Ошибка', true);
             }
-        } catch (error) {
-            console.error('Error loading messages:', error);
+        } catch(e) {
+            showNotification('Ошибка соединения', true);
         } finally {
-            isPolling = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Подтвердить';
         }
     }
 
-    // Делаем функцию goToProfile глобально доступной
+    async function loadPendingRequests() {
+        if (!isOwner) return;
+        const container = document.getElementById('pendingRequestsList');
+        try {
+            const response = await fetch(`/api/bookings/owner/${currentUserId}/pending`);
+            const requests = await response.json();
+            if (requests.length === 0) {
+                container.innerHTML = '<div class="empty-requests"><i class="fas fa-inbox"></i> Нет активных запросов</div>';
+                return;
+            }
+            container.innerHTML = requests.map(req => `
+                <div class="request-item">
+                    <div class="request-dates"><i class="fas fa-calendar-alt"></i> ${formatDateRu(req.startDate)} — ${formatDateRu(req.endDate)}</div>
+                    <div class="request-renter"><i class="fas fa-user"></i> Арендатор: <a href="/profile?username=${encodeURIComponent(req.renterName)}" target="_blank">${escapeHtml(req.renterName)}</a></div>
+                    <div class="request-actions">
+                        <button class="approve-btn" onclick="processRequest(${req.id}, 'approve')"><i class="fas fa-check"></i> Одобрить</button>
+                        <button class="reject-btn" onclick="processRequest(${req.id}, 'reject')"><i class="fas fa-times"></i> Отказать</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            container.innerHTML = '<div class="empty-requests"><i class="fas fa-exclamation-circle"></i> Ошибка загрузки</div>';
+        }
+    }
+
+    async function processRequest(bookingId, action) {
+        const msg = action === 'approve' ? 'Подтвердить аренду?' : 'Отказать в аренде?';
+        if (!confirm(msg)) return;
+        try {
+            const response = await fetch(`/api/bookings/${bookingId}/${action}`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                showNotification(action === 'approve' ? 'Аренда подтверждена!' : 'Запрос отклонён');
+
+                // Отправляем системное сообщение в чат
+                const messageType = action === 'approve' ? 'booking_approved' : 'booking_rejected';
+                await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=${messageType}&premiseId=${premiseId}`, {
+                    method: 'POST'
+                });
+
+                await loadPendingRequests();
+                await loadBookedRanges();
+
+                // Обновляем сообщения в чате
+                await loadNewMessages();
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch(e) {
+            showNotification('Ошибка', true);
+        }
+    }
+
+    function showModal() {
+        document.getElementById('bookingModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        updateDatePickerLimits();
+        if (premiseData.id) {
+            document.getElementById('previewCard').style.display = 'flex';
+            document.getElementById('previewTitle').textContent = premiseData.typeInRussian || 'Помещение';
+            document.getElementById('previewAddress').textContent = `${premiseData.city || ''}, ${premiseData.street || ''} ${premiseData.building || ''}`;
+            if (premiseData.photoPaths && premiseData.photoPaths.length) {
+                document.getElementById('previewImage').src = '/uploads/' + premiseData.photoPaths[0];
+            } else {
+                document.getElementById('previewImage').src = '/images/no-photo.jpg';
+            }
+        }
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('availabilityIndicator').style.display = 'none';
+        document.getElementById('submitBtn').disabled = true;
+
+        const modalTitle = document.getElementById('modalTitle');
+        if (isOwner) {
+            modalTitle.innerHTML = '<i class="fas fa-handshake"></i> Оформление аренды';
+        } else {
+            modalTitle.innerHTML = '<i class="fas fa-calendar-plus"></i> Предложение аренды';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('bookingModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    document.getElementById('messageInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+    document.getElementById('showOwnerModalBtn')?.addEventListener('click', showModal);
+    document.getElementById('showRenterModalBtn')?.addEventListener('click', showModal);
+    document.getElementById('startDate').addEventListener('change', () => {
+        const endInput = document.getElementById('endDate');
+        const start = document.getElementById('startDate').value;
+        if (start) endInput.min = start;
+        checkAvailability();
+    });
+    document.getElementById('endDate').addEventListener('change', checkAvailability);
+
     window.goToProfile = goToProfile;
     window.openFullscreen = openFullscreen;
+    window.sendMessage = sendMessage;
+    window.processRequest = processRequest;
+    window.submitBooking = submitBooking;
+    window.closeModal = closeModal;
 
-    document.getElementById('messageInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        if (initialMessages && initialMessages.length > 0) {
-            const sortedMessages = [...initialMessages].sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
-            renderMessages(sortedMessages);
-            lastMessageCount = sortedMessages.length;
-        } else {
-            renderMessages([]);
-            lastMessageCount = 0;
-        }
-
+    document.addEventListener('DOMContentLoaded', async () => {
+        renderMessages(initialMessages);
+        lastMessageCount = initialMessages.length;
         document.getElementById('messageInput').focus();
-        pollingInterval = setInterval(loadNewMessages, 2000);
-        updateChatBadge();
-
-        // Инициализируем слайдер в карточке
-        initSidebarPhotoSlider();
+        pollingInterval = setInterval(loadNewMessages, 3000);
+        await loadBookedRanges();
+        initPremiseSlider();
+        if (isOwner) await loadPendingRequests();
     });
 
-    window.addEventListener('beforeunload', function() {
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
-        }
-        if (sidebarAutoSlideInterval) {
-            clearInterval(sidebarAutoSlideInterval);
-        }
-    });
+    window.addEventListener('beforeunload', () => clearInterval(pollingInterval));
 </script>
 </body>
 </html>

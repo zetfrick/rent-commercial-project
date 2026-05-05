@@ -65,6 +65,9 @@ public class PremiseDto {
     private static Map<String, String> typeRussianMap = Map.of();
     private static Map<String, String> amenityRussianMap = Map.of();
 
+    private List<LocalDate> bookedDates = new ArrayList<>();
+    private List<BookingDto> bookings = new ArrayList<>();
+
     /**
      * Инициализация переводов (вызывается из ConfigService при загрузке)
      */

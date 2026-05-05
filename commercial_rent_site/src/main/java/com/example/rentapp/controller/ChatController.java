@@ -1,10 +1,12 @@
 package com.example.rentapp.controller;
 
 import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.ChatMessageDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.ChatMessage;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.ChatService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,9 @@ public class ChatController {
     @Autowired
     private CatalogClient catalogClient;
 
+    @Autowired
+    private BookingService bookingService;
+
     @GetMapping
     public String chatsPage(@AuthenticationPrincipal UserDetails userDetails,
                             @RequestParam(required = false) String city,
@@ -38,7 +44,6 @@ public class ChatController {
                             Model model) {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
 
-        // Для header
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
@@ -120,7 +125,6 @@ public class ChatController {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
         User otherUser = userService.findByLogin(username).orElseThrow();
 
-        // Получаем информацию об объявлении для карточки
         PremiseDto premise = catalogClient.getPremiseById(premiseId);
 
         chatService.markMessagesAsReadByPremise(currentUser.getId(), otherUser.getId(), premiseId);
@@ -132,7 +136,8 @@ public class ChatController {
         model.addAttribute("messages", messages);
         model.addAttribute("otherUsername", username);
         model.addAttribute("premiseId", premiseId);
-        model.addAttribute("premise", premise);  // ДОБАВЛЕНО: передаём данные об объявлении
+        model.addAttribute("premise", premise);
+        model.addAttribute("isOwner", currentUser.getId().equals(premise.getOwnerId()));
 
         return "future/chat-window";
     }
@@ -162,7 +167,8 @@ public class ChatController {
         model.addAttribute("otherUsername", owner.getLogin());
         model.addAttribute("premiseId", premiseId);
         model.addAttribute("premiseTitle", premise.getTypeInRussian() + " в " + premise.getCity());
-        model.addAttribute("premise", premise);  // ДОБАВЛЕНО: передаём данные об объявлении для карточки
+        model.addAttribute("premise", premise);
+        model.addAttribute("isOwner", currentUser.getId().equals(premise.getOwnerId()));
 
         return "future/chat-window";
     }
@@ -190,6 +196,42 @@ public class ChatController {
         }
 
         System.out.println("Message saved with ID: " + message.getId() + ", premiseId: " + message.getPremiseId());
+
+        return "ok";
+    }
+
+    // НОВЫЙ МЕТОД: отправка системного сообщения о запросе аренды
+    @PostMapping("/send-system-message")
+    @ResponseBody
+    public String sendSystemMessage(@RequestParam Long receiverId,
+                                    @RequestParam String messageType,
+                                    @RequestParam(required = false) Long premiseId,
+                                    @RequestParam(required = false) String startDate,
+                                    @RequestParam(required = false) String endDate,
+                                    @AuthenticationPrincipal UserDetails userDetails) {
+
+        User sender = userService.findByLogin(userDetails.getUsername()).orElseThrow();
+
+        String text;
+        if ("booking_request".equals(messageType)) {
+            String formattedStart = startDate != null ? startDate.replace('-', '.') : "";
+            String formattedEnd = endDate != null ? endDate.replace('-', '.') : "";
+            text = String.format("📅 <strong>Запрос на аренду</strong><br>Пользователь <strong>%s</strong> предлагает арендовать помещение с <strong>%s</strong> по <strong>%s</strong>. Проверьте запрос в разделе \"Запросы на аренду\" справа.",
+                    sender.getLogin(), formattedStart, formattedEnd);
+        } else if ("booking_approved".equals(messageType)) {
+            text = String.format("✅ <strong>Аренда подтверждена!</strong><br>Владелец <strong>%s</strong> подтвердил аренду помещения на выбранные даты.", sender.getLogin());
+        } else if ("booking_rejected".equals(messageType)) {
+            text = String.format("❌ <strong>Запрос на аренду отклонён</strong><br>Владелец <strong>%s</strong> отклонил ваш запрос на аренду.", sender.getLogin());
+        } else {
+            text = "Системное сообщение";
+        }
+
+        ChatMessage message;
+        if (premiseId != null) {
+            message = chatService.sendSystemMessageWithPremise(sender.getId(), receiverId, text, premiseId);
+        } else {
+            message = chatService.sendSystemMessage(sender.getId(), receiverId, text);
+        }
 
         return "ok";
     }
@@ -289,6 +331,13 @@ public class ChatController {
         chats.sort((a, b) -> b.lastMessageTime.compareTo(a.lastMessageTime));
 
         return chats;
+    }
+
+    @GetMapping("/api/requests/pending")
+    @ResponseBody
+    public List<BookingDto> getPendingRequests(@AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
+        return bookingService.getPendingRequestsForOwner(currentUser.getId());
     }
 
     public static class ChatInfo {

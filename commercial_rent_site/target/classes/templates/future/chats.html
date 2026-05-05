@@ -384,6 +384,15 @@
         return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     }
 
+    // Функция для очистки HTML-тегов из системных сообщений для предпросмотра
+    function stripHtml(html) {
+        if (!html) return '';
+        // Создаём временный элемент для извлечения текста без HTML-тегов
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        return temp.textContent || temp.innerText || '';
+    }
+
     // Функция для отображения списка чатов
     function renderChats(chats) {
         const container = document.getElementById('chatsList');
@@ -412,6 +421,15 @@
                 ? `/chats/with/${chat.user.login}/premise/${chat.premiseId}`
                 : `/chats/with/${chat.user.login}`;
 
+            // Обрабатываем предпросмотр сообщения
+            let previewText = chat.lastMessage || '';
+            // Если сообщение содержит HTML-теги (системное сообщение), извлекаем только текст
+            if (previewText.includes('<strong>') || previewText.includes('<br>')) {
+                previewText = stripHtml(previewText);
+            } else {
+                previewText = escapeHtml(previewText);
+            }
+
             html += `
                 <a href="${chatUrl}" class="chat-item">
                     <div class="chat-avatar">
@@ -423,7 +441,7 @@
                             ${premiseBadge}
                             ${unreadBadge}
                         </div>
-                        <div class="chat-preview">${escapeHtml(chat.lastMessage || '')}</div>
+                        <div class="chat-preview">${previewText}</div>
                     </div>
                     <div class="chat-time">
                         <span>${formatTime(chat.lastMessageTime)}</span>

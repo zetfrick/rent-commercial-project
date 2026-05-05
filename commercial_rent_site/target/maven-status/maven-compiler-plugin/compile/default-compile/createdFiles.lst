@@ -6,6 +6,7 @@ com\example\rentapp\dto\ComplaintDto.class
 com\example\rentapp\controller\ConfigController.class
 com\example\rentapp\controller\PremiseApiController.class
 com\example\rentapp\client\CatalogClient.class
+com\example\rentapp\repository\BookingRepository.class
 com\example\rentapp\RentAppApplication.class
 com\example\rentapp\entity\Complaint$RejectedBy.class
 com\example\rentapp\repository\CommentRepository.class
@@ -15,6 +16,7 @@ com\example\rentapp\dto\ChatMessageDto.class
 com\example\rentapp\entity\Comment.class
 com\example\rentapp\service\FileStorageService.class
 com\example\rentapp\config\WebConfig.class
+com\example\rentapp\service\BookingService.class
 com\example\rentapp\controller\ChatController.class
 com\example\rentapp\entity\Complaint.class
 com\example\rentapp\controller\api\ApiAuthController.class
@@ -23,6 +25,7 @@ com\example\rentapp\dto\ComplaintDto$RejectedByDto.class
 com\example\rentapp\controller\AdminController.class
 com\example\rentapp\service\CommentService.class
 com\example\rentapp\service\ChatService.class
+com\example\rentapp\entity\Booking.class
 com\example\rentapp\repository\ChatMessageRepository.class
 com\example\rentapp\service\ComplaintService.class
 com\example\rentapp\advice\GlobalModelAdvice.class
@@ -32,9 +35,11 @@ com\example\rentapp\entity\ChatMessage.class
 com\example\rentapp\repository\UserRepository.class
 com\example\rentapp\config\SecurityConfig.class
 com\example\rentapp\config\SecurityConfig$1.class
+com\example\rentapp\controller\BookingApiController.class
 com\example\rentapp\entity\User$Role.class
 com\example\rentapp\dto\RegisterRequest.class
 com\example\rentapp\repository\ComplaintRepository.class
+com\example\rentapp\dto\BookingDto.class
 com\example\rentapp\service\ConfigService.class
 com\example\rentapp\controller\ProfileController.class
 com\example\rentapp\dto\PremiseForm.class
