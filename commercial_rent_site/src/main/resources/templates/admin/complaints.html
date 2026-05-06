@@ -6,67 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
             background: #f5f5f5;
             color: #333;
+            padding-top: 80px;ф
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 30px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            color: white;
-        }
-        .nav-left { display: flex; align-items: center; gap: 25px; }
-        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
-        .nav-left a:hover { color: #ffcc80; }
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255,255,255,0.12);
-            padding: 4px 6px 4px 4px;
-            border-radius: 40px;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: white;
-            padding: 3px 12px 3px 6px;
-            border-radius: 40px;
-        }
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #ff5722, #ff9800);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .logout-btn {
-            background: #ff5722;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -636,7 +585,7 @@
             color: #555;
         }
         @media (max-width: 768px) {
-            .header { padding: 8px 16px; }
+            .container { padding: 20px 15px; }
             th, td { padding: 12px; }
             .complaints-table { overflow-x: auto; }
             table { min-width: 600px; }
@@ -649,22 +598,10 @@
 </head>
 <body>
 
-<header class="header">
-    <div class="nav-left">
-        <a href="/admin/admins">Администраторы</a>
-        <a href="/admin/complaints" style="color: #ffcc80;">Жалобы</a>
-        <a href="/catalog">Каталог</a>
-    </div>
-    <div class="user-profile">
-        <a href="/profile" class="user-info">
-            <span class="user-avatar">👤</span>
-            <span class="user-name" th:text="${#authentication.name}"></span>
-        </a>
-        <form th:action="@{/logout}" method="post" style="display: inline;">
-            <button type="submit" class="logout-btn">Выйти</button>
-        </form>
-    </div>
-</header>
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass='hd-header-fixed'
+)}"></div>
 
 <div class="container">
     <div class="page-header">

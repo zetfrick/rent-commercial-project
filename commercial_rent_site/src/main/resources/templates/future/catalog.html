@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light only">
     <title>Каталог помещений в аренду</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,128 +15,8 @@
             background: #f5f5f5;
             color: #333;
         }
+
         a { text-decoration: none; }
-
-        .top-bar {
-            background: white;
-            padding: 15px 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .left-side { display: flex; align-items: center; gap: 25px; }
-        .location { font-weight: 600; color: #ff5722; font-size: 19px; }
-        .back-home {
-            background: #ff5722;
-            color: white;
-            padding: 10px 28px;
-            border-radius: 30px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .back-home:hover { background: #e64a19; transform: translateY(-2px); }
-
-        .center-rent-btn {
-            background: #ff5722;
-            color: white;
-            padding: 12px 32px;
-            border-radius: 40px;
-            font-weight: bold;
-            font-size: 18px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255,87,34,0.3);
-        }
-        .center-rent-btn:hover {
-            background: #e64a19;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255,87,34,0.4);
-        }
-
-        .top-right {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            flex-wrap: wrap;
-        }
-
-        .phone { display: flex; align-items: center; gap: 8px; font-weight: 500; color: #333; }
-        .phone a { color: #ff5722; font-weight: 600; }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #f5f5f5;
-            padding: 5px 8px 5px 5px;
-            border-radius: 50px;
-            border: 1px solid #eee;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: #333;
-            padding: 4px 14px 4px 8px;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-        }
-        .user-info:hover { background: #fff0e8; }
-        .user-avatar {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, #ff5722, #ff9800);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            box-shadow: 0 3px 10px rgba(255,87,34,0.3);
-        }
-        .user-name {
-            font-weight: 600;
-            font-size: 15px;
-            max-width: 170px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .logout-btn {
-            background: #ff5722;
-            color: white;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .logout-btn:hover {
-            background: #e64a19;
-            transform: translateY(-1px);
-        }
-        .auth-buttons a {
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        .btn-login { background: transparent; color: #ff5722; border: 2px solid #ff5722; }
-        .btn-login:hover { background: #ff5722; color: white; }
-        .btn-register { background: #ff5722; color: white; }
-        .btn-register:hover { background: #e64a19; }
 
         .filters {
             background: white;
@@ -430,6 +312,7 @@
             transition: all 0.3s;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .premise-card:hover {
@@ -501,7 +384,9 @@
             font-size: 18px;
         }
 
-        .area-badge, .capacity-badge {
+        /* Бейджи площади и вместимости - только внутри карточки */
+        .premise-card .area-badge,
+        .premise-card .capacity-badge {
             position: absolute;
             top: 15px;
             background: rgba(0,0,0,0.7);
@@ -512,8 +397,8 @@
             font-size: 13px;
             z-index: 15;
         }
-        .area-badge { left: 15px; }
-        .capacity-badge { right: 15px; }
+        .premise-card .area-badge { left: 15px; }
+        .premise-card .capacity-badge { right: 15px; }
 
         .info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
         .type { font-size: 20px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; color: #ff9800; }
@@ -650,11 +535,6 @@
         }
 
         @media (max-width: 768px) {
-            .top-bar { flex-direction: column; align-items: stretch; text-align: center; }
-            .left-side { justify-content: center; }
-            .center-rent-btn { order: 2; margin: 10px 0; }
-            .top-right { justify-content: center; }
-            .slider-arrow { width: 30px; height: 30px; font-size: 18px; }
             .filters-left { flex-direction: column; }
             .filter-group { min-width: 100%; }
             .filters-buttons { justify-content: stretch; }
@@ -664,205 +544,179 @@
             .page-btn { min-width: 38px; height: 38px; padding: 0 10px; font-size: 13px; }
             .page-info { margin-left: 0; margin-top: 10px; width: 100%; text-align: center; }
             .pagination { gap: 6px; }
+            .slider-arrow { width: 30px; height: 30px; font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
-<div class="top-bar">
-    <div class="left-side">
-        <a href="/" class="back-home">Вернуться на главную страницу</a>
-    </div>
-
-    <button class="center-rent-btn"
-            th:onclick="'javascript:window.location.href=\'' +
-            @{${#authentication.principal != null ? '/premise/add' : '/auth/register'}} + '\''">
-        Сдать помещение в аренду
-    </button>
-
-    <div class="top-right">
-        <div class="phone">
-            <span>☎</span>
-            <a href="tel:+79991234567">+7 (999) 123-45-67</a>
-        </div>
-
-        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
-            <a th:href="@{/profile}" class="user-info">
-                <span class="user-avatar">👤</span>
-                <span class="user-name" th:text="${#authentication.name}"></span>
-            </a>
-            <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="logout-btn">Выйти</button>
-            </form>
-        </div>
-
-        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-buttons">
-            <a href="/auth/login" class="btn-login">Вход</a>
-            <a href="/auth/register" class="btn-register">Регистрация</a>
-        </div>
-    </div>
-</div>
-
-<div class="filters">
-    <div class="filters-container">
-        <div class="filters-left">
-            <div class="filter-group">
-                <label>💰 Цена</label>
-                <input type="number" id="priceMax" placeholder="до, ₽">
-            </div>
-            <div class="filter-group">
-                <label>📐 Площадь</label>
-                <input type="number" id="areaMin" placeholder="от, м²">
-            </div>
-            <div class="filter-group">
-                <label>👥 Кол-во</label>
-                <input type="number" id="capacityMin" placeholder="от, чел.">
-            </div>
-            <div class="filter-group">
-                <label>📅 Заезд</label>
-                <input type="date" id="checkInDate">
-            </div>
-            <div class="filter-group">
-                <label>📅 Выезд</label>
-                <input type="date" id="checkOutDate">
-            </div>
-            <div class="filter-group multi-select">
-                <label>🏢 Тип</label>
-                <div class="multi-select-trigger" id="typeTrigger">Любой</div>
-                <div class="multi-select-dropdown" id="typeDropdown">
-                    <div class="dropdown-search">
-                        <input type="text" id="typeSearch" placeholder="🔍 Поиск..." autocomplete="off">
+<!-- Хедер - фиксированное позиционирование для страницы каталога (прилипает при скролле) -->
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass='hd-header-fixed'
+)}"></div>
+<div class="catalog-content" style="padding-top: 80px;">
+    <div class="filters">
+        <div class="filters-container">
+            <div class="filters-left">
+                <div class="filter-group">
+                    <label>💰 Цена</label>
+                    <input type="number" id="priceMax" placeholder="до, ₽">
+                </div>
+                <div class="filter-group">
+                    <label>📐 Площадь</label>
+                    <input type="number" id="areaMin" placeholder="от, м²">
+                </div>
+                <div class="filter-group">
+                    <label>👥 Кол-во</label>
+                    <input type="number" id="capacityMin" placeholder="от, чел.">
+                </div>
+                <div class="filter-group">
+                    <label>📅 Заезд</label>
+                    <input type="date" id="checkInDate">
+                </div>
+                <div class="filter-group">
+                    <label>📅 Выезд</label>
+                    <input type="date" id="checkOutDate">
+                </div>
+                <div class="filter-group multi-select">
+                    <label>🏢 Тип</label>
+                    <div class="multi-select-trigger" id="typeTrigger">Любой</div>
+                    <div class="multi-select-dropdown" id="typeDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="typeSearch" placeholder="🔍 Поиск..." autocomplete="off">
+                        </div>
+                        <div id="typeOptionsContainer"></div>
                     </div>
-                    <div id="typeOptionsContainer"></div>
                 </div>
-            </div>
-            <div class="filter-group multi-select">
-                <label>✨ Опции</label>
-                <div class="multi-select-trigger" id="amenityTrigger">Любые</div>
-                <div class="multi-select-dropdown" id="amenityDropdown">
-                    <div class="dropdown-search">
-                        <input type="text" id="amenitySearch" placeholder="🔍 Поиск..." autocomplete="off">
+                <div class="filter-group multi-select">
+                    <label>✨ Опции</label>
+                    <div class="multi-select-trigger" id="amenityTrigger">Любые</div>
+                    <div class="multi-select-dropdown" id="amenityDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="amenitySearch" placeholder="🔍 Поиск..." autocomplete="off">
+                        </div>
+                        <div id="amenityOptionsContainer"></div>
                     </div>
-                    <div id="amenityOptionsContainer"></div>
                 </div>
-            </div>
-            <div class="filter-group multi-select">
-                <label>📍 Область</label>
-                <div class="multi-select-trigger" id="regionTrigger">Любая</div>
-                <div class="multi-select-dropdown" id="regionDropdown">
-                    <div class="dropdown-search">
-                        <input type="text" id="regionSearch" placeholder="🔍 Поиск..." autocomplete="off">
+                <div class="filter-group multi-select">
+                    <label>📍 Область</label>
+                    <div class="multi-select-trigger" id="regionTrigger">Любая</div>
+                    <div class="multi-select-dropdown" id="regionDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="regionSearch" placeholder="🔍 Поиск..." autocomplete="off">
+                        </div>
+                        <div id="regionOptionsContainer"></div>
                     </div>
-                    <div id="regionOptionsContainer"></div>
                 </div>
-            </div>
-            <div class="filter-group multi-select">
-                <label>🏙️ Город</label>
-                <div class="multi-select-trigger" id="cityTrigger">Любой</div>
-                <div class="multi-select-dropdown" id="cityDropdown">
-                    <div class="dropdown-search">
-                        <input type="text" id="citySearch" placeholder="🔍 Поиск..." autocomplete="off">
+                <div class="filter-group multi-select">
+                    <label>🏙️ Город</label>
+                    <div class="multi-select-trigger" id="cityTrigger">Любой</div>
+                    <div class="multi-select-dropdown" id="cityDropdown">
+                        <div class="dropdown-search">
+                            <input type="text" id="citySearch" placeholder="🔍 Поиск..." autocomplete="off">
+                        </div>
+                        <div id="cityOptionsContainer"></div>
                     </div>
-                    <div id="cityOptionsContainer"></div>
                 </div>
             </div>
-        </div>
-        <div class="filters-buttons">
-            <button class="reset-btn" onclick="resetAllFilters()">Сбросить</button>
-            <button class="search-btn" onclick="applyFiltersAndSort()">Применить</button>
-            <div class="sort-wrapper">
-                <button class="sort-btn" id="sortBtn">📊 Сортировка</button>
-                <div class="sort-dropdown" id="sortDropdown">
-                    <div class="sort-option" data-sort="newest">📅 Новые (сначала новые)</div>
-                    <div class="sort-option" data-sort="oldest">📅 Старые (сначала старые)</div>
-                    <div class="sort-option" data-sort="price_asc">💰 Цена (сначала дешёвые)</div>
-                    <div class="sort-option" data-sort="price_desc">💰 Цена (сначала дорогие)</div>
-                    <div class="sort-option" data-sort="area_asc">📐 Площадь (сначала малые)</div>
-                    <div class="sort-option" data-sort="area_desc">📐 Площадь (сначала большие)</div>
-                    <div class="sort-option" data-sort="capacity_asc">👥 Вместимость (сначала малые)</div>
-                    <div class="sort-option" data-sort="capacity_desc">👥 Вместимость (сначала большие)</div>
+            <div class="filters-buttons">
+                <button class="reset-btn" onclick="resetAllFilters()">Сбросить</button>
+                <button class="search-btn" onclick="applyFiltersAndSort()">Применить</button>
+                <div class="sort-wrapper">
+                    <button class="sort-btn" id="sortBtn">📊 Сортировка</button>
+                    <div class="sort-dropdown" id="sortDropdown">
+                        <div class="sort-option" data-sort="newest">📅 Новые (сначала новые)</div>
+                        <div class="sort-option" data-sort="oldest">📅 Старые (сначала старые)</div>
+                        <div class="sort-option" data-sort="price_asc">💰 Цена (сначала дешёвые)</div>
+                        <div class="sort-option" data-sort="price_desc">💰 Цена (сначала дорогие)</div>
+                        <div class="sort-option" data-sort="area_asc">📐 Площадь (сначала малые)</div>
+                        <div class="sort-option" data-sort="area_desc">📐 Площадь (сначала большие)</div>
+                        <div class="sort-option" data-sort="capacity_asc">👥 Вместимость (сначала малые)</div>
+                        <div class="sort-option" data-sort="capacity_desc">👥 Вместимость (сначала большие)</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="results-counter" id="resultsCounter">
-    <div class="counter-text">📋 Найдено объявлений:</div>
-    <div>
-        <span class="counter-number" id="foundCount">0</span>
-        <span class="counter-total" id="totalCountInfo"></span>
-    </div>
-</div>
-
-<div class="catalog-grid" id="catalogGrid">
-    <div class="premise-card" th:each="p : ${premises}"
-         th:data-id="${p.id}"
-         th:data-price="${p.priceWeekday}"
-         th:data-area="${p.area}"
-         th:data-capacity="${p.capacity}"
-         th:data-type="${p.type}"
-         th:data-amenities="${#strings.listJoin(p.amenities, ',')}"
-         th:data-price-weekend="${p.priceWeekend}"
-         th:data-price-holiday="${p.priceHoliday}"
-         th:data-available-from="${p.availableFrom}"
-         th:data-available-to="${p.availableTo}"
-         th:data-region="${p.region}"
-         th:data-city="${p.city}">
-
-        <div th:if="${!p.photoPaths.isEmpty()}" class="photos-slider">
-            <div class="photos-container">
-                <img th:each="photo : ${p.photoPaths}"
-                     th:src="@{'/uploads/' + ${photo}}"
-                     class="photo-item"
-                     onclick="openFullscreen(this.src)"
-                     onerror="this.src='/images/no-photo.jpg';">
-            </div>
-        </div>
-        <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">📷 Нет фото</div>
-        <div class="area-badge" th:text="${p.area} + ' м²'"></div>
-        <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
-        <div class="info">
-            <div class="type" th:text="${p.getTypeInRussian()}"></div>
-            <div class="amenities" th:if="${!p.amenities.isEmpty()}">
-                <span th:each="a : ${p.amenities}" th:text="${p.getAmenityInRussian(a)}"></span>
-            </div>
-            <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
-            <div class="address" th:text="${p.region} + ', ' + ${p.city} + ', ' + ${p.street} + ' ' + ${p.building}"></div>
-            <div class="availability">
-                <span class="availability-label">📅 Доступно:</span>
-                <span class="availability-dates">
-                    <span th:text="${#temporals.format(p.availableFrom, 'dd.MM.yyyy')}"></span> —
-                    <span th:text="${#temporals.format(p.availableTo, 'dd.MM.yyyy')}"></span>
-                </span>
-            </div>
-            <div class="prices">
-                <div class="price-row">
-                    <span class="price-label">Будни:</span>
-                    <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
-                </div>
-                <div class="price-row" th:if="${p.priceWeekend != null && p.priceWeekend > 0}">
-                    <span class="price-label">Выходные:</span>
-                    <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
-                </div>
-                <div class="price-row" th:if="${p.priceHoliday != null && p.priceHoliday > 0}">
-                    <span class="price-label">Праздники:</span>
-                    <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
-                </div>
-            </div>
-            <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
+    <div class="results-counter" id="resultsCounter">
+        <div class="counter-text">📋 Найдено объявлений:</div>
+        <div>
+            <span class="counter-number" id="foundCount">0</span>
+            <span class="counter-total" id="totalCountInfo"></span>
         </div>
     </div>
-</div>
 
-<div id="noResults" style="display:none; text-align:center; padding:80px; font-size:20px; color:#999;">
-    😔 По вашему запросу ничего не найдено
-</div>
+    <div class="catalog-grid" id="catalogGrid">
+        <div class="premise-card" th:each="p : ${premises}"
+             th:data-id="${p.id}"
+             th:data-price="${p.priceWeekday}"
+             th:data-area="${p.area}"
+             th:data-capacity="${p.capacity}"
+             th:data-type="${p.type}"
+             th:data-amenities="${#strings.listJoin(p.amenities, ',')}"
+             th:data-price-weekend="${p.priceWeekend}"
+             th:data-price-holiday="${p.priceHoliday}"
+             th:data-available-from="${p.availableFrom}"
+             th:data-available-to="${p.availableTo}"
+             th:data-region="${p.region}"
+             th:data-city="${p.city}">
 
-<div class="pagination" id="pagination"></div>
+            <div th:if="${!p.photoPaths.isEmpty()}" class="photos-slider">
+                <div class="photos-container">
+                    <img th:each="photo : ${p.photoPaths}"
+                         th:src="@{'/uploads/' + ${photo}}"
+                         class="photo-item"
+                         onclick="openFullscreen(this.src)"
+                         onerror="this.src='/images/no-photo.jpg';">
+                </div>
+            </div>
+            <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">📷 Нет фото</div>
+            <div class="area-badge" th:text="${p.area} + ' м²'"></div>
+            <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
+            <div class="info">
+                <div class="type" th:text="${p.getTypeInRussian()}"></div>
+                <div class="amenities" th:if="${!p.amenities.isEmpty()}">
+                    <span th:each="a : ${p.amenities}" th:text="${p.getAmenityInRussian(a)}"></span>
+                </div>
+                <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
+                <div class="address" th:text="${p.region} + ', ' + ${p.city} + ', ' + ${p.street} + ' ' + ${p.building}"></div>
+                <div class="availability">
+                    <span class="availability-label">📅 Доступно:</span>
+                    <span class="availability-dates">
+                        <span th:text="${#temporals.format(p.availableFrom, 'dd.MM.yyyy')}"></span> —
+                        <span th:text="${#temporals.format(p.availableTo, 'dd.MM.yyyy')}"></span>
+                    </span>
+                </div>
+                <div class="prices">
+                    <div class="price-row">
+                        <span class="price-label">Будни:</span>
+                        <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
+                    </div>
+                    <div class="price-row" th:if="${p.priceWeekend != null && p.priceWeekend > 0}">
+                        <span class="price-label">Выходные:</span>
+                        <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
+                    </div>
+                    <div class="price-row" th:if="${p.priceHoliday != null && p.priceHoliday > 0}">
+                        <span class="price-label">Праздники:</span>
+                        <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
+                    </div>
+                </div>
+                <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
+            </div>
+        </div>
+    </div>
 
-<div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
-    <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
+    <div id="noResults" style="display:none; text-align:center; padding:80px; font-size:20px; color:#999;">
+        😔 По вашему запросу ничего не найдено
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+
+    <div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
+        <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
+    </div>
 </div>
 
 <script th:inline="javascript">
@@ -896,6 +750,72 @@
             amenityInRussianMap = serverAmenityInRussianRaw;
         }
     }
+
+    // Хранилище занятых дат для каждого помещения (загружается асинхронно)
+    let bookedDatesCache = new Map();
+
+    // Функция загрузки занятых дат для помещения
+    async function loadBookedDatesForPremise(premiseId) {
+        try {
+            const response = await fetch(`/api/bookings/premise/${premiseId}/booked-dates`);
+            if (response.ok) {
+                const dates = await response.json();
+                bookedDatesCache.set(premiseId, dates.map(d => new Date(d)));
+                return bookedDatesCache.get(premiseId);
+            }
+        } catch (error) {
+            console.error(`Failed to load booked dates for premise ${premiseId}:`, error);
+        }
+        return [];
+    }
+
+    // Загрузка занятых дат для всех помещений
+    async function loadAllBookedDates() {
+        const cards = document.querySelectorAll('.premise-card');
+        const promises = [];
+        cards.forEach(card => {
+            const premiseId = parseInt(card.dataset.id);
+            if (premiseId && !bookedDatesCache.has(premiseId)) {
+                promises.push(loadBookedDatesForPremise(premiseId));
+            }
+        });
+        await Promise.all(promises);
+    }
+
+    // Проверка, пересекаются ли выбранные даты с занятыми
+    function isDateRangeBooked(premiseId, checkInDate, checkOutDate) {
+        if (!checkInDate && !checkOutDate) return false;
+
+        const bookedDates = bookedDatesCache.get(premiseId) || [];
+        if (bookedDates.length === 0) return false;
+
+        const checkIn = checkInDate ? new Date(checkInDate) : null;
+        const checkOut = checkOutDate ? new Date(checkOutDate) : null;
+
+        // Если указана только дата заезда
+        if (checkIn && !checkOut) {
+            return bookedDates.some(bookedDate =>
+                bookedDate.getTime() === checkIn.getTime()
+            );
+        }
+
+        // Если указана только дата выезда
+        if (!checkIn && checkOut) {
+            return bookedDates.some(bookedDate =>
+                bookedDate.getTime() === checkOut.getTime()
+            );
+        }
+
+        // Если указаны обе даты - проверяем пересечение диапазона
+        if (checkIn && checkOut) {
+            return bookedDates.some(bookedDate =>
+                bookedDate >= checkIn && bookedDate <= checkOut
+            );
+        }
+
+        return false;
+    }
+
     /*]]>*/
 </script>
 
@@ -1095,13 +1015,15 @@
             const city = card.dataset.city || '';
             const amenitiesStr = card.dataset.amenities || '';
             const cardAmenities = amenitiesStr ? amenitiesStr.split(',').filter(a => a.trim() !== '') : [];
+            const premiseId = parseInt(card.dataset.id);
 
             const matches = price <= priceMax && area >= areaMin && capacity >= capacityMin &&
                 (selectedTypes.size === 0 || selectedTypes.has(type)) &&
                 (selectedRegions.size === 0 || selectedRegions.has(region)) &&
                 (selectedCities.size === 0 || selectedCities.has(city)) &&
                 (selectedAmenities.size === 0 || Array.from(selectedAmenities).every(am => cardAmenities.includes(am))) &&
-                isDateRangeAvailable(card.dataset.availableFrom, card.dataset.availableTo, checkInDate, checkOutDate);
+                isDateRangeAvailable(card.dataset.availableFrom, card.dataset.availableTo, checkInDate, checkOutDate) &&
+                !isDateRangeBooked(premiseId, checkInDate, checkOutDate); // ← НОВАЯ ПРОВЕРКА НА ЗАНЯТЫЕ ДАТЫ
 
             if (matches) {
                 indices.push(idx);
@@ -1140,48 +1062,35 @@
     }
 
     function applyFiltersAndSort() {
-        // Получаем индексы отфильтрованных карточек
         const filteredIndices = getFilteredIndices();
         totalFilteredItems = filteredIndices.length;
         updateCounter();
 
-        // Сортируем индексы
         const sortedIndices = sortIndices(filteredIndices);
 
-        // Пагинация
         const startIdx = (currentPage - 1) * itemsPerPage;
         const endIdx = startIdx + itemsPerPage;
         const pageIndices = sortedIndices.slice(startIdx, endIdx);
 
-        // ПЕРЕСТРАИВАЕМ DOM: очищаем контейнер и добавляем карточки в правильном порядке
         const container = document.getElementById('catalogGrid');
         const allCards = document.querySelectorAll('.premise-card');
 
         if (totalFilteredItems === 0) {
-            // Если нет результатов, показываем все карточки скрытыми
             allCards.forEach(card => { card.style.display = 'none'; });
             document.getElementById('noResults').style.display = 'block';
         } else {
             document.getElementById('noResults').style.display = 'none';
-
-            // Сначала скрываем все
             allCards.forEach(card => { card.style.display = 'none'; });
 
-            // Очищаем контейнер и добавляем карточки в новом порядке
             const cardsToShow = pageIndices.map(idx => allPremises[idx]);
 
-            // Если порядок изменился, переставляем элементы в DOM
             if (cardsToShow.length > 0) {
-                // Получаем первый элемент, который должен быть
                 const firstCard = cardsToShow[0];
-                // Проверяем, не находится ли он уже на первом месте
                 if (container.firstChild !== firstCard) {
-                    // Переставляем все карточки в правильном порядке
                     cardsToShow.forEach(card => {
                         container.appendChild(card);
                     });
                 }
-                // Показываем только нужные карточки
                 cardsToShow.forEach(card => { card.style.display = 'flex'; });
             }
         }
@@ -1201,10 +1110,8 @@
         const paginationDiv = document.getElementById('pagination');
         const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
 
-        // Всегда показываем пагинацию, даже если всего одна страница
         let paginationHtml = '';
 
-        // Кнопка "Назад" (стрелка влево)
         paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
             <span class="nav-arrow">←</span> Назад
         </button>`;
@@ -1237,12 +1144,10 @@
             }
         }
 
-        // Кнопка "Вперёд" (стрелка вправо)
         paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
             Вперёд <span class="nav-arrow">→</span>
         </button>`;
 
-        // Информация о странице (всегда показываем)
         if (totalFilteredItems > 0) {
             paginationHtml += `<span class="page-info">Страница ${currentPage} из ${totalPages}</span>`;
         } else {
@@ -1370,8 +1275,7 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Сохраняем оригинальные карточки
+    document.addEventListener('DOMContentLoaded', async () => {
         allPremises = Array.from(document.querySelectorAll('.premise-card'));
 
         collectLocationData();
@@ -1400,6 +1304,9 @@
         }
         currentSort = 'newest';
         currentPage = 1;
+
+        // Загружаем занятые даты для всех помещений перед фильтрацией
+        await loadAllBookedDates();
         applyFiltersAndSort();
     });
 </script>

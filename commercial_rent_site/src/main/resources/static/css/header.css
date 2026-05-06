@@ -1,0 +1,367 @@
+/* ====================== УНИКАЛЬНЫЕ СТИЛИ ХЕДЕРА (префикс hd-) ====================== */
+
+/* Основной контейнер хедера (по умолчанию - прозрачный для лендингов) */
+.hd-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    color: white;
+}
+
+/* Фиксированный хедер для страниц типа catalog (белый фон, тёмные элементы) */
+.hd-header.hd-header-fixed {
+    position: fixed;
+    background: white;
+    color: #333;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+/* Стили для фиксированного белого хедера - все элементы тёмные */
+.hd-header.hd-header-fixed .hd-nav-left a,
+.hd-header.hd-header-fixed .hd-home-link i,
+.hd-header.hd-header-fixed .hd-login-link,
+.hd-header.hd-header-fixed .hd-user-name {
+    color: #333;
+}
+
+.hd-header.hd-header-fixed .hd-nav-left a:hover,
+.hd-header.hd-header-fixed .hd-home-link:hover i {
+    color: #ff5722;
+}
+
+.hd-header.hd-header-fixed .hd-home-link:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.hd-header.hd-header-fixed .hd-register-link {
+    background: #ff5722;
+    color: white;
+}
+
+.hd-header.hd-header-fixed .hd-login-link {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #333;
+}
+
+.hd-header.hd-header-fixed .hd-login-link:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: #ff5722;
+    color: #ff5722;
+}
+
+/* Убираем лишний фон с обёртки профиля в фиксированном режиме */
+.hd-header.hd-header-fixed .hd-user-profile {
+    background: none;
+    border: none;
+}
+
+.hd-header.hd-header-fixed .hd-user-info {
+    color: #333;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.hd-header.hd-header-fixed .hd-user-info:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.hd-header.hd-header-fixed .hd-user-avatar {
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    color: white;
+}
+
+.hd-header.hd-header-fixed .hd-dropdown-menu {
+    background: white;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.hd-header.hd-header-fixed .hd-dropdown-item {
+    color: #333;
+}
+
+.hd-header.hd-header-fixed .hd-dropdown-item:hover {
+    background: #fff5f0;
+    color: #ff5722;
+}
+
+.hd-header.hd-header-fixed .hd-dropdown-item i {
+    color: #ff5722;
+}
+
+/* Левая часть хедера */
+.hd-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.hd-nav-left a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.hd-nav-left a:hover {
+    color: #ffcc80;
+}
+
+/* Иконка домика */
+.hd-home-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.hd-home-link i {
+    font-size: 18px;
+    color: white;
+}
+
+.hd-home-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Правая часть хедера */
+.hd-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Профиль пользователя - вся обёртка (без фона) */
+.hd-user-profile {
+    position: relative;
+}
+
+/* Стили для внутренней ссылки */
+.hd-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 6px 14px 6px 8px;
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: white;
+}
+
+.hd-user-info:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.hd-user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.hd-user-name {
+    font-weight: 600;
+    font-size: 14px;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Выпадающее меню - с задержкой 1 секунда при скрытии */
+.hd-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #1a1a1a;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    min-width: 220px;
+    z-index: 1100;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* Показываем меню при наведении на профиль ИЛИ на само меню */
+.hd-user-profile:hover .hd-dropdown-menu,
+.hd-dropdown-menu:hover {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Задержка 1 секунда при скрытии - работает когда мышь ушла и с профиля, и с меню */
+.hd-user-profile:not(:hover) .hd-dropdown-menu:not(:hover) {
+    transition-delay: 0.5s;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hd-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hd-dropdown-item i {
+    width: 20px;
+    color: #ff5722;
+    font-size: 14px;
+}
+
+.hd-dropdown-item:hover {
+    background: rgba(255, 87, 34, 0.2);
+    color: #ff9800;
+}
+
+.hd-dropdown-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.hd-dropdown-item.disabled:hover {
+    background: none;
+}
+
+.hd-dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+}
+
+.hd-logout-form {
+    padding: 0;
+    margin: 0;
+}
+
+.hd-logout-btn-dropdown {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 18px;
+    background: none;
+    border: none;
+    color: #f44336;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.hd-logout-btn-dropdown i {
+    width: 20px;
+    font-size: 14px;
+    color: #f44336;
+}
+
+.hd-logout-btn-dropdown:hover {
+    background: rgba(244, 67, 54, 0.1);
+}
+
+/* Кнопки аутентификации */
+.hd-auth-links {
+    display: flex;
+    gap: 12px;
+}
+
+.hd-login-link {
+    color: white;
+    text-decoration: none;
+    padding: 8px 20px;
+    border-radius: 30px;
+    transition: all 0.3s;
+    font-size: 14px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.hd-login-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.hd-register-link {
+    background: #ff5722;
+    color: white;
+    text-decoration: none;
+    padding: 8px 20px;
+    border-radius: 30px;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.hd-register-link:hover {
+    background: #e64a19;
+    transform: translateY(-2px);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .hd-header {
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .hd-nav-left {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .hd-user-name {
+        max-width: 100px;
+        font-size: 12px;
+    }
+    .hd-dropdown-menu {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        transition-delay: 0s !important;
+    }
+    .hd-user-profile:not(:hover) .hd-dropdown-menu:not(:hover) {
+        transition-delay: 0s !important;
+    }
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+}

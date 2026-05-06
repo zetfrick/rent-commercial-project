@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Аренда коммерческих помещений</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -15,84 +17,6 @@
             color: #333;
         }
         a { text-decoration: none; }
-
-        /* ====================== HEADER (поверх фона) ====================== */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 30px;
-            background: rgba(0, 0, 0, 0.45);
-            backdrop-filter: blur(8px);
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            color: white;
-        }
-
-        .nav-left { display: flex; align-items: center; gap: 25px; }
-        .nav-left a { color: white; text-decoration: none; font-weight: 500; }
-        .nav-left a:hover { color: #ffcc80; }
-
-        /* Дропдаун города */
-        .city-dropdown {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .current-city {
-            padding: 6px 14px;
-            border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 6px;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            white-space: nowrap;
-        }
-
-        .city-list {
-            position: absolute;
-            top: calc(100% + 5px);
-            left: 0;
-            list-style: none;
-            padding: 8px 0;
-            margin: 0;
-            background: rgba(0,0,0,0.95);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            min-width: 180px;
-            z-index: 1010;
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-
-        .city-dropdown:hover .city-list {
-            display: block;
-        }
-
-        .city-list li { margin: 0; padding: 0; }
-        .city-list li a {
-            padding: 10px 16px;
-            display: block;
-            color: white;
-            text-decoration: none;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-        .city-list li a:hover { background: #ff5722; }
-
-        .nav-right { display: flex; align-items: center; gap: 20px; }
-        .login-link, .register-link {
-            color: white;
-            text-decoration: none;
-            padding: 8px 18px;
-            border-radius: 6px;
-            transition: all 0.3s;
-        }
-        .register-link { background: #ff5722; }
-        .register-link:hover { background: #e64a19; }
 
         /* ====================== HERO ====================== */
         .hero-section {
@@ -164,7 +88,7 @@
             padding: 0 20px;
         }
 
-        /* ====================== КАРТОЧКА ПОМЕЩЕНИЯ (полностью как в каталоге) ====================== */
+        /* ====================== КАРТОЧКА ПОМЕЩЕНИЯ ====================== */
         .premise-card {
             background: white;
             border-radius: 20px;
@@ -173,6 +97,7 @@
             transition: all 0.3s;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .premise-card:hover {
@@ -245,7 +170,9 @@
             font-size: 18px;
         }
 
-        .area-badge, .capacity-badge {
+        /* Бейджи площади и вместимости - только внутри карточки */
+        .premise-card .area-badge,
+        .premise-card .capacity-badge {
             position: absolute;
             top: 15px;
             background: rgba(0,0,0,0.7);
@@ -256,8 +183,8 @@
             font-size: 14px;
             z-index: 15;
         }
-        .area-badge { left: 15px; }
-        .capacity-badge { right: 15px; }
+        .premise-card .area-badge { left: 15px; }
+        .premise-card .capacity-badge { right: 15px; }
 
         .info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
         .type { font-size: 22px; font-weight: bold; text-transform: uppercase; margin: 0 0 12px 0; color: #ff9800; }
@@ -342,6 +269,23 @@
             object-fit: contain;
         }
 
+        /* Стиль для кнопки перехода в каталог */
+        .catalog-link {
+            margin-top: 50px;
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 14px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .catalog-link:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 768px) {
             .hero-content h1 { font-size: 3.2rem; }
             .catalog-grid { grid-template-columns: 1fr; }
@@ -357,8 +301,11 @@
 </head>
 <body>
 
-<!-- Header с исправленным дропдауном городов -->
-<div th:insert="~{fragments/header :: header(currentCity = ${currentCity}, currentUri = ${currentUri})}"></div>
+<!-- Хедер: абсолютное позиционирование поверх hero-секции -->
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass=''
+)}"></div>
 
 <!-- Hero -->
 <div class="hero-section">
@@ -375,7 +322,7 @@
     </div>
 </div>
 
-<!-- Новое в каталоге — карточки идентичны каталогу -->
+<!-- Новое в каталоге -->
 <section class="new-section">
     <h2>Новое в каталоге</h2>
 
@@ -395,6 +342,7 @@
             </div>
             <div class="no-photo" th:unless="${!p.photoPaths.isEmpty()}">📷 Нет фото</div>
 
+            <!-- Бейджи внутри карточки -->
             <div class="area-badge" th:text="${p.area} + ' м²'"></div>
             <div class="capacity-badge" th:text="${p.capacity} + ' чел.'"></div>
 
@@ -406,7 +354,6 @@
                 <div class="owner" th:text="${p.contactFirstName} + ' ' + ${p.contactLastName}"></div>
                 <div class="address" th:text="${p.city} + ', ' + ${p.street} + ' ' + ${p.building}"></div>
 
-                <!-- Блок доступности -->
                 <div class="availability">
                     <span class="availability-label">📅 Доступно для аренды:</span>
                     <span class="availability-dates">
@@ -415,7 +362,6 @@
                     </span>
                 </div>
 
-                <!-- Блок цен -->
                 <div class="prices">
                     <div class="price-row">
                         <span class="price-label">📅 Будни:</span>
@@ -440,9 +386,7 @@
         😔 Пока нет добавленных помещений
     </div>
 
-    <a href="/catalog" style="margin-top:50px; display:inline-block; background:#ff9800; color:white; padding:14px 40px; border-radius:50px; text-decoration:none; font-weight:bold; transition: all 0.3s;">
-        🔍 Перейти в полный каталог
-    </a>
+    <a href="/catalog" class="catalog-link">🔍 Перейти в полный каталог</a>
 </section>
 
 <!-- Fullscreen просмотр -->
@@ -453,7 +397,6 @@
 <div th:insert="~{fragments/footer :: footer}"></div>
 
 <script>
-    // Функция полноэкранного просмотра
     function openFullscreen(src) {
         const fullDiv = document.getElementById('fullscreen');
         const fullImg = document.getElementById('fullImg');
@@ -461,7 +404,6 @@
         fullDiv.style.display = 'flex';
     }
 
-    // Инициализация всех слайдеров на странице
     (function() {
         function initSlider(sliderElement) {
             const container = sliderElement.querySelector('.photos-container');
@@ -493,7 +435,6 @@
                 updatePosition();
             }
 
-            // Клонируем стрелки, чтобы убрать старые обработчики
             if (arrowLeft) {
                 const newLeft = arrowLeft.cloneNode(true);
                 arrowLeft.parentNode.replaceChild(newLeft, arrowLeft);
@@ -524,5 +465,6 @@
         }
     })();
 </script>
+
 </body>
 </html>

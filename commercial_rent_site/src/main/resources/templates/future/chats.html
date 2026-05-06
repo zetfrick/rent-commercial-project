@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои чаты - RentApp</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -12,139 +13,8 @@
             font-family: 'Segoe UI', Arial, sans-serif;
             background: #f8f9fa;
             min-height: 100vh;
+            padding-top: 80px;
         }
-
-        /* ====================== HEADER (статичный, тонкий) ====================== */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 30px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(12px);
-            position: relative;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            color: white;
-        }
-
-        .nav-left { display: flex; align-items: center; gap: 25px; }
-        .nav-left a { color: white; text-decoration: none; font-weight: 500; font-size: 14px; }
-        .nav-left a:hover { color: #ffcc80; }
-
-        .city-dropdown { position: relative; cursor: pointer; }
-        .current-city {
-            padding: 5px 12px;
-            border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 6px;
-            background: rgba(255,255,255,0.15);
-            white-space: nowrap;
-            font-size: 14px;
-        }
-        .city-list {
-            position: absolute;
-            top: calc(100% + 5px);
-            left: 0;
-            list-style: none;
-            padding: 6px 0;
-            margin: 0;
-            background: rgba(0,0,0,0.95);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-            min-width: 170px;
-            z-index: 1010;
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-        .city-dropdown:hover .city-list { display: block; }
-        .city-list li a {
-            padding: 8px 14px;
-            display: block;
-            color: white;
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .city-list li a:hover { background: #ff5722; }
-
-        /* Профиль пользователя */
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255,255,255,0.12);
-            padding: 4px 6px 4px 4px;
-            border-radius: 40px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.25);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: white;
-            padding: 3px 12px 3px 6px;
-            border-radius: 40px;
-            transition: all 0.3s ease;
-        }
-        .user-info:hover { background: rgba(255,255,255,0.18); }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #ff5722, #ff9800);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 3px 10px rgba(255,87,34,0.4);
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 13px;
-            max-width: 150px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .logout-btn {
-            background: #ff5722;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .logout-btn:hover {
-            background: #e64a19;
-            transform: translateY(-1px);
-        }
-
-        .auth-links a {
-            color: white;
-            text-decoration: none;
-            padding: 6px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 13px;
-        }
-        .login-link:hover { background: rgba(255,255,255,0.15); }
-        .register-link {
-            background: #ff5722;
-        }
-        .register-link:hover { background: #e64a19; }
 
         /* Контейнер основного контента */
         .container {
@@ -314,44 +184,11 @@
     </style>
 </head>
 <body>
-
-<!-- HEADER (статичный, тонкий, как на главной) -->
-<header class="header">
-    <div class="nav-left">
-        <a href="/about">О нас</a>
-
-        <!-- Выбор города -->
-        <div class="city-dropdown">
-            <span class="current-city" th:text="${currentCity != null ? currentCity : 'Нижний Новгород'}">Нижний Новгород</span>
-            <ul class="city-list">
-                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
-                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
-                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
-                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
-                <li><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="nav-right">
-        <!-- Если пользователь авторизован -->
-        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
-            <a th:href="@{/profile}" class="user-info">
-                <span class="user-avatar">👤</span>
-                <span class="user-name" th:text="${#authentication.name}"></span>
-            </a>
-            <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="logout-btn">Выйти</button>
-            </form>
-        </div>
-
-        <!-- Если пользователь не авторизован -->
-        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
-            <a href="/auth/login" class="login-link">Вход</a>
-            <a href="/auth/register" class="register-link">Регистрация</a>
-        </div>
-    </div>
-</header>
+<!-- Хедер - фиксированное позиционирование для страницы деталей (прилипает при скролле) -->
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass='hd-header-fixed'
+)}"></div>
 
 <!-- Основной контент -->
 <div class="container">

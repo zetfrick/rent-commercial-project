@@ -1,36 +1,70 @@
-<header class="header" th:fragment="header(currentCity, currentUri)" xmlns:th="http://www.w3.org/1999/xhtml">
-    <div class="nav-left">
-        <a href="/about">О нас</a>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
 
-        <!-- Выбор города -->
-        <div class="city-dropdown">
-            <span class="current-city" th:text="${currentCity}">Нижний Новгород</span>
-            <ul class="city-list">
-                <li><a th:href="@{${currentUri}(city='Москва')}">Москва</a></li>
-                <li><a th:href="@{${currentUri}(city='Ростов на Дону')}">Ростов на Дону</a></li>
-                <li><a th:href="@{${currentUri}(city='Владимир')}">Владимир</a></li>
-                <li><a th:href="@{${currentUri}(city='Владивосток')}">Владивосток</a></li>
-                <li class="selected"><a th:href="@{${currentUri}(city='Нижний Новгород')}">Нижний Новгород</a></li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="nav-right">
-        <!-- Если пользователь авторизован -->
-        <div th:if="${#authorization.expression('isAuthenticated()')}" class="user-profile">
-            <a th:href="@{/profile}" class="user-info">
-                <span class="user-avatar">👤</span>
-                <span class="user-name" th:text="${#authentication.name}"></span>
+<th:block th:fragment="header(currentUri, headerClass)">
+    <header th:class="'hd-header ' + (${headerClass} != null ? ${headerClass} : '')">
+        <div class="hd-nav-left">
+            <a href="/" class="hd-home-link">
+                <i class="fas fa-home"></i>
             </a>
-            <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="logout-btn">Выйти</button>
-            </form>
+            <a href="/about">О нас</a>
         </div>
 
-        <!-- Если пользователь не авторизован -->
-        <div th:unless="${#authorization.expression('isAuthenticated()')}" class="auth-links">
-            <a href="/auth/login" class="login-link">Вход</a>
-            <a href="/auth/register" class="register-link">Регистрация</a>
+        <div class="hd-nav-right">
+            <div th:if="${#authorization.expression('isAuthenticated()')}" class="hd-user-profile" id="hdUserProfile">
+                <a th:href="@{/profile}" class="hd-user-info">
+                    <span class="hd-user-avatar">👤</span>
+                    <span class="hd-user-name" th:text="${#authentication.name}"></span>
+                </a>
+                <div class="hd-dropdown-menu" id="hdDropdownMenu">
+                    <a th:href="@{/profile}" class="hd-dropdown-item">
+                        <i class="fas fa-user-circle"></i> Мой профиль
+                    </a>
+                    <a th:href="@{/premise/add}" class="hd-dropdown-item">
+                        <i class="fas fa-plus-circle"></i> Сдать помещение
+                    </a>
+                    <a th:href="@{/catalog}" class="hd-dropdown-item">
+                        <i class="fas fa-search"></i> Каталог
+                    </a>
+                    <div class="hd-dropdown-item disabled">
+                        <i class="fas fa-bell"></i> Уведомления <span style="font-size: 11px; opacity: 0.7;">(скоро)</span>
+                    </div>
+                    <div class="hd-dropdown-divider"></div>
+                    <form th:action="@{/logout}" method="post" class="hd-logout-form">
+                        <button type="submit" class="hd-logout-btn-dropdown">
+                            <i class="fas fa-sign-out-alt"></i> Выйти
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div th:unless="${#authorization.expression('isAuthenticated()')}" class="hd-auth-links">
+                <a href="/auth/login" class="hd-login-link">Вход</a>
+                <a href="/auth/register" class="hd-register-link">Регистрация</a>
+            </div>
         </div>
-    </div>
-</header>
+    </header>
+</th:block>
+
+<script>
+    // Для мобильных устройств - по клику, а не по наведению
+    document.addEventListener('DOMContentLoaded', function() {
+        const userProfile = document.getElementById('hdUserProfile');
+        if (userProfile && window.innerWidth <= 768) {
+            userProfile.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.classList.toggle('active');
+            });
+            document.addEventListener('click', function() {
+                userProfile.classList.remove('active');
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
