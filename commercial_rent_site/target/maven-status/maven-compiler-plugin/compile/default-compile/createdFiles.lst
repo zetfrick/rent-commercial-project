@@ -5,6 +5,7 @@ com\example\rentapp\controller\MainController.class
 com\example\rentapp\dto\ComplaintDto.class
 com\example\rentapp\controller\ConfigController.class
 com\example\rentapp\controller\PremiseApiController.class
+com\example\rentapp\service\NotificationService.class
 com\example\rentapp\client\CatalogClient.class
 com\example\rentapp\repository\BookingRepository.class
 com\example\rentapp\RentAppApplication.class
@@ -30,9 +31,11 @@ com\example\rentapp\repository\ChatMessageRepository.class
 com\example\rentapp\service\ComplaintService.class
 com\example\rentapp\advice\GlobalModelAdvice.class
 com\example\rentapp\service\UserService.class
+com\example\rentapp\controller\NotificationController.class
 com\example\rentapp\config\SwaggerConfig.class
 com\example\rentapp\entity\ChatMessage.class
 com\example\rentapp\repository\UserRepository.class
+com\example\rentapp\dto\NotificationDto.class
 com\example\rentapp\config\SecurityConfig.class
 com\example\rentapp\config\SecurityConfig$1.class
 com\example\rentapp\controller\BookingApiController.class
@@ -44,8 +47,10 @@ com\example\rentapp\service\ConfigService.class
 com\example\rentapp\controller\ProfileController.class
 com\example\rentapp\dto\PremiseForm.class
 com\example\rentapp\controller\WebCatalogController.class
+com\example\rentapp\entity\Notification.class
 com\example\rentapp\dto\PremiseDto.class
 com\example\rentapp\controller\ChatController$ChatInfo.class
 com\example\rentapp\controller\CommentApiController.class
 com\example\rentapp\dto\CommentDto.class
 com\example\rentapp\controller\ComplaintApiController.class
+com\example\rentapp\repository\NotificationRepository.class

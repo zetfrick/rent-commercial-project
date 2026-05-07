@@ -35,15 +35,14 @@ public class SecurityConfig {
                                                 HttpServletResponse response,
                                                 Authentication authentication) throws IOException, ServletException {
 
-                String redirectUrl = "/main/landing-logged"; // URL по умолчанию
+                String redirectUrl = "/main/landing-logged";
 
-                // Пытаемся получить сохранённый URL из сессии
                 HttpSession session = request.getSession(false);
                 if (session != null) {
                     String savedUrl = (String) session.getAttribute("redirectAfterLogin");
                     if (savedUrl != null && !savedUrl.isEmpty()) {
                         redirectUrl = savedUrl;
-                        session.removeAttribute("redirectAfterLogin"); // очищаем после использования
+                        session.removeAttribute("redirectAfterLogin");
                         System.out.println("=== LOGIN SUCCESS ===");
                         System.out.println("Redirecting to saved URL: " + redirectUrl);
                     } else {
@@ -64,7 +63,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/chats/**", "/admin/**")
+                        .ignoringRequestMatchers("/api/**", "/chats/**", "/admin/**", "/notifications/api/**")  // ← ДОБАВЛЕНО /notifications/api/**
                 )
                 .authorizeHttpRequests(authz -> authz
                         // Публичные страницы - доступны всем
@@ -76,9 +75,15 @@ public class SecurityConfig {
                                 "/premise/**")  // Просмотр объявлений доступен всем
                         .permitAll()
 
+                        // ===== ВАЖНО: ДОБАВЬТЕ ЭТИ СТРОКИ =====
+                        // Разрешаем доступ к API уведомлений без авторизации
+                        .requestMatchers("/notifications/api/create").permitAll()
+                        .requestMatchers("/notifications/api/**").permitAll()  // Для всех API уведомлений
+                        // ====================================
+
                         // Защищённые страницы - только для авторизованных
                         .requestMatchers("/profile", "/profile/**", "/api/premise/**",
-                                "/chats/**")
+                                "/chats/**", "/notifications")  // ← Страница уведомлений требует авторизации
                         .authenticated()
 
                         // Добавление и редактирование помещений - только для авторизованных

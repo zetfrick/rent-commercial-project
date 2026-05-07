@@ -18,9 +18,14 @@ public class ChatService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public ChatMessage sendMessage(Long senderId, Long receiverId, String text) {
         User sender = userService.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("Отправитель не найден"));
+        User receiver = userService.findById(receiverId)
+                .orElseThrow(() -> new RuntimeException("Получатель не найден"));
 
         ChatMessage message = new ChatMessage(
                 senderId,
@@ -29,12 +34,34 @@ public class ChatService {
                 text
         );
 
-        return chatMessageRepository.save(message);
+        ChatMessage saved = chatMessageRepository.save(message);
+
+        // Ссылка на чат с отправителем (тем, кто написал сообщение)
+        String chatLink = "/chats/with/" + sender.getLogin();
+
+        if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, null)) {
+            notificationService.createNotification(
+                    receiverId,
+                    "MESSAGE",
+                    null,
+                    senderId,
+                    sender.getLogin(),
+                    null,
+                    chatLink
+            );
+            System.out.println("Создано новое уведомление о сообщении от " + sender.getLogin() + " для " + receiver.getLogin());
+        } else {
+            System.out.println("Уведомление уже существует, пропускаем дубликат");
+        }
+
+        return saved;
     }
 
     public ChatMessage sendMessageWithPremise(Long senderId, Long receiverId, String text, Long premiseId) {
         User sender = userService.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("Отправитель не найден"));
+        User receiver = userService.findById(receiverId)
+                .orElseThrow(() -> new RuntimeException("Получатель не найден"));
 
         ChatMessage message = new ChatMessage(
                 senderId,
@@ -44,7 +71,27 @@ public class ChatService {
                 premiseId
         );
 
-        return chatMessageRepository.save(message);
+        ChatMessage saved = chatMessageRepository.save(message);
+
+        // ИСПРАВЛЕННАЯ ССЫЛКА - на чат с отправителем (кто написал сообщение)
+        String chatLink = "/chats/with/" + sender.getLogin() + "/premise/" + premiseId;
+
+        if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, premiseId)) {
+            notificationService.createNotification(
+                    receiverId,
+                    "MESSAGE",
+                    premiseId,
+                    senderId,
+                    sender.getLogin(),
+                    null,
+                    chatLink
+            );
+            System.out.println("Создано новое уведомление о сообщении от " + sender.getLogin() + " по помещению #" + premiseId);
+        } else {
+            System.out.println("Уведомление уже существует, пропускаем дубликат");
+        }
+
+        return saved;
     }
 
     // НОВЫЙ МЕТОД: отправка системного сообщения

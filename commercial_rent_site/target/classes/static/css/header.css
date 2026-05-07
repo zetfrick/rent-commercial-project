@@ -143,6 +143,87 @@
     gap: 20px;
 }
 
+/* Контейнер для действий пользователя (уведомления + профиль) */
+.hd-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Кнопка уведомлений */
+.hd-notification-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: white;
+}
+
+.hd-notification-btn i {
+    font-size: 20px;
+}
+
+.hd-notification-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+/* Белый хедер - тёмная кнопка уведомлений */
+.hd-header.hd-header-fixed .hd-notification-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #333;
+}
+
+.hd-header.hd-header-fixed .hd-notification-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #ff5722;
+}
+
+/* Бейдж для количества непрочитанных уведомлений на кнопке */
+.hd-notification-btn .hd-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    background: #ff5722;
+    color: white;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 0 5px;
+}
+
+/* Бейдж для уведомлений в выпадающем меню */
+.hd-dropdown-item .hd-notification-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    background: #ff5722;
+    color: white;
+    border-radius: 30px;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 0 5px;
+    margin-left: 8px;
+}
+
+.hd-header.hd-header-fixed .hd-notification-btn .hd-notification-badge {
+    background: #ff5722;
+    color: white;
+}
+
 /* Профиль пользователя - вся обёртка (без фона) */
 .hd-user-profile {
     position: relative;
@@ -189,7 +270,7 @@
     text-overflow: ellipsis;
 }
 
-/* Выпадающее меню - с задержкой 1 секунда при скрытии */
+/* Выпадающее меню - с задержкой 0.5 секунды при скрытии */
 .hd-dropdown-menu {
     position: absolute;
     top: calc(100% + 8px);
@@ -212,9 +293,9 @@
     visibility: visible;
 }
 
-/* Задержка 1 секунда при скрытии - работает когда мышь ушла и с профиля, и с меню */
+/* Задержка 0.5 секунды при скрытии - работает когда мышь ушла и с профиля, и с меню */
 .hd-user-profile:not(:hover) .hd-dropdown-menu:not(:hover) {
-    transition-delay: 1s;
+    transition-delay: 0.5s;
 }
 
 /* Анимация появления */
@@ -346,6 +427,16 @@
     .hd-user-name {
         max-width: 100px;
         font-size: 12px;
+    }
+    .hd-user-actions {
+        gap: 10px;
+    }
+    .hd-notification-btn {
+        width: 36px;
+        height: 36px;
+    }
+    .hd-notification-btn i {
+        font-size: 18px;
     }
     .hd-dropdown-menu {
         position: fixed;

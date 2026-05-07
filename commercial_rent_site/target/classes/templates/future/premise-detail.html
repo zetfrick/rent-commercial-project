@@ -549,7 +549,7 @@
             text-decoration: line-through;
         }
 
-        /* Стили для диапазонов занятых дат */
+        /* Стили для диапазонов занятых дат (APPROVED) - красные */
         .booked-dates-simple {
             background: white;
             padding: 12px;
@@ -578,6 +578,35 @@
         .booked-info-text {
             font-size: 12px;
             color: #888;
+            margin-top: 10px;
+        }
+
+        /* Стили для ожидающих запросов (PENDING) - жёлтые */
+        .pending-dates-simple {
+            background: #fff8e1;
+            padding: 12px;
+            border-radius: 12px;
+        }
+        .pending-ranges-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .pending-date-range-badge {
+            background: #fff3e0;
+            color: #ff9800;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .pending-date-range-badge i {
+            margin-right: 6px;
+        }
+        .pending-info-text {
+            font-size: 12px;
+            color: #ff9800;
             margin-top: 10px;
         }
 
@@ -1206,10 +1235,11 @@
                 </div>
 
                 <!-- Для владельца: показываем ВСЕ бронирования с деталями и статусами -->
-                <div th:if="${isOwner and not #lists.isEmpty(activeBookings)}" class="bookings-card">
-                    <h3><i class="fas fa-calendar-check"></i> Управление бронированиями</h3>
+                <!-- Для владельца: показываем только APPROVED бронирования (без PENDING) -->
+                <div th:if="${isOwner and not #lists.isEmpty(approvedBookings)}" class="bookings-card">
+                    <h3><i class="fas fa-calendar-check"></i> Подтверждённые бронирования</h3>
 
-                    <div th:each="booking : ${activeBookings}" class="booking-item">
+                    <div th:each="booking : ${approvedBookings}" class="booking-item">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                             <div>
                                 <div class="booking-dates">
@@ -1217,9 +1247,7 @@
                                     <span th:text="${#temporals.format(booking.startDate, 'dd.MM.yyyy')}"></span>
                                     —
                                     <span th:text="${#temporals.format(booking.endDate, 'dd.MM.yyyy')}"></span>
-                                    <span th:if="${booking.status == 'PENDING'}" class="status-pending">⏳ Ожидает</span>
-                                    <span th:if="${booking.status == 'APPROVED'}" class="status-approved">✅ Подтверждена</span>
-                                    <span th:if="${booking.status == 'REJECTED'}" class="status-rejected">❌ Отказано</span>
+                                    <span class="status-approved">✅ Подтверждена</span>
                                 </div>
                                 <div class="booking-renter">
                                     <i class="fas fa-user"></i> Арендатор:
@@ -1228,7 +1256,7 @@
                                     </a>
                                 </div>
                             </div>
-                            <button th:if="${booking.status != 'CANCELLED' and booking.status != 'REJECTED'}"
+                            <button th:if="${booking.status == 'APPROVED'}"
                                     th:attr="data-booking-id=${booking.id}"
                                     class="cancel-booking-btn"
                                     onclick="cancelBooking(this, true)">
@@ -1238,33 +1266,91 @@
                     </div>
                 </div>
 
-                <div th:if="${isOwner and #lists.isEmpty(activeBookings)}" class="bookings-card">
-                    <h3><i class="fas fa-calendar-check"></i> Управление бронированиями</h3>
+                <div th:if="${isOwner and #lists.isEmpty(approvedBookings)}" class="bookings-card">
+                    <h3><i class="fas fa-calendar-check"></i> Подтверждённые бронирования</h3>
                     <div class="no-bookings">
-                        <i class="fas fa-calendar-week"></i> Нет активных бронирований
+                        <i class="fas fa-calendar-week"></i> Нет подтверждённых бронирований
                     </div>
                 </div>
 
-                <!-- Для обычных пользователей: показываем только занятые диапазоны дат -->
-                <div th:if="${not isOwner and not #lists.isEmpty(bookedDateRanges)}" class="bookings-card">
+                <!-- Занятые даты (APPROVED) - красные, видны всем -->
+                <div th:if="${not #lists.isEmpty(bookedDateRanges)}" class="bookings-card">
                     <h3><i class="fas fa-calendar-check"></i> Занятые даты</h3>
                     <div class="booked-dates-simple">
                         <div class="booked-ranges-list">
                             <div th:each="range : ${bookedDateRanges}" class="booked-date-range">
-                                <span class="booked-date-range-badge">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span th:text="${#temporals.format(range.start, 'dd.MM.yyyy')}"></span>
-                                    —
-                                    <span th:text="${#temporals.format(range.end, 'dd.MM.yyyy')}"></span>
-                                </span>
+                <span class="booked-date-range-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span th:text="${#temporals.format(range.start, 'dd.MM.yyyy')}"></span>
+                    —
+                    <span th:text="${#temporals.format(range.end, 'dd.MM.yyyy')}"></span>
+                    <span class="status-approved" style="margin-left: 8px;">✅ Подтверждена</span>
+                </span>
                             </div>
                         </div>
                         <p class="booked-info-text">
-                            <i class="fas fa-info-circle"></i> Эти даты уже заняты
+                            <i class="fas fa-info-circle"></i> Эти даты уже подтверждены и недоступны для бронирования
                         </p>
                     </div>
                 </div>
 
+                <!-- Ожидающие запросы (PENDING) - жёлтые -->
+                <div th:if="${not #lists.isEmpty(pendingDateRanges)}" class="bookings-card" style="border-left-color: #ff9800;">
+                    <h3><i class="fas fa-clock"></i> Ожидают подтверждения</h3>
+
+                    <!-- Для владельца - показываем с деталями -->
+                    <div th:if="${isOwner and not #lists.isEmpty(pendingRequestsWithDetails)}" class="pending-dates-simple">
+                        <div class="pending-ranges-list">
+                            <div th:each="request : ${pendingRequestsWithDetails}" class="pending-date-range">
+                                <div class="booking-item pending-item">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                        <div>
+                                            <div class="booking-dates" style="margin-bottom: 8px;">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                <span th:text="${#temporals.format(request.start, 'dd.MM.yyyy')}"></span>
+                                                —
+                                                <span th:text="${#temporals.format(request.end, 'dd.MM.yyyy')}"></span>
+                                                <span class="status-pending" style="margin-left: 8px;">⏳ Ожидает</span>
+                                            </div>
+                                            <div class="booking-renter">
+                                                <i class="fas fa-user"></i> Арендатор:
+                                                <a th:href="@{/profile(username=${request.renterName})}" target="_blank">
+                                                    <span th:text="${request.renterName}"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="pending-actions" style="display: flex; gap: 10px;">
+                                            <a th:href="@{/chats/with/{username}/premise/{premiseId}(username=${request.renterName}, premiseId=${premiseId})}" class="cancel-booking-btn" style="background: #2196f3; text-decoration: none; display: inline-block;">
+                                                <i class="fas fa-comment-dots"></i> Чат
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="pending-info-text">
+                            <i class="fas fa-info-circle"></i> Эти даты заблокированы под ожидающие запросы
+                        </p>
+                    </div>
+
+                    <!-- Для обычных пользователей (не владельцев) - показываем только даты без деталей -->
+                    <div th:unless="${isOwner}" class="pending-dates-simple">
+                        <div class="pending-ranges-list">
+                            <div th:each="range : ${pendingDateRanges}" class="pending-date-range">
+                                <span class="pending-date-range-badge">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span th:text="${#temporals.format(range.start, 'dd.MM.yyyy')}"></span>
+                                    —
+                                    <span th:text="${#temporals.format(range.end, 'dd.MM.yyyy')}"></span>
+                                    <span class="status-pending" style="margin-left: 8px;">⏳ Ожидает</span>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="pending-info-text">
+                            <i class="fas fa-info-circle"></i> Эти даты уже забронированы (ожидают подтверждения)
+                        </p>
+                    </div>
+                </div>
 
                 <div class="owner-card">
                     <h3><i class="fas fa-user-circle"></i> Контактные данные владельца</h3>
@@ -1405,6 +1491,10 @@
     const ownerUsername = /*[[${premise.contactFirstName != null ? premise.contactFirstName : ''}]]*/ null;
     const currentUsername = /*[[${#authentication.name}]]*/ null;
     const isAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'', ''SUPER_ADMIN'')')}]]*/ false;
+    const isOwner = /*[[${isOwner}]]*/ false;
+    const pendingDateRanges = /*[[${pendingDateRanges}]]*/ [];
+    const bookedDateRanges = /*[[${bookedDateRanges}]]*/ [];
+
     const premiseData = {
         region: /*[[${premise.region}]]*/ null,
         city: /*[[${premise.city}]]*/ null,

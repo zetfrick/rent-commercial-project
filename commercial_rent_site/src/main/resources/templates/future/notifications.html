@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Уведомления</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding-top: 80px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            color: #ff5722;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab-btn:hover {
+            color: #ff5722;
+        }
+
+        .tab-btn.active {
+            color: #ff5722;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #ff5722;
+        }
+
+        .badge {
+            background: #ff5722;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .action-btn.read-all {
+            background: #4caf50;
+            color: white;
+        }
+
+        .action-btn.read-all:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.delete-all {
+            background: #f44336;
+            color: white;
+        }
+
+        .action-btn.delete-all:hover {
+            background: #d32f2f;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.clear-history {
+            background: #ff9800;
+            color: white;
+        }
+
+        .action-btn.clear-history:hover {
+            background: #f57c00;
+            transform: translateY(-1px);
+        }
+
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notification-item {
+            background: white;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            position: relative;
+            border-left: 4px solid #ff5722;
+        }
+
+        .notification-item.read {
+            border-left-color: #ccc;
+            opacity: 0.8;
+        }
+
+        .notification-item:hover {
+            transform: translateX(2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .notification-content {
+            flex: 1;
+            margin-bottom: 12px;
+        }
+
+        .notification-text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .notification-text a {
+            color: #ff5722;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .notification-text a:hover {
+            text-decoration: underline;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification-time i {
+            font-size: 12px;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 12px;
+        }
+
+        .notif-btn {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .notif-btn.mark-read {
+            background: #4caf50;
+            color: white;
+        }
+
+        .notif-btn.mark-read:hover {
+            background: #45a049;
+        }
+
+        .notif-btn.delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .notif-btn.delete:hover {
+            background: #d32f2f;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #ff5722;
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .selected-actions {
+            background: #fff0e8;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .selected-count {
+            font-size: 14px;
+            color: #ff5722;
+            font-weight: 600;
+        }
+
+        .selected-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .notification-item { padding: 15px; }
+            .notification-actions { justify-content: flex-start; }
+            .action-buttons { justify-content: stretch; }
+            .action-btn { flex: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass='hd-header-fixed'
+)}"></div>
+
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-bell"></i> Уведомления</h1>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="unread">
+            Непрочитанные <span class="badge" id="unreadCount">0</span>
+        </button>
+        <button class="tab-btn" data-tab="read">
+            Прочитанные
+        </button>
+    </div>
+
+    <div id="selectedActions" class="selected-actions" style="display: none;">
+        <div class="selected-count">
+            <i class="fas fa-check-square"></i> Выбрано: <span id="selectedCount">0</span>
+        </div>
+        <div class="selected-buttons">
+            <button class="action-btn read-all" onclick="markSelectedAsRead()" id="selectedMarkReadBtn">
+                <i class="fas fa-check-double"></i> Прочитать
+            </button>
+            <button class="action-btn delete-all" onclick="deleteSelected()">
+                <i class="fas fa-trash-alt"></i> Удалить
+            </button>
+        </div>
+    </div>
+
+    <div id="mainActions" class="action-buttons">
+        <button class="action-btn read-all" onclick="markAllAsRead()" id="mainMarkAllBtn">
+            <i class="fas fa-check-double"></i> Прочитать всё
+        </button>
+        <button class="action-btn delete-all" onclick="deleteAllUnread()" id="deleteAllBtn">
+            <i class="fas fa-trash-alt"></i> Удалить всё
+        </button>
+        <button class="action-btn clear-history" onclick="clearHistory()" id="clearHistoryBtn" style="display: none;">
+            <i class="fas fa-eraser"></i> Очистить историю
+        </button>
+    </div>
+
+    <div class="notifications-list" id="notificationsList">
+        <div class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <p>Загрузка уведомлений...</p>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const currentUsername = /*[[${#authentication.name}]]*/ null;
+    let currentTab = 'unread';
+    let allNotifications = [];
+    let selectedIds = new Set();
+
+    const typeIcons = {
+        'MESSAGE': 'fa-envelope',
+        'PREMISE_EXPIRED': 'fa-calendar-times',
+        'BOOKING_REQUEST': 'fa-handshake',
+        'BOOKING_REJECTED': 'fa-times-circle',
+        'BOOKING_APPROVED': 'fa-check-circle',
+        'BOOKING_CANCELLED_BY_OWNER': 'fa-ban',
+        'BOOKING_CANCELLED_BY_RENTER': 'fa-ban',
+        'COMMENT': 'fa-comment'
+    };
+
+    const typeColors = {
+        'MESSAGE': '#2196f3',
+        'PREMISE_EXPIRED': '#ff9800',
+        'BOOKING_REQUEST': '#ff9800',
+        'BOOKING_REJECTED': '#f44336',
+        'BOOKING_APPROVED': '#4caf50',
+        'BOOKING_CANCELLED_BY_OWNER': '#f44336',
+        'BOOKING_CANCELLED_BY_RENTER': '#f44336',
+        'COMMENT': '#9c27b0'
+    };
+
+    async function loadNotifications() {
+        const url = `/notifications/api/list?type=${currentTab === 'read' ? 'read' : 'unread'}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            console.log('Loaded notifications:', data);
+
+            if (currentTab === 'unread') {
+                allNotifications = data.notifications || [];
+                const unreadCountElem = document.getElementById('unreadCount');
+                if (unreadCountElem) {
+                    unreadCountElem.textContent = data.unreadCount || 0;
+                }
+            } else {
+                allNotifications = data.notifications || [];
+            }
+            renderNotifications();
+            updateButtonsVisibility();
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+            document.getElementById('notificationsList').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Ошибка загрузки уведомлений</p>
+                </div>
+            `;
+        }
+    }
+
+    function renderNotifications() {
+        const container = document.getElementById('notificationsList');
+        const isReadTab = currentTab === 'read';
+
+        if (!allNotifications || allNotifications.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>${isReadTab ? 'Нет прочитанных уведомлений' : 'У вас нет новых уведомлений'}</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = allNotifications.map(notif => `
+            <div class="notification-item ${notif.read ? 'read' : ''}" data-id="${notif.id}">
+                <div class="notification-header">
+                    <input type="checkbox" class="notification-checkbox" data-id="${notif.id}" onchange="toggleSelect(this)">
+                    <div style="flex: 1;">
+                        <div class="notification-content">
+                            <div class="notification-text">
+                                ${formatNotification(notif)}
+                            </div>
+                        </div>
+                        <div class="notification-time">
+                            <i class="far fa-clock"></i>
+                            ${formatTime(notif.createdAt)}
+                        </div>
+                        <div class="notification-actions">
+                            ${!notif.read && !isReadTab ? `
+                                <button class="notif-btn mark-read" onclick="markSingleAsRead(${notif.id})">
+                                    <i class="fas fa-check"></i> Прочитано
+                                </button>
+                            ` : ''}
+                            <button class="notif-btn delete" onclick="deleteSingle(${notif.id})">
+                                <i class="fas fa-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function updateButtonsVisibility() {
+        const mainMarkAllBtn = document.getElementById('mainMarkAllBtn');
+        const selectedMarkReadBtn = document.getElementById('selectedMarkReadBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const selectedActions = document.getElementById('selectedActions');
+
+        if (currentTab === 'read') {
+            if (mainMarkAllBtn) mainMarkAllBtn.style.display = 'none';
+            if (selectedMarkReadBtn) selectedMarkReadBtn.style.display = 'none';
+            if (deleteAllBtn) deleteAllBtn.style.display = 'none';
+            if (clearHistoryBtn) clearHistoryBtn.style.display = 'inline-block';
+            if (selectedIds.size > 0) {
+                selectedActions.style.display = 'flex';
+            }
+        } else {
+            if (mainMarkAllBtn) mainMarkAllBtn.style.display = 'inline-block';
+            if (selectedMarkReadBtn) selectedMarkReadBtn.style.display = 'inline-block';
+            if (deleteAllBtn) deleteAllBtn.style.display = 'inline-block';
+            if (clearHistoryBtn) clearHistoryBtn.style.display = 'none';
+        }
+    }
+
+    function formatNotification(notif) {
+        let html = '';
+
+        switch (notif.type) {
+            case 'MESSAGE':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Новое сообщение от <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a>
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Перейти к чату →</a>` : ''}`;
+                break;
+            case 'PREMISE_EXPIRED':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Помещение снято с публикации
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть →</a>` : ''}`;
+                break;
+            case 'BOOKING_REQUEST':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Пользователь <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> запросил аренду
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Перейти в чат →</a>` : ''}`;
+                break;
+            case 'BOOKING_REJECTED':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Пользователь <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> отклонил запрос на аренду
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Перейти в чат →</a>` : ''}`;
+                break;
+            case 'BOOKING_APPROVED':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Пользователь <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> одобрил аренду
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Перейти в чат →</a>` : ''}`;
+                break;
+            case 'BOOKING_CANCELLED_BY_OWNER':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Владелец <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> отменил аренду
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть помещение →</a>` : ''}`;
+                break;
+            case 'BOOKING_CANCELLED_BY_RENTER':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        Арендатор <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> отменил аренду
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть помещение →</a>` : ''}`;
+                break;
+            case 'COMMENT':
+                html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
+                        <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> оставил комментарий к вашему объявлению
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть →</a>` : ''}`;
+                break;
+            default:
+                html = notif.content || 'Новое уведомление';
+        }
+
+        return html;
+    }
+
+    function formatTime(dateStr) {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now - date;
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+
+        if (diff < 24 * 60 * 60 * 1000) {
+            return `Сегодня в ${hours}:${minutes}`;
+        } else if (diff < 2 * 24 * 60 * 60 * 1000) {
+            return `Вчера в ${hours}:${minutes}`;
+        } else {
+            return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth()+1).toString().padStart(2, '0')}.${date.getFullYear()} в ${hours}:${minutes}`;
+        }
+    }
+
+    function toggleSelect(checkbox) {
+        const id = parseInt(checkbox.dataset.id);
+        if (checkbox.checked) {
+            selectedIds.add(id);
+        } else {
+            selectedIds.delete(id);
+        }
+        updateSelectedActions();
+    }
+
+    function updateSelectedActions() {
+        const selectedCount = selectedIds.size;
+        const selectedDiv = document.getElementById('selectedActions');
+        const selectedCountSpan = document.getElementById('selectedCount');
+
+        if (selectedCount > 0) {
+            selectedDiv.style.display = 'flex';
+            selectedCountSpan.textContent = selectedCount;
+        } else {
+            selectedDiv.style.display = 'none';
+        }
+
+        updateButtonsVisibility();
+    }
+
+    async function markSelectedAsRead() {
+        if (selectedIds.size === 0) return;
+        const ids = Array.from(selectedIds);
+
+        try {
+            const response = await fetch('/notifications/api/mark-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            });
+            const data = await response.json();
+
+            console.log('Mark read response:', data);
+
+            if (data.success) {
+                selectedIds.clear();
+                updateSelectedActions();
+                await loadNotifications();
+                showNotification('Отмечено как прочитанное');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка при отметке прочитанных', true);
+        }
+    }
+
+    async function markSingleAsRead(id) {
+        try {
+            const response = await fetch('/notifications/api/mark-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] })
+            });
+            const data = await response.json();
+
+            console.log('Mark single read response:', data);
+
+            if (data.success) {
+                await loadNotifications();
+                showNotification('Отмечено как прочитанное');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка при отметке прочитанного', true);
+        }
+    }
+
+    async function markAllAsRead() {
+        if (currentTab === 'read') {
+            showNotification('В прочитанных нет новых уведомлений', true);
+            return;
+        }
+        if (!confirm('Отметить все уведомления как прочитанные?')) return;
+
+        try {
+            const response = await fetch('/notifications/api/mark-all-read', { method: 'POST' });
+            const data = await response.json();
+
+            console.log('Mark all read response:', data);
+
+            if (data.success) {
+                await loadNotifications();
+                showNotification('Все уведомления отмечены как прочитанные');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка', true);
+        }
+    }
+
+    async function deleteSelected() {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`Удалить ${selectedIds.size} уведомлений?`)) return;
+
+        const ids = Array.from(selectedIds);
+
+        try {
+            const response = await fetch('/notifications/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            });
+            const data = await response.json();
+
+            console.log('Delete response:', data);
+
+            if (data.success) {
+                selectedIds.clear();
+                updateSelectedActions();
+                await loadNotifications();
+                showNotification('Уведомления удалены');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка при удалении', true);
+        }
+    }
+
+    async function deleteSingle(id) {
+        if (!confirm('Удалить уведомление?')) return;
+
+        try {
+            const response = await fetch('/notifications/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] })
+            });
+            const data = await response.json();
+
+            console.log('Delete single response:', data);
+
+            if (data.success) {
+                await loadNotifications();
+                showNotification('Уведомление удалено');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка при удалении', true);
+        }
+    }
+
+    async function deleteAllUnread() {
+        if (currentTab === 'read') return;
+        const unreadIds = allNotifications.filter(n => !n.read).map(n => n.id);
+        if (unreadIds.length === 0) {
+            showNotification('Нет уведомлений для удаления', true);
+            return;
+        }
+        if (!confirm(`Удалить все ${unreadIds.length} уведомлений?`)) return;
+
+        try {
+            const response = await fetch('/notifications/api/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: unreadIds })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                await loadNotifications();
+                showNotification('Все уведомления удалены');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка при удалении', true);
+        }
+    }
+
+    async function clearHistory() {
+        if (!confirm('Очистить всю историю прочитанных уведомлений? Это действие нельзя отменить.')) return;
+
+        try {
+            const response = await fetch('/notifications/api/clear-read', { method: 'POST' });
+            const data = await response.json();
+
+            if (data.success) {
+                await loadNotifications();
+                showNotification('История очищена');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Ошибка', true);
+        }
+    }
+
+    async function markAsReadAndRedirect(id, link) {
+        try {
+            await fetch('/notifications/api/mark-read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] })
+            });
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
+        window.location.href = link;
+    }
+
+    function showNotification(message, isError = false) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `position: fixed; bottom: 20px; right: 20px; background: ${isError ? '#f44336' : '#4caf50'}; color: white; padding: 12px 20px; border-radius: 10px; z-index: 10001; animation: slideIn 0.3s ease;`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTab = this.dataset.tab;
+            selectedIds.clear();
+            updateSelectedActions();
+            loadNotifications();
+        });
+    });
+
+    loadNotifications();
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+    document.head.appendChild(style);
+</script>
+
+</body>
+</html>

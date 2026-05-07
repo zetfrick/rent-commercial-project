@@ -15,30 +15,40 @@
         </div>
 
         <div class="hd-nav-right">
-            <div th:if="${#authorization.expression('isAuthenticated()')}" class="hd-user-profile" id="hdUserProfile">
-                <a th:href="@{/profile}" class="hd-user-info">
-                    <span class="hd-user-avatar">👤</span>
-                    <span class="hd-user-name" th:text="${#authentication.name}"></span>
+            <div th:if="${#authorization.expression('isAuthenticated()')}" class="hd-user-actions">
+                <!-- Кнопка уведомлений с бейджем -->
+                <a href="/notifications" class="hd-notification-btn" id="hdNotificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span th:if="${unreadNotificationsCount > 0}" class="hd-notification-badge" th:text="${unreadNotificationsCount}"></span>
                 </a>
-                <div class="hd-dropdown-menu" id="hdDropdownMenu">
-                    <a th:href="@{/profile}" class="hd-dropdown-item">
-                        <i class="fas fa-user-circle"></i> Мой профиль
+
+                <!-- Профиль пользователя -->
+                <div class="hd-user-profile" id="hdUserProfile">
+                    <a th:href="@{/profile}" class="hd-user-info">
+                        <span class="hd-user-avatar">👤</span>
+                        <span class="hd-user-name" th:text="${#authentication.name}"></span>
                     </a>
-                    <a th:href="@{/premise/add}" class="hd-dropdown-item">
-                        <i class="fas fa-plus-circle"></i> Сдать помещение
-                    </a>
-                    <a th:href="@{/catalog}" class="hd-dropdown-item">
-                        <i class="fas fa-search"></i> Каталог
-                    </a>
-                    <div class="hd-dropdown-item disabled">
-                        <i class="fas fa-bell"></i> Уведомления <span style="font-size: 11px; opacity: 0.7;">(скоро)</span>
+                    <div class="hd-dropdown-menu" id="hdDropdownMenu">
+                        <a th:href="@{/profile}" class="hd-dropdown-item">
+                            <i class="fas fa-user-circle"></i> Мой профиль
+                        </a>
+                        <a th:href="@{/premise/add}" class="hd-dropdown-item">
+                            <i class="fas fa-plus-circle"></i> Сдать помещение
+                        </a>
+                        <a th:href="@{/catalog}" class="hd-dropdown-item">
+                            <i class="fas fa-search"></i> Каталог
+                        </a>
+                        <a th:href="@{/notifications}" class="hd-dropdown-item">
+                            <i class="fas fa-bell"></i> Уведомления
+                            <span th:if="${unreadNotificationsCount > 0}" class="hd-notification-badge" th:text="${unreadNotificationsCount}"></span>
+                        </a>
+                        <div class="hd-dropdown-divider"></div>
+                        <form th:action="@{/logout}" method="post" class="hd-logout-form">
+                            <button type="submit" class="hd-logout-btn-dropdown">
+                                <i class="fas fa-sign-out-alt"></i> Выйти
+                            </button>
+                        </form>
                     </div>
-                    <div class="hd-dropdown-divider"></div>
-                    <form th:action="@{/logout}" method="post" class="hd-logout-form">
-                        <button type="submit" class="hd-logout-btn-dropdown">
-                            <i class="fas fa-sign-out-alt"></i> Выйти
-                        </button>
-                    </form>
                 </div>
             </div>
 

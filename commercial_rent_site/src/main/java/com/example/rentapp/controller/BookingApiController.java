@@ -49,10 +49,24 @@ public class BookingApiController {
         return ResponseEntity.ok(bookingService.getPendingRequestsForOwner(ownerId));
     }
 
+    // НОВЫЙ ЭНДПОИНТ: получить PENDING запросы для владельца по конкретному помещению
+    @GetMapping("/owner/{ownerId}/pending/premise/{premiseId}")
+    public ResponseEntity<List<BookingDto>> getPendingRequestsForOwnerByPremise(
+            @PathVariable Long ownerId,
+            @PathVariable Long premiseId) {
+        return ResponseEntity.ok(bookingService.getPendingRequestsForOwnerByPremise(ownerId, premiseId));
+    }
+
     // Получить все запросы арендатора (с разными статусами)
     @GetMapping("/renter/{renterId}/requests")
     public ResponseEntity<List<BookingDto>> getRenterRequests(@PathVariable Long renterId) {
         return ResponseEntity.ok(bookingService.getRequestsForRenter(renterId));
+    }
+
+    // НОВЫЙ ЭНДПОИНТ: получить диапазоны ожидающих дат для помещения (только PENDING)
+    @GetMapping("/premise/{premiseId}/pending-ranges")
+    public ResponseEntity<List<Map<String, Object>>> getPendingDateRanges(@PathVariable Long premiseId) {
+        return ResponseEntity.ok(bookingService.getPendingDateRanges(premiseId));
     }
 
     // Создать запрос на аренду (для арендатора)
@@ -124,7 +138,6 @@ public class BookingApiController {
             return ResponseEntity.status(404).body(response);
         }
 
-        // Получаем информацию о помещении, чтобы проверить владельца
         PremiseDto premise = catalogClient.getPremiseById(premiseId);
         if (premise == null) {
             response.put("success", false);
@@ -132,14 +145,12 @@ public class BookingApiController {
             return ResponseEntity.status(404).body(response);
         }
 
-        // Проверяем, что текущий пользователь - владелец помещения
         if (!currentUser.getId().equals(premise.getOwnerId())) {
             response.put("success", false);
             response.put("message", "Только владелец может создать бронирование");
             return ResponseEntity.status(403).body(response);
         }
 
-        // Проверяем, что арендатор существует
         User renter = userService.findById(renterId).orElse(null);
         if (renter == null) {
             response.put("success", false);
@@ -228,7 +239,7 @@ public class BookingApiController {
         }
     }
 
-    // Отменить бронирование (владелец) - ИСПРАВЛЕНО: @DeleteMapping
+    // Отменить бронирование (владелец)
     @DeleteMapping("/{bookingId}/cancel-by-owner")
     public ResponseEntity<Map<String, Object>> cancelByOwner(
             @PathVariable Long bookingId,
@@ -261,7 +272,7 @@ public class BookingApiController {
         }
     }
 
-    // Отменить бронирование (арендатор) - ИСПРАВЛЕНО: @DeleteMapping
+    // Отменить бронирование (арендатор)
     @DeleteMapping("/{bookingId}/cancel-by-renter")
     public ResponseEntity<Map<String, Object>> cancelByRenter(
             @PathVariable Long bookingId,
@@ -307,6 +318,7 @@ public class BookingApiController {
         return ResponseEntity.ok(response);
     }
 
+    // Получить диапазоны подтверждённых дат для помещения (только APPROVED)
     @GetMapping("/premise/{premiseId}/booked-ranges")
     public ResponseEntity<List<Map<String, Object>>> getBookedDateRanges(@PathVariable Long premiseId) {
         return ResponseEntity.ok(bookingService.getBookedDateRanges(premiseId));
@@ -321,7 +333,6 @@ public class BookingApiController {
 
         Map<String, Object> response = new HashMap<>();
 
-        // Получаем информацию о помещении
         PremiseDto premise = catalogClient.getPremiseById(premiseId);
         if (premise == null) {
             response.put("available", false);
@@ -329,7 +340,6 @@ public class BookingApiController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        // Проверяем границы периода
         if (startDate.isBefore(premise.getAvailableFrom()) || endDate.isAfter(premise.getAvailableTo())) {
             response.put("available", false);
             response.put("message", "Выбранные даты выходят за пределы доступного периода аренды");

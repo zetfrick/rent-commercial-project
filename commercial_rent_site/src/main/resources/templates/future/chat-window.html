@@ -664,6 +664,19 @@
             margin-right: 6px;
         }
 
+        .pending-date-range-badge {
+            background: #fff3e0;
+            color: #ff9800;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .pending-date-range-badge i {
+            margin-right: 6px;
+        }
+
         .availability-indicator {
             padding: 10px;
             border-radius: 10px;
@@ -826,7 +839,7 @@
             </div>
 
             <div id="bookedRangesContainer" class="booked-ranges-list" style="display: none;">
-                <h4><i class="fas fa-calendar-times"></i> Уже занятые периоды</h4>
+                <h4><i class="fas fa-calendar-times"></i> Занятые периоды</h4>
                 <div id="bookedRangesItems" class="booked-ranges-items"></div>
             </div>
 
@@ -867,7 +880,8 @@
     let notificationTimeout = null;
     let pollingInterval = null;
     let lastMessageCount = 0;
-    let bookedRanges = [];
+    let approvedRanges = [];   // APPROVED бронирования (красные)
+    let pendingRanges = [];    // PENDING бронирования (жёлтые)
     let currentAvailability = false;
 
     const premiseData = {
@@ -984,7 +998,6 @@
                 lastDateKey = currentDateKey;
             }
 
-            // Проверяем, является ли сообщение системным
             const isSystem = msg.senderLogin === 'Система';
             const isCurrentUser = msg.senderId == currentUserId;
 
@@ -992,7 +1005,6 @@
             div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')}`;
 
             if (isSystem) {
-                // Для системных сообщений НЕ экранируем HTML, чтобы теги работали
                 div.innerHTML = `
                     <div class="message-text">${msg.text}</div>
                     <div class="message-time">${formatDate(msg.sentAt)}</div>
@@ -1049,25 +1061,53 @@
     async function loadBookedRanges() {
         if (!premiseId) return;
         try {
-            const response = await fetch(`/api/bookings/premise/${premiseId}/booked-ranges`);
-            if (response.ok) {
-                bookedRanges = await response.json();
-                displayBookedRanges();
+            // Загружаем подтверждённые бронирования (APPROVED)
+            const responseApproved = await fetch(`/api/bookings/premise/${premiseId}/booked-ranges`);
+            if (responseApproved.ok) {
+                approvedRanges = await responseApproved.json();
             }
+
+            // Загружаем ожидающие бронирования (PENDING)
+            const responsePending = await fetch(`/api/bookings/premise/${premiseId}/pending-ranges`);
+            if (responsePending.ok) {
+                pendingRanges = await responsePending.json();
+            }
+
+            displayBookedRanges();
         } catch(e) { console.error(e); }
     }
 
     function displayBookedRanges() {
         const container = document.getElementById('bookedRangesContainer');
         const items = document.getElementById('bookedRangesItems');
-        if (bookedRanges && bookedRanges.length > 0) {
-            container.style.display = 'block';
-            items.innerHTML = bookedRanges.map(range =>
-                `<span class="booked-date-range-badge">
+
+        let allRangesHtml = '';
+
+        // Добавляем подтверждённые бронирования (красные)
+        if (approvedRanges && approvedRanges.length > 0) {
+            allRangesHtml += approvedRanges.map(range => `
+                <span class="booked-date-range-badge">
                     <i class="fas fa-calendar-alt"></i>
                     ${formatDateRu(range.start)} — ${formatDateRu(range.end)}
-                </span>`
-            ).join('');
+                    <span style="margin-left: 6px; font-size: 10px;">✅ Подтверждена</span>
+                </span>
+            `).join('');
+        }
+
+        // Добавляем ожидающие бронирования (жёлтые)
+        if (pendingRanges && pendingRanges.length > 0) {
+            allRangesHtml += pendingRanges.map(range => `
+                <span class="pending-date-range-badge">
+                    <i class="fas fa-calendar-alt"></i>
+                    ${formatDateRu(range.start)} — ${formatDateRu(range.end)}
+                    <span style="margin-left: 6px; font-size: 10px;">⏳ Ожидает</span>
+                </span>
+            `).join('');
+        }
+
+        if (allRangesHtml) {
+            container.style.display = 'block';
+            items.innerHTML = allRangesHtml;
         } else {
             container.style.display = 'none';
         }
@@ -1151,13 +1191,23 @@
         let hasConflict = false;
         let conflictingRanges = [];
 
-        for (const range of bookedRanges) {
+        // Проверяем подтверждённые бронирования (APPROVED)
+        for (const range of approvedRanges) {
             const rangeStart = new Date(range.start);
             const rangeEnd = new Date(range.end);
-
             if (start <= rangeEnd && end >= rangeStart) {
                 hasConflict = true;
-                conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)}`);
+                conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)} (подтверждена)`);
+            }
+        }
+
+        // Проверяем ожидающие бронирования (PENDING)
+        for (const range of pendingRanges) {
+            const rangeStart = new Date(range.start);
+            const rangeEnd = new Date(range.end);
+            if (start <= rangeEnd && end >= rangeStart) {
+                hasConflict = true;
+                conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)} (ожидает подтверждения)`);
             }
         }
 
@@ -1204,14 +1254,11 @@
             const response = await fetch(url, { method: 'POST' });
             const data = await response.json();
             if (data.success) {
-                // Отправляем системное сообщение в чат
                 if (!isOwner) {
-                    // Арендатор отправил запрос -> уведомляем владельца
                     await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=booking_request&premiseId=${premiseId}&startDate=${startDate}&endDate=${endDate}`, {
                         method: 'POST'
                     });
                 } else {
-                    // Владелец создал бронирование -> уведомляем арендатора
                     await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=booking_approved&premiseId=${premiseId}`, {
                         method: 'POST'
                     });
@@ -1221,8 +1268,6 @@
                 closeModal();
                 await loadBookedRanges();
                 if (isOwner) loadPendingRequests();
-
-                // Обновляем сообщения в чате
                 await loadNewMessages();
             } else {
                 showNotification(data.message || 'Ошибка', true);
@@ -1239,8 +1284,9 @@
         if (!isOwner) return;
         const container = document.getElementById('pendingRequestsList');
         try {
-            const response = await fetch(`/api/bookings/owner/${currentUserId}/pending`);
+            const response = await fetch(`/api/bookings/owner/${currentUserId}/pending/premise/${premiseId}`);
             const requests = await response.json();
+
             if (requests.length === 0) {
                 container.innerHTML = '<div class="empty-requests"><i class="fas fa-inbox"></i> Нет активных запросов</div>';
                 return;
@@ -1256,6 +1302,7 @@
                 </div>
             `).join('');
         } catch(e) {
+            console.error('Error loading pending requests:', e);
             container.innerHTML = '<div class="empty-requests"><i class="fas fa-exclamation-circle"></i> Ошибка загрузки</div>';
         }
     }
@@ -1269,7 +1316,6 @@
             if (data.success) {
                 showNotification(action === 'approve' ? 'Аренда подтверждена!' : 'Запрос отклонён');
 
-                // Отправляем системное сообщение в чат
                 const messageType = action === 'approve' ? 'booking_approved' : 'booking_rejected';
                 await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=${messageType}&premiseId=${premiseId}`, {
                     method: 'POST'
@@ -1277,8 +1323,6 @@
 
                 await loadPendingRequests();
                 await loadBookedRanges();
-
-                // Обновляем сообщения в чате
                 await loadNewMessages();
             } else {
                 showNotification(data.message || 'Ошибка', true);

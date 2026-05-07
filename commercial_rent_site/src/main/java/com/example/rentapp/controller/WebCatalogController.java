@@ -7,6 +7,7 @@ import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.CommentService;
+import com.example.rentapp.service.NotificationService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +36,9 @@ public class WebCatalogController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // УПРОЩЁННО: types, amenities, typeInRussian, amenityInRussian добавляются автоматически через GlobalModelAdvice
     @GetMapping("/catalog")
@@ -85,25 +89,38 @@ public class WebCatalogController {
         // Получаем диапазоны занятых дат для компактного отображения (только APPROVED)
         List<Map<String, Object>> bookedDateRanges = bookingService.getBookedDateRanges(id);
 
-        // Получаем ВСЕ бронирования (включая CANCELLED) - удаляем отменённые для отображения
+        // Получаем диапазоны ожидающих дат для компактного отображения (только PENDING)
+        List<Map<String, Object>> pendingDateRanges = bookingService.getPendingDateRanges(id);
+
+        // Получаем ожидающие запросы с деталями (с информацией об арендаторе)
+        List<Map<String, Object>> pendingRequestsWithDetails = bookingService.getPendingRequestsWithDetails(id);
+
+        // Получаем ВСЕ бронирования
         List<BookingDto> allBookings = bookingService.getBookingsWithDetails(id);
 
-        // Фильтруем: показываем только бронирования со статусами PENDING, APPROVED, REJECTED (НЕ показываем CANCELLED)
-        List<BookingDto> activeBookings = allBookings.stream()
-                .filter(b -> !"CANCELLED".equals(b.getStatus()))
+        // Разделяем бронирования на APPROVED и PENDING
+        List<BookingDto> approvedBookings = allBookings.stream()
+                .filter(b -> "APPROVED".equals(b.getStatus()))
+                .collect(Collectors.toList());
+
+        List<BookingDto> pendingBookings = allBookings.stream()
+                .filter(b -> "PENDING".equals(b.getStatus()))
                 .collect(Collectors.toList());
 
         // Устанавливаем данные в DTO
         premise.setBookedDates(bookedDates);
-        premise.setBookings(activeBookings);
+        premise.setBookings(approvedBookings);
 
         // Добавляем атрибуты в модель
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("ownerLogin", ownerLogin);
-        model.addAttribute("bookedDates", bookedDates);                     // для всех пользователей
-        model.addAttribute("bookedDateRanges", bookedDateRanges);           // для компактного отображения (только APPROVED)
-        model.addAttribute("activeBookings", isOwner ? activeBookings : List.of()); // активные бронирования (без CANCELLED)
+        model.addAttribute("bookedDates", bookedDates);                          // для всех пользователей
+        model.addAttribute("bookedDateRanges", bookedDateRanges);                // для компактного отображения (только APPROVED)
+        model.addAttribute("pendingDateRanges", pendingDateRanges);              // диапазоны ожидающих запросов
+        model.addAttribute("pendingRequestsWithDetails", pendingRequestsWithDetails); // детали ожидающих запросов (с арендаторами)
+        model.addAttribute("approvedBookings", isOwner ? approvedBookings : List.of()); // подтверждённые бронирования
+        model.addAttribute("pendingBookings", isOwner ? pendingBookings : List.of());   // ожидающие бронирования
 
         // types, amenities и прочее уже в модели через GlobalModelAdvice
 
@@ -187,7 +204,36 @@ public class WebCatalogController {
         if (userDetails != null) {
             commentDto.setAuthorName(userDetails.getUsername());
         }
-        return commentService.addComment(commentDto);
+
+        CommentDto saved = commentService.addComment(commentDto);
+
+        // ===== СОЗДАЁМ УВЕДОМЛЕНИЕ ВЛАДЕЛЬЦУ ПОМЕЩЕНИЯ =====
+        try {
+            // Получаем информацию о помещении, чтобы узнать владельца
+            PremiseDto premise = catalogClient.getPremiseById(commentDto.getPremiseId());
+
+            if (premise != null && userDetails != null) {
+                User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+
+                // Отправляем уведомление владельцу, если комментатор не является владельцем
+                if (currentUser != null && !currentUser.getId().equals(premise.getOwnerId())) {
+                    notificationService.createNotification(
+                            premise.getOwnerId(),                    // кому (владельцу помещения)
+                            "COMMENT",                               // тип
+                            saved.getId(),                           // ID комментария
+                            currentUser.getId(),                     // от кого (комментатор)
+                            currentUser.getLogin(),                  // имя комментатора
+                            commentDto.getText() != null ? commentDto.getText().substring(0, Math.min(commentDto.getText().length(), 100)) : "",  // текст комментария (первые 100 символов)
+                            "/premise/" + commentDto.getPremiseId()   // ссылка на объявление
+                    );
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send notification for comment: " + e.getMessage());
+            // Не прерываем выполнение, если уведомление не отправилось
+        }
+
+        return saved;
     }
 
     @GetMapping("/api/comments/premise/{premiseId}")

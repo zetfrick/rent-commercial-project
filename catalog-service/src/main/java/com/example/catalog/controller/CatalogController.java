@@ -6,9 +6,11 @@ import com.example.catalog.entity.Comment;
 import com.example.catalog.entity.Premise;
 import com.example.catalog.repository.CommentRepository;
 import com.example.catalog.repository.PremiseRepository;
-import jakarta.annotation.PostConstruct;
+import com.example.catalog.service.NotificationService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -38,9 +40,13 @@ public class CatalogController {
     @Autowired
     private CommentRepository commentRepository;
 
-    // Выполняется сразу после запуска приложения
-    @PostConstruct
+    @Autowired
+    private NotificationService notificationService;
+
+    // Выполняется после полного запуска приложения (вместо @PostConstruct)
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
+        System.out.println("=== ApplicationReadyEvent: Начало проверки ===");
         System.out.println("=== Выполнение первоначальной проверки просроченных объявлений ===");
         checkAndUnpublishExpiredPremises();
         System.out.println("=== Выполнение первоначальной проверки удаления старых объявлений ===");
@@ -52,49 +58,109 @@ public class CatalogController {
     @Scheduled(cron = "0 0 0 * * *")
     public void checkAndUnpublishExpiredPremises() {
         LocalDate today = LocalDate.now();
+        System.out.println("=== [SCHEDULED] Проверка просроченных объявлений на " + today + " ===");
+
         // Находим активные объявления, у которых дата окончания доступности уже прошла
         List<Premise> expiredPremises = premiseRepository.findByActiveTrueAndAvailableToBefore(today);
 
         System.out.println("Найдено просроченных объявлений: " + expiredPremises.size());
+
         for (Premise premise : expiredPremises) {
+            System.out.println("---");
+            System.out.println("Обработка объявления #" + premise.getId());
+            System.out.println("Тип: " + premise.getType());
+            System.out.println("Владелец ID: " + premise.getOwnerId());
+            System.out.println("Дата доступности до: " + premise.getAvailableTo());
+
+            // Проверяем наличие владельца
+            if (premise.getOwnerId() == null) {
+                System.err.println("!!! ПРЕДУПРЕЖДЕНИЕ: У объявления #" + premise.getId() + " отсутствует владелец (owner_id = null)");
+                System.err.println("!!! Уведомление не будет отправлено");
+                // Все равно снимаем с публикации
+                premise.setActive(false);
+                premise.setUnpublishedAt(LocalDateTime.now());
+                premiseRepository.save(premise);
+                System.out.println("Объявление #" + premise.getId() + " снято с публикации (без уведомления владельца)");
+                continue;
+            }
+
             premise.setActive(false);
             premise.setUnpublishedAt(LocalDateTime.now());
             premiseRepository.save(premise);
-            System.out.println("Объявление #" + premise.getId() + " снято с публикации (истек срок доступности)");
+            System.out.println("✓ Объявление #" + premise.getId() + " снято с публикации (истек срок доступности)");
+
+            // Отправляем уведомление владельцу о снятии помещения
+            try {
+                System.out.println("→ Попытка отправить уведомление владельцу ID=" + premise.getOwnerId());
+                notificationService.sendNotification(
+                        premise.getOwnerId(),
+                        "PREMISE_EXPIRED",
+                        premise.getId(),
+                        null,
+                        null,
+                        "Помещение \"" + premise.getType() + "\" снято с публикации (истек срок доступности)",
+                        "/premise/" + premise.getId()
+                );
+            } catch (Exception e) {
+                System.err.println("✗ ОШИБКА отправки уведомления для помещения #" + premise.getId());
+                System.err.println("  Сообщение: " + e.getMessage());
+                // Не прерываем выполнение, продолжаем со следующими объявлениями
+            }
+            System.out.println("---");
         }
+        System.out.println("=== [SCHEDULED] Проверка просроченных объявлений завершена ===");
     }
 
     // Запускается каждый день в 01:00
     @Scheduled(cron = "0 0 1 * * *")
     public void deleteOldUnpublishedPremises() {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(60);
+        System.out.println("=== [SCHEDULED] Проверка старых объявлений для удаления (до " + cutoffDate + ") ===");
+
         // Находим неактивные объявления, которые были сняты более 60 дней назад
         List<Premise> oldPremises = premiseRepository.findByActiveFalseAndUnpublishedAtBefore(cutoffDate);
 
         System.out.println("Найдено объявлений для удаления: " + oldPremises.size());
+
         for (Premise premise : oldPremises) {
+            System.out.println("---");
+            System.out.println("Удаление объявления #" + premise.getId());
+            if (premise.getUnpublishedAt() != null) {
+                System.out.println("  Снято с публикации: " + premise.getUnpublishedAt());
+                System.out.println("  Прошло дней: " + java.time.Duration.between(premise.getUnpublishedAt(), LocalDateTime.now()).toDays());
+            }
+
             // Удаляем фото с диска
             List<String> photoPaths = premise.getPhotoPaths();
             if (photoPaths != null && !photoPaths.isEmpty()) {
                 String uploadDir = "uploads/";
+                int deletedCount = 0;
                 for (String photoPath : photoPaths) {
                     try {
                         Path filePath = Paths.get(uploadDir + photoPath);
-                        Files.deleteIfExists(filePath);
-                        System.out.println("Удалён файл: " + photoPath);
+                        if (Files.deleteIfExists(filePath)) {
+                            deletedCount++;
+                            System.out.println("  ✓ Удалён файл: " + photoPath);
+                        } else {
+                            System.out.println("  ⚠ Файл не найден: " + photoPath);
+                        }
                     } catch (IOException e) {
-                        System.err.println("Ошибка удаления файла: " + photoPath + " - " + e.getMessage());
+                        System.err.println("  ✗ Ошибка удаления файла: " + photoPath + " - " + e.getMessage());
                     }
                 }
+                System.out.println("  Удалено файлов: " + deletedCount + " из " + photoPaths.size());
             }
 
             // Удаляем комментарии
             commentRepository.deleteByPremiseId(premise.getId());
+            System.out.println("  ✓ Комментарии удалены");
 
             // Удаляем объявление
             premiseRepository.delete(premise);
-            System.out.println("Объявление #" + premise.getId() + " полностью удалено (снято более 60 дней назад)");
+            System.out.println("✓ Объявление #" + premise.getId() + " полностью удалено (снято более 60 дней назад)");
+            System.out.println("---");
         }
+        System.out.println("=== [SCHEDULED] Удаление старых объявлений завершено ===");
     }
 
     @GetMapping("/catalog")
@@ -125,12 +191,22 @@ public class CatalogController {
 
     @PostMapping("/premise/add")
     public ResponseEntity<Premise> addPremise(@RequestBody PremiseDto premiseDto) {
+        System.out.println("=== Добавление нового помещения ===");
+        System.out.println("OwnerId: " + premiseDto.getOwnerId());
+        System.out.println("Тип: " + premiseDto.getType());
+
         Premise premise = new Premise();
         BeanUtils.copyProperties(premiseDto, premise, "id", "createdAt", "unpublishedAt");
         premise.setLatitude(premiseDto.getLatitude());
         premise.setLongitude(premiseDto.getLongitude());
 
+        // Проверяем, что ownerId не null
+        if (premise.getOwnerId() == null) {
+            System.err.println("!!! ВНИМАНИЕ: Помещение добавляется без владельца (owner_id = null)");
+        }
+
         Premise saved = premiseRepository.save(premise);
+        System.out.println("✓ Помещение #" + saved.getId() + " успешно добавлено");
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
@@ -197,13 +273,53 @@ public class CatalogController {
         Boolean active = request.get("active");
 
         if (active != null) {
+            boolean wasActive = premise.isActive();
+
+            System.out.println("=== Ручное изменение статуса публикации ===");
+            System.out.println("Помещение #" + id);
+            System.out.println("Было активно: " + wasActive);
+            System.out.println("Стало активно: " + active);
+            System.out.println("Владелец ID: " + premise.getOwnerId());
+
             premise.setActive(active);
             if (!active && premise.getUnpublishedAt() == null) {
                 premise.setUnpublishedAt(LocalDateTime.now());
+                System.out.println("Установлена дата снятия: " + premise.getUnpublishedAt());
             }
             premiseRepository.save(premise);
             response.put("success", true);
             response.put("active", active);
+
+            // Если помещение было снято с публикации вручную, отправляем уведомление
+            if (wasActive && !active) {
+                if (premise.getOwnerId() == null) {
+                    System.err.println("!!! ПРЕДУПРЕЖДЕНИЕ: У помещения #" + id + " отсутствует владелец, уведомление не отправлено");
+                    response.put("notificationSent", false);
+                    response.put("notificationError", "Отсутствует владелец помещения");
+                } else {
+                    try {
+                        System.out.println("→ Попытка отправить уведомление владельцу ID=" + premise.getOwnerId());
+                        notificationService.sendNotification(
+                                premise.getOwnerId(),
+                                "PREMISE_EXPIRED",
+                                premise.getId(),
+                                null,
+                                null,
+                                "Помещение \"" + premise.getType() + "\" снято с публикации",
+                                "/premise/" + premise.getId()
+                        );
+                        System.out.println("✓ Уведомление успешно отправлено владельцу о снятии помещения #" + premise.getId());
+                        response.put("notificationSent", true);
+                    } catch (Exception e) {
+                        System.err.println("✗ ОШИБКА отправки уведомления для помещения #" + premise.getId());
+                        System.err.println("  Сообщение: " + e.getMessage());
+                        response.put("notificationSent", false);
+                        response.put("notificationError", e.getMessage());
+                    }
+                }
+            } else {
+                System.out.println("Уведомление не требуется (помещение не было снято с публикации)");
+            }
         } else {
             response.put("success", false);
             response.put("message", "Не указан статус");
@@ -224,6 +340,7 @@ public class CatalogController {
         }
 
         Premise premise = premiseOpt.get();
+        System.out.println("=== Удаление помещения #" + id + " ===");
 
         List<String> photoPaths = premise.getPhotoPaths();
         if (photoPaths != null && !photoPaths.isEmpty()) {
@@ -232,8 +349,9 @@ public class CatalogController {
                 try {
                     Path filePath = Paths.get(uploadDir + photoPath);
                     Files.deleteIfExists(filePath);
+                    System.out.println("✓ Удалён файл: " + photoPath);
                 } catch (IOException e) {
-                    System.err.println("Ошибка удаления файла: " + photoPath);
+                    System.err.println("✗ Ошибка удаления файла: " + photoPath);
                 }
             }
         }
@@ -242,6 +360,7 @@ public class CatalogController {
         premiseRepository.deleteById(id);
 
         response.put("success", true);
+        System.out.println("✓ Помещение #" + id + " удалено");
         return ResponseEntity.ok(response);
     }
 
@@ -254,6 +373,7 @@ public class CatalogController {
                         c.getId(),
                         c.getPremiseId(),
                         c.getAuthorName(),
+                        null,
                         c.getText(),
                         c.getCreatedAt()
                 )
@@ -280,10 +400,12 @@ public class CatalogController {
                 saved.getId(),
                 saved.getPremiseId(),
                 saved.getAuthorName(),
+                commentDto.getAuthorId(),
                 saved.getText(),
                 saved.getCreatedAt()
         );
 
+        // Уведомление о комментарии отправляется из rentapp
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -303,4 +425,17 @@ public class CatalogController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/debug/services")
+    public Map<String, Object> debugServices() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            result.put("status", "ok");
+            result.put("catalog-service.port", "8081");
+            result.put("main-service.url", "http://localhost:8080");
+            result.put("notification.service.available", "true");
+        } catch (Exception e) {
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
 }

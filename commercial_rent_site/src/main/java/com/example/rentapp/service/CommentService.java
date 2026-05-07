@@ -14,6 +14,8 @@ public class CommentService {
     @Autowired
     private CatalogClient catalogClient;
 
+    // Убираем notificationService и userService отсюда - уведомления будут в контроллере
+
     public CommentDto addComment(CommentDto commentDto) {
         if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
             throw new IllegalArgumentException("Текст комментария не может быть пустым");
@@ -21,6 +23,8 @@ public class CommentService {
         if (commentDto.getPremiseId() == null) {
             throw new IllegalArgumentException("Не указан ID помещения");
         }
+
+        // Только сохраняем комментарий через catalog-client, без уведомлений
         return catalogClient.addComment(commentDto);
     }
 

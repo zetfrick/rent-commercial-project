@@ -17,7 +17,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,7 +71,13 @@ public class ChatController {
                         } catch (Exception e) {
                             System.err.println("Error loading premise: " + e.getMessage());
                         }
+                        // ТОЛЬКО для чатов с привязкой к помещению проверяем наличие запроса
+                        info.pendingBookingRequest = bookingService.hasPendingRequestForChat(premiseIdObj, currentUser.getId(), otherUserId);
+                    } else {
+                        // Для чатов без привязки к помещению - запросов быть не может
+                        info.pendingBookingRequest = false;
                     }
+
                     chatMap.put(key, info);
                 }
             } else {
@@ -112,6 +117,10 @@ public class ChatController {
         model.addAttribute("otherUser", otherUser);
         model.addAttribute("messages", messages);
         model.addAttribute("otherUsername", username);
+        model.addAttribute("premiseId", null);
+        model.addAttribute("premise", null);
+        model.addAttribute("isOwner", false);
+        model.addAttribute("pendingBookingRequest", false);
 
         return "future/chat-window";
     }
@@ -131,6 +140,9 @@ public class ChatController {
 
         List<ChatMessage> messages = chatService.getChatBetweenByPremise(currentUser.getId(), otherUser.getId(), premiseId);
 
+        // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
+        boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), otherUser.getId());
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("otherUser", otherUser);
         model.addAttribute("messages", messages);
@@ -138,6 +150,7 @@ public class ChatController {
         model.addAttribute("premiseId", premiseId);
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", currentUser.getId().equals(premise.getOwnerId()));
+        model.addAttribute("pendingBookingRequest", hasPendingRequest);
 
         return "future/chat-window";
     }
@@ -161,6 +174,9 @@ public class ChatController {
 
         List<ChatMessage> messages = chatService.getChatBetweenByPremise(currentUser.getId(), owner.getId(), premiseId);
 
+        // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
+        boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), owner.getId());
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("otherUser", owner);
         model.addAttribute("messages", messages);
@@ -169,6 +185,7 @@ public class ChatController {
         model.addAttribute("premiseTitle", premise.getTypeInRussian() + " в " + premise.getCity());
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", currentUser.getId().equals(premise.getOwnerId()));
+        model.addAttribute("pendingBookingRequest", hasPendingRequest);
 
         return "future/chat-window";
     }
@@ -200,7 +217,6 @@ public class ChatController {
         return "ok";
     }
 
-    // НОВЫЙ МЕТОД: отправка системного сообщения о запросе аренды
     @PostMapping("/send-system-message")
     @ResponseBody
     public String sendSystemMessage(@RequestParam Long receiverId,
@@ -312,6 +328,10 @@ public class ChatController {
                         } catch (Exception e) {
                             System.err.println("Error loading premise: " + e.getMessage());
                         }
+                        // ТОЛЬКО для чатов с привязкой к помещению проверяем наличие запроса
+                        info.pendingBookingRequest = bookingService.hasPendingRequestForChat(premiseIdObj, currentUser.getId(), otherUserId);
+                    } else {
+                        info.pendingBookingRequest = false;
                     }
                     chatMap.put(key, info);
                 }
@@ -347,5 +367,6 @@ public class ChatController {
         public String lastMessage;
         public LocalDateTime lastMessageTime;
         public int unreadCount;
+        public boolean pendingBookingRequest;
     }
 }
