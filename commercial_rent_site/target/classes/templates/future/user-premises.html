@@ -144,15 +144,42 @@
             box-shadow: 0 20px 40px rgba(255,152,0,0.2);
         }
 
-        .status-label {
+        /* Бейджи вверху (только площадь и вместимость) */
+        .top-badges {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 15px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 15px;
+            z-index: 15;
+            pointer-events: none;
+        }
+        .area-badge, .capacity-badge {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+        }
+
+        /* Бейджи статуса внизу */
+        .status-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .status-label {
+            display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 600;
-            z-index: 15;
         }
         .status-active {
             background: #4caf50;
@@ -160,6 +187,10 @@
         }
         .status-inactive {
             background: #f44336;
+            color: white;
+        }
+        .has-bookings-label {
+            background: #2196f3;
             color: white;
         }
 
@@ -248,20 +279,6 @@
             font-size: 18px;
         }
 
-        .area-badge, .capacity-badge {
-            position: absolute;
-            top: 15px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 13px;
-            z-index: 15;
-        }
-        .area-badge { left: 15px; }
-        .capacity-badge { right: 15px; }
-
         .info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
         .type { font-size: 20px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; color: #ff9800; }
         .amenities { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; font-size: 12px; color: #555; }
@@ -323,15 +340,156 @@
             color: #ff5722;
             font-size: 16px;
         }
-        .details-btn {
-            display: block;
-            text-align: right;
-            color: #ff9800;
-            font-weight: bold;
-            font-size: 15px;
-            margin-top: auto;
+
+        .card-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
-        .details-btn:hover { text-decoration: underline; }
+        .details-btn {
+            display: inline-block;
+            text-align: center;
+            background: #ff9800;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 13px;
+            text-decoration: none;
+            flex: 1;
+            transition: all 0.3s;
+        }
+        .details-btn:hover {
+            background: #ff5722;
+            transform: translateY(-2px);
+        }
+        .bookings-btn {
+            display: inline-block;
+            text-align: center;
+            background: #2196f3;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.3s;
+        }
+        .bookings-btn:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        /* Модальное окно для аренд */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 20px;
+            animation: modalFadeIn 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            padding: 20px;
+            background: #ff5722;
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+        }
+        .modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .booking-section {
+            margin-bottom: 25px;
+        }
+        .booking-section h4 {
+            color: #ff5722;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .booking-item {
+            background: #f9f9f9;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff9800;
+        }
+        .booking-item.approved {
+            border-left-color: #4caf50;
+        }
+        .booking-item.pending {
+            border-left-color: #ff9800;
+        }
+        .booking-dates {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .booking-user {
+            font-size: 13px;
+            color: #555;
+        }
+        .booking-user a {
+            color: #ff5722;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .booking-user a:hover {
+            text-decoration: underline;
+        }
+        .booking-chat-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #2196f3;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .booking-chat-link:hover {
+            text-decoration: underline;
+        }
+        .no-bookings {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
 
         .empty-state {
             text-align: center;
@@ -367,6 +525,9 @@
             .catalog-grid { grid-template-columns: 1fr; }
             .page-title { flex-direction: column; text-align: center; }
             .sort-control { justify-content: center; }
+            .card-buttons { flex-direction: column; }
+            .top-badges { padding: 0 10px; }
+            .area-badge, .capacity-badge { padding: 4px 8px; font-size: 11px; }
         }
     </style>
 </head>
@@ -386,10 +547,18 @@
         <a href="/profile" class="back-btn"><i class="fas fa-arrow-left"></i> Вернуться в профиль</a>
     </div>
 
-    <div class="tabs">
+    <!-- Вкладки - только для владельца -->
+    <div th:if="${isOwnProfile}" class="tabs">
         <button class="tab-btn active" data-status="active">📋 Опубликованные</button>
         <button class="tab-btn" data-status="inactive">📁 Снятые с публикации</button>
+        <button class="tab-btn" data-status="rented">🏠 Сданы в аренду</button>
         <button class="tab-btn" data-status="all">📜 Все объявления</button>
+    </div>
+
+    <!-- Для гостя - только опубликованные -->
+    <div th:unless="${isOwnProfile}" class="tabs">
+        <button class="tab-btn active" data-status="active">📋 Опубликованные</button>
+        <button class="tab-btn" data-status="inactive">📁 Снятые с публикации</button>
     </div>
 
     <div class="sort-control">
@@ -421,6 +590,26 @@
     </div>
 </div>
 
+<!-- Модальное окно для аренд - только для владельца -->
+<div th:if="${isOwnProfile}" id="bookingsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-check"></i> <span id="modalPremiseTitle"></span></h3>
+            <button class="modal-close" onclick="closeBookingsModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div class="booking-section">
+                <h4>✅ Подтверждённые аренды</h4>
+                <div id="approvedBookingsList"></div>
+            </div>
+            <div class="booking-section">
+                <h4>⏳ Ожидающие подтверждения</h4>
+                <div id="pendingBookingsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
     <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
 </div>
@@ -432,6 +621,7 @@
 
     const serverTypeInRussianRaw = /*[[${typeInRussian}]]*/ null;
     const serverAmenityInRussianRaw = /*[[${amenityInRussian}]]*/ null;
+    const isOwnProfile = /*[[${isOwnProfile}]]*/ false;
 
     if (serverTypeInRussianRaw && typeof serverTypeInRussianRaw === 'object') {
         typeInRussianMap = serverTypeInRussianRaw;
@@ -452,6 +642,7 @@
 
     const premisesData = /*[[${premises}]]*/ [];
     console.log('Загружено объявлений:', premisesData.length);
+    console.log('isOwnProfile:', isOwnProfile);
 
     let currentPremises = [...premisesData];
     let currentSort = 'newest';
@@ -468,11 +659,21 @@
         return diffDays > 0 ? diffDays : 0;
     }
 
+    // Проверка, есть ли у помещения аренды (для отображения кнопки - только для владельца)
+    function hasBookings(premise) {
+        if (!isOwnProfile) return false;
+        return (premise.bookings && premise.bookings.length > 0) ||
+               (premise.pendingBookings && premise.pendingBookings.length > 0);
+    }
+
     function filterByStatus() {
+
         if (currentStatus === 'active') {
             return premisesData.filter(p => p.active === true);
         } else if (currentStatus === 'inactive') {
             return premisesData.filter(p => p.active === false);
+        } else if (currentStatus === 'rented' && isOwnProfile) {
+            return premisesData.filter(p => p.bookings && p.bookings.length > 0);
         }
         return [...premisesData];
     }
@@ -513,6 +714,73 @@
         renderCards();
     }
 
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ru-RU');
+    }
+
+    function showBookingsModal(premiseId, premiseTitle) {
+        if (!isOwnProfile) return;
+
+        const premise = premisesData.find(p => p.id === premiseId);
+        if (!premise) return;
+
+        document.getElementById('modalPremiseTitle').innerHTML = `<i class="fas fa-building"></i> ${premiseTitle}`;
+
+        // Подтверждённые аренды
+        const approvedBookings = premise.bookings || [];
+        const approvedContainer = document.getElementById('approvedBookingsList');
+        if (approvedBookings.length === 0) {
+            approvedContainer.innerHTML = '<div class="no-bookings">Нет подтверждённых аренд</div>';
+        } else {
+            approvedContainer.innerHTML = approvedBookings.map(booking => `
+                <div class="booking-item approved">
+                    <div class="booking-dates">
+                        <i class="fas fa-calendar-alt"></i> ${formatDate(booking.startDate)} — ${formatDate(booking.endDate)}
+                    </div>
+                    <div class="booking-user">
+                        <i class="fas fa-user"></i> Арендатор:
+                        <a href="/profile?username=${encodeURIComponent(booking.renterName)}">${escapeHtml(booking.renterName)}</a>
+                    </div>
+                    <a href="/chats/with/${encodeURIComponent(booking.renterName)}/premise/${premiseId}" class="booking-chat-link">
+                        <i class="fas fa-comment-dots"></i> Перейти в чат
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        // Ожидающие аренды
+        const pendingBookings = premise.pendingBookings || [];
+        const pendingContainer = document.getElementById('pendingBookingsList');
+        if (pendingBookings.length === 0) {
+            pendingContainer.innerHTML = '<div class="no-bookings">Нет ожидающих запросов</div>';
+        } else {
+            pendingContainer.innerHTML = pendingBookings.map(booking => `
+                <div class="booking-item pending">
+                    <div class="booking-dates">
+                        <i class="fas fa-calendar-alt"></i> ${formatDate(booking.startDate)} — ${formatDate(booking.endDate)}
+                    </div>
+                    <div class="booking-user">
+                        <i class="fas fa-user"></i> Арендатор:
+                        <a href="/profile?username=${encodeURIComponent(booking.renterName)}">${escapeHtml(booking.renterName)}</a>
+                    </div>
+                    <a href="/chats/with/${encodeURIComponent(booking.renterName)}/premise/${premiseId}" class="booking-chat-link">
+                        <i class="fas fa-comment-dots"></i> Перейти в чат
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('bookingsModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeBookingsModal() {
+        document.getElementById('bookingsModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
     function renderCards() {
         const container = document.getElementById('catalogGrid');
         const emptyState = document.getElementById('emptyState');
@@ -524,10 +792,14 @@
             emptyState.style.display = 'block';
             countSpan.textContent = '0';
 
-            if (currentStatus === 'active') {
+            if (!isOwnProfile) {
+                emptyMessage.textContent = 'У пользователя нет опубликованных объявлений';
+            } else if (currentStatus === 'active') {
                 emptyMessage.textContent = 'Нет опубликованных объявлений';
             } else if (currentStatus === 'inactive') {
                 emptyMessage.textContent = 'Нет снятых с публикации объявлений';
+            } else if (currentStatus === 'rented') {
+                emptyMessage.textContent = 'Нет объявлений, сданных в аренду';
             } else {
                 emptyMessage.textContent = 'Нет объявлений';
             }
@@ -557,9 +829,26 @@
                 photosHtml = `<div class="no-photo">📷 Нет фото</div>`;
             }
 
-            const statusHtml = premise.active
-                ? '<div class="status-label status-active">✓ Активно</div>'
-                : '<div class="status-label status-inactive">✗ Снято</div>';
+            // Бейджи вверху: площадь и вместимость
+            const topBadgesHtml = `
+                <div class="top-badges">
+                    <span class="area-badge">${premise.area} м²</span>
+                    <span class="capacity-badge">${premise.capacity} чел.</span>
+                </div>
+            `;
+
+            // Бейджи статуса внизу
+            let statusBadgesHtml = '';
+            if (premise.active) {
+                statusBadgesHtml += '<span class="status-label status-active">✓ Активно</span>';
+            } else {
+                statusBadgesHtml += '<span class="status-label status-inactive">✗ Снято</span>';
+            }
+
+            const hasBookingsFlag = hasBookings(premise);
+            if (hasBookingsFlag && premise.active && isOwnProfile) {
+                statusBadgesHtml += '<span class="status-label has-bookings-label">🏠 Сдано в аренду</span>';
+            }
 
             let amenitiesHtml = '';
             if (premise.amenities && premise.amenities.length > 0) {
@@ -590,9 +879,8 @@
                 `;
             }
 
-            // Информация об удалении для снятых объявлений
             let deletionHtml = '';
-            if (!premise.active && premise.unpublishedAt) {
+            if (!premise.active && premise.unpublishedAt && isOwnProfile) {
                 const daysLeft = getDaysUntilDeletion(premise.unpublishedAt);
                 const deletionDate = new Date(premise.unpublishedAt);
                 deletionDate.setDate(deletionDate.getDate() + 60);
@@ -616,21 +904,32 @@
                 }
             }
 
+            // Кнопка "Аренды" - только для владельца
+            let bookingsButtonHtml = '';
+            if (isOwnProfile) {
+                const bookingsBtnClass = hasBookingsFlag ? 'bookings-btn' : 'bookings-btn disabled';
+                const bookingsBtnOnclick = hasBookingsFlag ? `showBookingsModal(${premise.id}, '${escapeHtml(getTypeInRussian(premise.type))}')` : 'return false;';
+                bookingsButtonHtml = `
+                    <button class="${bookingsBtnClass}" onclick="${bookingsBtnOnclick}">
+                        <i class="fas fa-calendar-check"></i> Аренды
+                    </button>
+                `;
+            }
+
             card.innerHTML = `
                 ${photosHtml}
-                ${statusHtml}
-                <div class="area-badge">${premise.area} м²</div>
-                <div class="capacity-badge">${premise.capacity} чел.</div>
+                ${topBadgesHtml}
                 <div class="info">
                     <div class="type">${getTypeInRussian(premise.type)}</div>
+                    <div class="status-badges">${statusBadgesHtml}</div>
                     ${amenitiesHtml}
                     <div class="owner">${premise.contactFirstName || ''} ${premise.contactLastName || ''}</div>
                     <div class="address">${premise.region || ''}, ${premise.city || ''}, ${premise.street || ''} ${premise.building || ''}</div>
                     <div class="availability">
                         <span class="availability-label">📅 Доступно:</span>
                         <span class="availability-dates">
-                            ${premise.availableFrom ? new Date(premise.availableFrom).toLocaleDateString('ru-RU') : '—'} —
-                            ${premise.availableTo ? new Date(premise.availableTo).toLocaleDateString('ru-RU') : '—'}
+                            ${premise.availableFrom ? formatDate(premise.availableFrom) : '—'} —
+                            ${premise.availableTo ? formatDate(premise.availableTo) : '—'}
                         </span>
                     </div>
                     <div class="prices">
@@ -642,7 +941,10 @@
                         ${holidayPriceHtml}
                     </div>
                     ${deletionHtml}
-                    <a href="/premise/${premise.id}" class="details-btn">Подробнее →</a>
+                    <div class="card-buttons">
+                        <a href="/premise/${premise.id}" class="details-btn">Подробнее →</a>
+                        ${bookingsButtonHtml}
+                    </div>
                 </div>
             `;
 
@@ -718,19 +1020,28 @@
         }
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+    }
+
     document.getElementById('sortSelect').addEventListener('change', function(e) {
         currentSort = e.target.value;
         sortPremises();
     });
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentStatus = this.dataset.status;
-            sortPremises();
+    // Настройка вкладок - только если есть несколько кнопок
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    if (tabBtns.length > 1) {
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentStatus = this.dataset.status;
+                sortPremises();
+            });
         });
-    });
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         premisesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -740,6 +1051,10 @@
     window.openFullscreen = openFullscreen;
     window.prevPhoto = prevPhoto;
     window.nextPhoto = nextPhoto;
+    if (isOwnProfile) {
+        window.showBookingsModal = showBookingsModal;
+        window.closeBookingsModal = closeBookingsModal;
+    }
     /*]]>*/
 </script>
 </body>

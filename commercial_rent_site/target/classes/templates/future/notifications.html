@@ -360,6 +360,12 @@
         'BOOKING_APPROVED': 'fa-check-circle',
         'BOOKING_CANCELLED_BY_OWNER': 'fa-ban',
         'BOOKING_CANCELLED_BY_RENTER': 'fa-ban',
+        'BOOKING_STARTS_IN_3_DAYS': 'fa-calendar-week',
+        'BOOKING_STARTS_IN_1_DAY': 'fa-calendar-day',
+        'BOOKING_STARTS_TODAY': 'fa-calendar-check',
+        'BOOKING_ENDS_IN_3_DAYS': 'fa-calendar-week',
+        'BOOKING_ENDS_IN_1_DAY': 'fa-calendar-day',
+        'BOOKING_ENDS_TODAY': 'fa-calendar-times',
         'COMMENT': 'fa-comment'
     };
 
@@ -371,6 +377,12 @@
         'BOOKING_APPROVED': '#4caf50',
         'BOOKING_CANCELLED_BY_OWNER': '#f44336',
         'BOOKING_CANCELLED_BY_RENTER': '#f44336',
+        'BOOKING_STARTS_IN_3_DAYS': '#2196f3',
+        'BOOKING_STARTS_IN_1_DAY': '#ff9800',
+        'BOOKING_STARTS_TODAY': '#4caf50',
+        'BOOKING_ENDS_IN_3_DAYS': '#ff9800',
+        'BOOKING_ENDS_IN_1_DAY': '#ff5722',
+        'BOOKING_ENDS_TODAY': '#f44336',
         'COMMENT': '#9c27b0'
     };
 
@@ -463,6 +475,8 @@
             if (clearHistoryBtn) clearHistoryBtn.style.display = 'inline-block';
             if (selectedIds.size > 0) {
                 selectedActions.style.display = 'flex';
+            } else {
+                selectedActions.style.display = 'none';
             }
         } else {
             if (mainMarkAllBtn) mainMarkAllBtn.style.display = 'inline-block';
@@ -515,6 +529,16 @@
                 html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
                         <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> оставил комментарий к вашему объявлению
                         ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть →</a>` : ''}`;
+                break;
+            case 'BOOKING_STARTS_IN_3_DAYS':
+            case 'BOOKING_STARTS_IN_1_DAY':
+            case 'BOOKING_STARTS_TODAY':
+            case 'BOOKING_ENDS_IN_3_DAYS':
+            case 'BOOKING_ENDS_IN_1_DAY':
+            case 'BOOKING_ENDS_TODAY':
+                // Убираем иконку, так как content уже содержит всё форматирование с иконкой внутри
+                html = `${notif.content || ''}
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть помещение →</a>` : ''}`;
                 break;
             default:
                 html = notif.content || 'Новое уведомление';

@@ -86,17 +86,21 @@ public class NotificationController {
             @RequestParam(required = false) String content,
             @RequestParam String link) {
 
-        String decodedContent = content;
+        // ВАЖНО: НЕ декодируем content, так как он может содержать HTML-ссылку!
+        // Только если это необходимо для URL-декодирования без повреждения HTML
+        String processedContent = content;
         if (content != null && content.contains("%")) {
             try {
-                decodedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.toString());
+                // Декодируем URL-кодированные символы, но не трогаем HTML-теги
+                processedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.toString());
             } catch (Exception e) {
                 System.err.println("Ошибка декодирования content: " + e.getMessage());
+                processedContent = content;
             }
         }
 
         try {
-            notificationService.createNotification(userId, type, relatedId, fromUserId, fromUserName, decodedContent, link);
+            notificationService.createNotification(userId, type, relatedId, fromUserId, fromUserName, processedContent, link);
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
             System.err.println("Ошибка при создании уведомления: " + e.getMessage());

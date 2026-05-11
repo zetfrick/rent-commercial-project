@@ -1,9 +1,11 @@
 package com.example.rentapp.controller;
 
 import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.dto.PremiseForm;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.FileStorageService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-// Убираем импорт Map - он больше не нужен здесь
+import java.util.Map;
 
 @Controller
 public class ProfileController {
@@ -29,6 +31,9 @@ public class ProfileController {
 
     @Autowired
     private CatalogClient catalogClient;
+
+    @Autowired
+    private BookingService bookingService;
 
     // ==================== ПРОФИЛЬ ====================
 
@@ -126,8 +131,6 @@ public class ProfileController {
         form.setOwnerPhone(owner.getPhone());
         form.setOwnerEmail(owner.getEmail());
 
-        // Убираем добавление types, amenities, typeInRussian, amenityInRussian - они придут через GlobalModelAdvice
-
         model.addAttribute("premiseForm", form);
         return "future/add-premise";
     }
@@ -208,14 +211,23 @@ public class ProfileController {
 
         List<PremiseDto> userPremises = catalogClient.getPremisesByOwnerId(profileUser.getId());
 
+        // Загружаем аренды для каждого помещения
+        for (PremiseDto premise : userPremises) {
+            // Загружаем подтверждённые бронирования
+            List<BookingDto> approvedBookings = bookingService.getApprovedBookingsWithDetails(premise.getId());
+            premise.setBookings(approvedBookings);
+
+            // Загружаем ожидающие запросы
+            List<Map<String, Object>> pendingRequests = bookingService.getPendingRequestsWithDetails(premise.getId());
+            premise.setPendingBookings(pendingRequests);
+        }
+
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
         model.addAttribute("profileUser", profileUser);
         model.addAttribute("premises", userPremises);
         model.addAttribute("isOwnProfile", userDetails != null && userDetails.getUsername().equals(username));
-
-        // Убираем добавление типов - они придут через GlobalModelAdvice
 
         return "future/user-premises";
     }

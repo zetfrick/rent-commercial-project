@@ -7,10 +7,14 @@ import com.example.rentapp.entity.Booking;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +38,220 @@ public class BookingService {
     private NotificationService notificationService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    // ==================== ЗАПУСК ПРИ СТАРТЕ ПРИЛОЖЕНИЯ ====================
+
+    // Выполняется после полного запуска приложения
+    @EventListener(ApplicationReadyEvent.class)
+    public void init() {
+        System.out.println("=== ApplicationReadyEvent: Проверка приближающихся аренд при старте ===");
+        // Задержка в 5 секунд, чтобы все сервисы успели запуститься
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000);
+                sendAllBookingReminders();
+                System.out.println("=== Первоначальная проверка аренд завершена ===");
+            } catch (InterruptedException e) {
+                System.err.println("Initial booking check interrupted: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // Общий метод для проверки всех типов уведомлений
+    private void sendAllBookingReminders() {
+        sendUpcomingRentNotifications();
+        sendEndingRentNotifications();
+    }
+
+    // ==================== УВЕДОМЛЕНИЯ О ПРИБЛИЖАЮЩЕЙСЯ АРЕНДЕ ====================
+
+    // Запускается каждый день в 00:00
+    @Scheduled(cron = "0 0 0 * * *")
+    public void sendUpcomingRentNotifications() {
+        System.out.println("=== [SCHEDULED] Проверка приближающихся аренд в 00:00 ===");
+        LocalDate today = LocalDate.now();
+        LocalDate in3Days = today.plusDays(3);
+        LocalDate in1Day = today.plusDays(1);
+
+        // Находим все APPROVED бронирования, которые начинаются через 3 дня, 1 день или сегодня
+        List<Booking> upcomingBookings = bookingRepository.findUpcomingApprovedBookings(in3Days, in1Day, today);
+
+        System.out.println("Найдено приближающихся аренд: " + upcomingBookings.size());
+
+        for (Booking booking : upcomingBookings) {
+            sendBookingReminder(booking);
+        }
+
+        System.out.println("=== [SCHEDULED] Проверка приближающихся аренд завершена ===");
+    }
+
+    // Запускается каждый день в 00:00 (для окончания аренды)
+    @Scheduled(cron = "0 0 0 * * *")
+    public void sendEndingRentNotifications() {
+        System.out.println("=== [SCHEDULED] Проверка заканчивающихся аренд в 00:00 ===");
+        LocalDate today = LocalDate.now();
+        LocalDate in3Days = today.plusDays(3);
+        LocalDate in1Day = today.plusDays(1);
+
+        // Находим все APPROVED бронирования, которые заканчиваются через 3 дня, 1 день или сегодня
+        List<Booking> endingBookings = bookingRepository.findEndingApprovedBookings(in3Days, in1Day, today);
+
+        System.out.println("Найдено заканчивающихся аренд: " + endingBookings.size());
+
+        for (Booking booking : endingBookings) {
+            sendBookingEndingReminder(booking);
+        }
+
+        System.out.println("=== [SCHEDULED] Проверка заканчивающихся аренд завершена ===");
+    }
+
+    // Добавляем также проверку каждый час для гарантии (опционально)
+    // Запускается каждый час
+    @Scheduled(cron = "0 0 * * * *")
+    public void sendHourlyReminders() {
+        // Проверяем, не пропустили ли мы какие-то уведомления
+        // Можно закомментировать, если не нужно
+        sendUpcomingRentNotifications();
+        sendEndingRentNotifications();
+    }
+
+    private void sendBookingReminder(Booking booking) {
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = booking.getStartDate();
+        long daysUntilStart = java.time.temporal.ChronoUnit.DAYS.between(today, startDate);
+
+        String daysText;
+        String notificationType;
+
+        if (daysUntilStart == 3) {
+            daysText = "через 3 дня";
+            notificationType = "BOOKING_STARTS_IN_3_DAYS";
+        } else if (daysUntilStart == 1) {
+            daysText = "завтра";
+            notificationType = "BOOKING_STARTS_IN_1_DAY";
+        } else if (daysUntilStart == 0) {
+            daysText = "сегодня";
+            notificationType = "BOOKING_STARTS_TODAY";
+        } else {
+            return;
+        }
+
+        PremiseDto premise = catalogClient.getPremiseById(booking.getPremiseId());
+        if (premise == null) return;
+
+        String premiseLink = "/premise/" + booking.getPremiseId();
+        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + " - " + booking.getEndDate().format(DATE_FORMATTER);
+
+        // Создаем HTML-ссылку на владельца для арендатора
+        String ownerProfileLink = "<a href='/profile?username=" + booking.getOwnerName() + "'>" + escapeHtml(booking.getOwnerName()) + "</a>";
+
+        // Уведомление арендатору - с HTML-ссылкой на владельца
+        String renterContent = "Ваша аренда у " + ownerProfileLink + " помещения \"" + premise.getTypeInRussian() +
+                "\" в " + premise.getCity() + " начинается " + daysText + ". Период: " + dateRange;
+        notificationService.createNotification(
+                booking.getRenterId(),
+                notificationType,
+                booking.getId(),
+                booking.getOwnerId(),
+                booking.getOwnerName(),
+                renterContent,
+                premiseLink
+        );
+
+        // Создаем HTML-ссылку на арендатора для владельца
+        String renterProfileLink = "<a href='/profile?username=" + booking.getRenterName() + "'>" + escapeHtml(booking.getRenterName()) + "</a>";
+
+        // Уведомление арендодателю - с HTML-ссылкой на арендатора
+        String ownerContent = "Аренда помещения \"" + premise.getTypeInRussian() + "\" в " + premise.getCity() +
+                " для арендатора " + renterProfileLink + " начинается " + daysText +
+                ". Период: " + dateRange;
+        notificationService.createNotification(
+                booking.getOwnerId(),
+                notificationType,
+                booking.getId(),
+                booking.getRenterId(),
+                booking.getRenterName(),
+                ownerContent,
+                premiseLink
+        );
+
+        System.out.println("✓ Отправлено уведомление о начале аренды #" + booking.getId() + " (" + daysText + ")");
+    }
+
+    private void sendBookingEndingReminder(Booking booking) {
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = booking.getEndDate();
+        long daysUntilEnd = java.time.temporal.ChronoUnit.DAYS.between(today, endDate);
+
+        String daysText;
+        String notificationType;
+
+        if (daysUntilEnd == 3) {
+            daysText = "через 3 дня";
+            notificationType = "BOOKING_ENDS_IN_3_DAYS";
+        } else if (daysUntilEnd == 1) {
+            daysText = "завтра";
+            notificationType = "BOOKING_ENDS_IN_1_DAY";
+        } else if (daysUntilEnd == 0) {
+            daysText = "сегодня";
+            notificationType = "BOOKING_ENDS_TODAY";
+        } else {
+            return;
+        }
+
+        PremiseDto premise = catalogClient.getPremiseById(booking.getPremiseId());
+        if (premise == null) return;
+
+        String premiseLink = "/premise/" + booking.getPremiseId();
+        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + " - " + booking.getEndDate().format(DATE_FORMATTER);
+
+        // Создаем HTML-ссылку на владельца для арендатора
+        String ownerProfileLink = "<a href='/profile?username=" + booking.getOwnerName() + "'>" + escapeHtml(booking.getOwnerName()) + "</a>";
+
+        // Уведомление арендатору - с HTML-ссылкой на владельца
+        String renterContent = "Ваша аренда у " + ownerProfileLink + " помещения \"" + premise.getTypeInRussian() +
+                "\" в " + premise.getCity() + " заканчивается " + daysText + ". Период: " + dateRange;
+        notificationService.createNotification(
+                booking.getRenterId(),
+                notificationType,
+                booking.getId(),
+                booking.getOwnerId(),
+                booking.getOwnerName(),
+                renterContent,
+                premiseLink
+        );
+
+        // Создаем HTML-ссылку на арендатора для владельца
+        String renterProfileLink = "<a href='/profile?username=" + booking.getRenterName() + "'>" + escapeHtml(booking.getRenterName()) + "</a>";
+
+        // Уведомление арендодателю - с HTML-ссылкой на арендатора
+        String ownerContent = "Аренда помещения \"" + premise.getTypeInRussian() + "\" в " + premise.getCity() +
+                " для арендатора " + renterProfileLink + " заканчивается " + daysText +
+                ". Период: " + dateRange;
+        notificationService.createNotification(
+                booking.getOwnerId(),
+                notificationType,
+                booking.getId(),
+                booking.getRenterId(),
+                booking.getRenterName(),
+                ownerContent,
+                premiseLink
+        );
+
+        System.out.println("✓ Отправлено уведомление об окончании аренды #" + booking.getId() + " (" + daysText + ")");
+    }
+
+    // Вспомогательный метод для экранирования HTML
+    private String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
+    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ (остаются без изменений) ====================
 
     // Получить занятые даты для помещения (только APPROVED) - для проверки доступности
     public List<LocalDate> getBookedDates(Long premiseId) {
@@ -381,7 +599,7 @@ public class BookingService {
         );
     }
 
-    // Отменить бронирование (владелец) - можно отменить только PENDING и APPROVED
+    // Отменить бронирование (владелец)
     @Transactional
     public void cancelBookingByOwner(Long bookingId, Long ownerId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -412,7 +630,7 @@ public class BookingService {
         );
     }
 
-    // Отменить бронирование (арендатор) - можно отменить только PENDING и APPROVED
+    // Отменить бронирование (арендатор)
     @Transactional
     public void cancelBookingByRenter(Long bookingId, Long renterId) {
         Booking booking = bookingRepository.findById(bookingId)

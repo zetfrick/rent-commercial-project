@@ -58,19 +58,17 @@ public class PremiseDto {
 
     private LocalDate createdAt;
 
-    // НОВОЕ ПОЛЕ: дата снятия с публикации
     private LocalDateTime unpublishedAt;
 
-    // Статические карты для переводов (будут заполняться из ConfigService)
     private static Map<String, String> typeRussianMap = Map.of();
     private static Map<String, String> amenityRussianMap = Map.of();
 
     private List<LocalDate> bookedDates = new ArrayList<>();
     private List<BookingDto> bookings = new ArrayList<>();
 
-    /**
-     * Инициализация переводов (вызывается из ConfigService при загрузке)
-     */
+    // НОВОЕ ПОЛЕ: ожидающие запросы на аренду
+    private List<Map<String, Object>> pendingBookings = new ArrayList<>();
+
     public static void initTranslations(Map<String, String> typeRussian, Map<String, String> amenityRussian) {
         if (typeRussian != null && !typeRussian.isEmpty()) {
             typeRussianMap = typeRussian;
@@ -90,13 +88,11 @@ public class PremiseDto {
         return amenityRussianMap.getOrDefault(amenity, amenity);
     }
 
-    // Метод для получения даты удаления (через 60 дней после снятия)
     public LocalDate getDeletionDate() {
         if (unpublishedAt == null) return null;
         return unpublishedAt.plusDays(60).toLocalDate();
     }
 
-    // Метод для получения количества дней до удаления
     public long getDaysUntilDeletion() {
         if (unpublishedAt == null) return 0;
         LocalDateTime deletionDate = unpublishedAt.plusDays(60);
