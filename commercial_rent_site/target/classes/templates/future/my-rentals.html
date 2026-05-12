@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <title>Мои аренды</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        a { text-decoration: none; }
+
+        .rentals-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 100px 20px 60px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+            border-left: 4px solid #ff5722;
+            padding-left: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .catalog-link {
+            display: inline-block;
+            background: #ff5722;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .catalog-link:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        .rentals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+        }
+
+        .rental-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .rental-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(255,152,0,0.2);
+        }
+
+        .photos-slider {
+            position: relative;
+            height: 260px;
+            overflow: hidden;
+            cursor: grab;
+            background: #f0f0f0;
+        }
+
+        .photos-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .photo-item {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .photos-slider:hover .slider-arrow {
+            opacity: 0.9;
+        }
+
+        .slider-arrow:hover {
+            background: #ff5722;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .arrow-left { left: 10px; }
+        .arrow-right { right: 10px; }
+
+        .no-photo {
+            height: 260px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 48px;
+        }
+
+        .area-badge,
+        .capacity-badge {
+            position: absolute;
+            top: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            z-index: 15;
+        }
+        .area-badge { left: 15px; }
+        .capacity-badge { right: 15px; }
+
+        .rental-status-badge {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 15;
+            white-space: nowrap;
+        }
+        .status-approved { background: #4caf50; color: white; }
+        .status-pending { background: #ff9800; color: white; }
+        .status-rejected { background: #f44336; color: white; }
+        .status-cancelled { background: #9e9e9e; color: white; }
+
+        .info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .type { font-size: 20px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; color: #ff9800; }
+        .amenities { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; font-size: 12px; color: #555; }
+        .amenities span { background: #f0f0f0; padding: 4px 10px; border-radius: 18px; }
+        .owner { font-size: 16px; margin: 12px 0 6px; font-weight: 500; color: #333; }
+        .owner a { color: #333; transition: color 0.2s; }
+        .owner a:hover { color: #ff5722; text-decoration: underline; }
+        .address {
+            color: #777;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .booking-period {
+            background: #e3f2fd;
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin: 10px 0;
+            border-left: 3px solid #2196f3;
+        }
+        .booking-label {
+            font-weight: 600;
+            color: #1565c0;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+        .booking-dates {
+            color: #0d47a1;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .duration {
+            font-size: 12px;
+            color: #1565c0;
+            margin-top: 5px;
+        }
+
+        .prices {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .price-label {
+            color: #777;
+            font-weight: normal;
+        }
+        .price-value {
+            font-weight: bold;
+            color: #ff9800;
+            font-size: 15px;
+        }
+        .price-value.highlight {
+            color: #ff5722;
+            font-size: 16px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-chat {
+            background: #2196f3;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-chat:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        .btn-premise {
+            background: #ff5722;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-premise:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-cancel:hover {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .rentals-grid {
+                grid-template-columns: 1fr;
+            }
+            .rental-status-badge {
+                font-size: 10px;
+                padding: 4px 12px;
+            }
+            .area-badge, .capacity-badge {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass='hd-header-fixed'
+)}"></div>
+
+<div class="rentals-container">
+    <h1 class="page-title">📋 Мои аренды</h1>
+
+    <div th:if="${rentals.isEmpty()}" class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h3>У вас пока нет активных аренд</h3>
+        <p>Перейдите в каталог, чтобы арендовать помещение</p>
+        <a href="/catalog" class="catalog-link">Перейти в каталог →</a>
+    </div>
+
+    <div th:unless="${rentals.isEmpty()}" class="rentals-grid">
+        <div th:each="rental : ${rentals}" class="rental-card">
+            <!-- Статус аренды -->
+            <div class="rental-status-badge"
+                 th:class="${rental.booking.status == 'APPROVED'} ? 'status-approved' :
+                           (${rental.booking.status == 'PENDING'} ? 'status-pending' :
+                           (${rental.booking.status == 'REJECTED'} ? 'status-rejected' : 'status-cancelled'))">
+                <span th:if="${rental.booking.status == 'APPROVED'}">✓ ПОДТВЕРЖДЕНА</span>
+                <span th:if="${rental.booking.status == 'PENDING'}">⏳ ОЖИДАЕТ</span>
+                <span th:if="${rental.booking.status == 'REJECTED'}">✗ ОТКЛОНЕНА</span>
+                <span th:if="${rental.booking.status == 'CANCELLED'}">⊗ ОТМЕНЕНА</span>
+            </div>
+
+            <!-- Фото помещения -->
+            <div th:if="${!rental.premise.photoPaths.isEmpty()}" class="photos-slider">
+                <div class="photos-container">
+                    <img th:each="photo : ${rental.premise.photoPaths}"
+                         th:src="@{'/uploads/' + ${photo}}"
+                         class="photo-item"
+                         onclick="openFullscreen(this.src)"
+                         onerror="this.src='/images/no-photo.jpg';">
+                </div>
+            </div>
+            <div class="no-photo" th:unless="${!rental.premise.photoPaths.isEmpty()}">
+                <i class="fas fa-image"></i>
+            </div>
+
+            <!-- Бейджи площади и вместимости -->
+            <div class="area-badge" th:text="${rental.premise.area} + ' м²'"></div>
+            <div class="capacity-badge" th:text="${rental.premise.capacity} + ' чел.'"></div>
+
+            <div class="info">
+                <!-- Тип помещения -->
+                <div class="type" th:text="${rental.premise.typeInRussian}"></div>
+
+                <!-- Удобства -->
+                <div class="amenities" th:if="${!rental.premise.amenities.isEmpty()}">
+                    <span th:each="a : ${rental.premise.amenities}" th:text="${rental.premise.getAmenityInRussian(a)}"></span>
+                </div>
+
+                <!-- Владелец (кликабельный) -->
+                <div class="owner" th:if="${rental.owner != null}">
+                    <i class="fas fa-user-circle" style="color:#ff5722;"></i>
+                    <a th:href="@{/profile(username=${rental.owner.login})}" th:text="${rental.owner.firstName + ' ' + rental.owner.lastName}"></a>
+                </div>
+
+                <!-- Адрес -->
+                <div class="address">
+                    <i class="fas fa-map-marker-alt" style="color:#ff5722; margin-right:5px;"></i>
+                    <span th:text="${rental.premise.region + ', ' + rental.premise.city + ', ' + rental.premise.street + ' ' + rental.premise.building}"></span>
+                </div>
+
+                <!-- Период аренды -->
+                <div class="booking-period">
+                    <div class="booking-label">
+                        <i class="fas fa-calendar-check"></i> Период аренды
+                    </div>
+                    <div class="booking-dates">
+                        <span th:text="${#temporals.format(rental.booking.startDate, 'dd.MM.yyyy')}"></span>
+                        —
+                        <span th:text="${#temporals.format(rental.booking.endDate, 'dd.MM.yyyy')}"></span>
+                    </div>
+                    <div class="duration">
+                        <i class="fas fa-clock"></i> Длительность:
+                        <span th:text="${#temporals.day(rental.booking.endDate) - #temporals.day(rental.booking.startDate) + 1}"></span> дней
+                    </div>
+                </div>
+
+                <!-- Цены -->
+                <div class="prices">
+                    <!-- Если указана разная цена - показываем отдельно будни/выходные/праздники -->
+                    <div th:if="${p.priceWeekend != null and p.priceWeekend > 0 or p.priceHoliday != null and p.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Будни:</span>
+                            <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${p.priceWeekend != null and p.priceWeekend > 0}">
+                            <span class="price-label">Выходные:</span>
+                            <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${p.priceHoliday != null and p.priceHoliday > 0}">
+                            <span class="price-label">Праздники:</span>
+                            <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
+                        </div>
+                    </div>
+                    <!-- Иначе показываем единую цену за сутки -->
+                    <div th:unless="${p.priceWeekend != null and p.priceWeekend > 0 or p.priceHoliday != null and p.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Цена за сутки:</span>
+                            <span class="price-value highlight" th:text="${p.priceWeekday} + ' ₽'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="action-buttons">
+                    <a th:href="@{|/premise/${rental.premise.id}|}" class="btn-premise">
+                        <i class="fas fa-building"></i> Подробнее
+                    </a>
+                    <a th:href="@{|/chats/with/${rental.owner.login}/premise/${rental.premise.id}|}" class="btn-chat">
+                        <i class="fas fa-comment-dots"></i> Написать
+                    </a>
+                    <button th:if="${rental.booking.status == 'APPROVED'}"
+                            th:data-booking-id="${rental.booking.id}"
+                            class="btn-cancel cancel-booking-btn">
+                        <i class="fas fa-ban"></i> Отменить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения отмены -->
+<div id="cancelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:20px; padding:25px; max-width:400px; margin:20px; text-align:center;">
+        <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff5722; margin-bottom:15px;"></i>
+        <h3 style="margin-bottom:10px;">Отмена аренды</h3>
+        <p style="color:#666; margin-bottom:20px;">Вы уверены, что хотите отменить эту аренду? Это действие нельзя отменить.</p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="cancelConfirmBtn" style="background:#f44336; color:white; border:none; padding:10px 25px; border-radius:25px; cursor:pointer; font-weight:600;">Да, отменить</button>
+            <button id="cancelModalClose" style="background:#f5f5f5; color:#666; border:none; padding:10px 25px; border-radius:25px; cursor:pointer; font-weight:600;">Нет, закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Полноэкранный просмотр фото -->
+<div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
+    <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
+</div>
+
+<script>
+    function openFullscreen(src) {
+        document.getElementById('fullImg').src = src;
+        document.getElementById('fullscreen').style.display = 'flex';
+    }
+
+    function prevPhoto(btn) {
+        const slider = btn.parentElement;
+        const container = slider.querySelector('.photos-container');
+        let index = parseInt(container.dataset.current || 0);
+        const total = container.children.length;
+        if (index > 0) {
+            index--;
+            container.dataset.current = index;
+            container.style.transform = `translateX(-${index * 100}%)`;
+            updateArrowsVisibility(slider, index, total);
+        }
+    }
+
+    function nextPhoto(btn) {
+        const slider = btn.parentElement;
+        const container = slider.querySelector('.photos-container');
+        let index = parseInt(container.dataset.current || 0);
+        const total = container.children.length;
+        if (index < total - 1) {
+            index++;
+            container.dataset.current = index;
+            container.style.transform = `translateX(-${index * 100}%)`;
+            updateArrowsVisibility(slider, index, total);
+        }
+    }
+
+    function updateArrowsVisibility(slider, currentIndex, totalPhotos) {
+        const leftArrow = slider.querySelector('.arrow-left');
+        const rightArrow = slider.querySelector('.arrow-right');
+        if (leftArrow) {
+            leftArrow.style.opacity = currentIndex === 0 ? '0' : '0.9';
+            leftArrow.style.pointerEvents = currentIndex === 0 ? 'none' : 'auto';
+        }
+        if (rightArrow) {
+            rightArrow.style.opacity = currentIndex === totalPhotos - 1 ? '0' : '0.9';
+            rightArrow.style.pointerEvents = currentIndex === totalPhotos - 1 ? 'none' : 'auto';
+        }
+    }
+
+    function addArrowsToSlider(slider) {
+        const container = slider.querySelector('.photos-container');
+        const totalPhotos = container ? container.children.length : 0;
+        if (totalPhotos > 1 && !slider.querySelector('.arrow-left')) {
+            const leftArrow = document.createElement('div');
+            leftArrow.className = 'slider-arrow arrow-left';
+            leftArrow.innerHTML = '‹';
+            leftArrow.onclick = (e) => { e.stopPropagation(); prevPhoto(leftArrow); };
+            const rightArrow = document.createElement('div');
+            rightArrow.className = 'slider-arrow arrow-right';
+            rightArrow.innerHTML = '›';
+            rightArrow.onclick = (e) => { e.stopPropagation(); nextPhoto(rightArrow); };
+            slider.appendChild(leftArrow);
+            slider.appendChild(rightArrow);
+            container.dataset.current = '0';
+            container.style.transform = 'translateX(0%)';
+        }
+    }
+
+    let currentBookingId = null;
+    const modal = document.getElementById('cancelModal');
+    const confirmBtn = document.getElementById('cancelConfirmBtn');
+    const closeBtn = document.getElementById('cancelModalClose');
+
+    function showCancelModal(bookingId) {
+        currentBookingId = bookingId;
+        modal.style.display = 'flex';
+    }
+
+    function hideCancelModal() {
+        modal.style.display = 'none';
+        currentBookingId = null;
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideCancelModal);
+    }
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async function() {
+            if (currentBookingId) {
+                try {
+                    const response = await fetch(`/api/bookings/${currentBookingId}/cancel-by-renter`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Аренда успешно отменена');
+                        window.location.reload();
+                    } else {
+                        alert('Ошибка: ' + (result.message || 'Не удалось отменить аренду'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка при отмене аренды');
+                }
+            }
+            hideCancelModal();
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                hideCancelModal();
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.photos-slider').forEach(slider => {
+            const container = slider.querySelector('.photos-container');
+            if (container && container.children.length > 0) {
+                container.dataset.current = '0';
+                container.style.transform = 'translateX(0%)';
+                addArrowsToSlider(slider);
+            }
+        });
+
+        document.querySelectorAll('.cancel-booking-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const bookingId = this.getAttribute('data-booking-id');
+                if (bookingId) {
+                    showCancelModal(bookingId);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

@@ -33,6 +33,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Найти все бронирования владельца
     List<Booking> findByOwnerIdOrderByCreatedAtDesc(Long ownerId);
 
+    // Найти APPROVED бронирования арендатора
+    List<Booking> findByRenterIdAndStatus(Long renterId, String status);
+
     // Найти APPROVED бронирования, пересекающиеся с заданным диапазоном дат
     @Query("SELECT b FROM Booking b WHERE b.premiseId = :premiseId AND b.status = 'APPROVED' " +
             "AND b.startDate <= :endDate AND b.endDate >= :startDate")

@@ -355,4 +355,10 @@ public class BookingApiController {
         }
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/renter/{renterId}/approved")
+    public ResponseEntity<List<BookingDto>> getApprovedBookingsForRenter(@PathVariable Long renterId) {
+        List<BookingDto> bookings = bookingService.getApprovedBookingsForRenter(renterId);
+        return ResponseEntity.ok(bookings);
+    }
 }

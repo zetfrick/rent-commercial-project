@@ -1,10 +1,15 @@
 package com.example.rentapp.config;
 
+import com.example.rentapp.service.CustomUserDetailsService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
@@ -26,6 +31,20 @@ import java.io.IOException;
 public class SecurityConfig {
 
     @Autowired @Lazy private UserService userService;
+    @Autowired private CustomUserDetailsService customUserDetailsService;
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
@@ -63,7 +82,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/chats/**", "/admin/**", "/notifications/api/**")  // ← ДОБАВЛЕНО /notifications/api/**
+                        .ignoringRequestMatchers(
+                                "/api/**",
+                                "/chats/**",
+                                "/admin/**",
+                                "/notifications/api/**",
+                                "/auth/api/**"
+                        )
                 )
                 .authorizeHttpRequests(authz -> authz
                         // Публичные страницы - доступны всем
@@ -72,18 +97,19 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/api/auth/register", "/api/auth/login",
                                 "/auth/check",
-                                "/premise/**")  // Просмотр объявлений доступен всем
+                                "/premise/**")
                         .permitAll()
 
-                        // ===== ВАЖНО: ДОБАВЬТЕ ЭТИ СТРОКИ =====
+                        // API для восстановления пароля
+                        .requestMatchers("/auth/api/forgot-password", "/auth/api/verify-code", "/auth/api/reset-password").permitAll()
+
                         // Разрешаем доступ к API уведомлений без авторизации
                         .requestMatchers("/notifications/api/create").permitAll()
-                        .requestMatchers("/notifications/api/**").permitAll()  // Для всех API уведомлений
-                        // ====================================
+                        .requestMatchers("/notifications/api/**").permitAll()
 
                         // Защищённые страницы - только для авторизованных
                         .requestMatchers("/profile", "/profile/**", "/api/premise/**",
-                                "/chats/**", "/notifications")  // ← Страница уведомлений требует авторизации
+                                "/chats/**", "/notifications")
                         .authenticated()
 
                         // Добавление и редактирование помещений - только для авторизованных
@@ -111,7 +137,8 @@ public class SecurityConfig {
                         .maximumSessions(1)
                         .sessionRegistry(sessionRegistry())
                 )
-                .userDetailsService(userService);
+                .authenticationProvider(authenticationProvider())
+                .userDetailsService(customUserDetailsService);
 
         return http.build();
     }

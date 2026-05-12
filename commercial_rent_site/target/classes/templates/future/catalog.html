@@ -690,17 +690,27 @@
                     </span>
                 </div>
                 <div class="prices">
-                    <div class="price-row">
-                        <span class="price-label">Будни:</span>
-                        <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
+                    <!-- Если указана разная цена - показываем отдельно будни/выходные/праздники -->
+                    <div th:if="${p.priceWeekend != null and p.priceWeekend > 0 or p.priceHoliday != null and p.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Будни:</span>
+                            <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${p.priceWeekend != null and p.priceWeekend > 0}">
+                            <span class="price-label">Выходные:</span>
+                            <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${p.priceHoliday != null and p.priceHoliday > 0}">
+                            <span class="price-label">Праздники:</span>
+                            <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
+                        </div>
                     </div>
-                    <div class="price-row" th:if="${p.priceWeekend != null && p.priceWeekend > 0}">
-                        <span class="price-label">Выходные:</span>
-                        <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
-                    </div>
-                    <div class="price-row" th:if="${p.priceHoliday != null && p.priceHoliday > 0}">
-                        <span class="price-label">Праздники:</span>
-                        <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
+                    <!-- Иначе показываем единую цену за сутки -->
+                    <div th:unless="${p.priceWeekend != null and p.priceWeekend > 0 or p.priceHoliday != null and p.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Цена за сутки:</span>
+                            <span class="price-value highlight" th:text="${p.priceWeekday} + ' ₽'"></span>
+                        </div>
                     </div>
                 </div>
                 <a th:href="@{'/premise/' + ${p.id}}" class="details-btn">Подробнее →</a>
@@ -835,9 +845,77 @@
     // Храним оригинальные карточки
     let allPremises = [];
 
+    // Функция синхронизации дат
+    function syncDates() {
+        const checkInInput = document.getElementById('checkInDate');
+        const checkOutInput = document.getElementById('checkOutDate');
+        const checkIn = checkInInput.value;
+        const checkOut = checkOutInput.value;
+
+        if (checkIn && checkOut) {
+            if (checkIn > checkOut) {
+                checkInInput.value = checkOut;
+                window.currentCheckInISO = checkOut;
+            } else if (checkOut < checkIn) {
+                checkOutInput.value = checkIn;
+                window.currentCheckOutISO = checkIn;
+            }
+        }
+    }
+
+    // Обновлённая функция синхронизации дат
     function syncDateInputs() {
-        window.currentCheckInISO = document.getElementById('checkInDate').value || '';
-        window.currentCheckOutISO = document.getElementById('checkOutDate').value || '';
+        const checkInInput = document.getElementById('checkInDate');
+        const checkOutInput = document.getElementById('checkOutDate');
+
+        let checkIn = checkInInput.value;
+        let checkOut = checkOutInput.value;
+
+        if (checkIn && checkOut && checkIn > checkOut) {
+            checkInInput.value = checkOut;
+            checkIn = checkOut;
+        }
+        if (checkIn && checkOut && checkOut < checkIn) {
+            checkOutInput.value = checkIn;
+            checkOut = checkIn;
+        }
+
+        window.currentCheckInISO = checkIn || '';
+        window.currentCheckOutISO = checkOut || '';
+    }
+
+    // Функция для установки минимальной даты выезда (не может быть раньше даты заезда)
+    function updateMinCheckOutDate() {
+        const checkInInput = document.getElementById('checkInDate');
+        const checkOutInput = document.getElementById('checkOutDate');
+        const checkInValue = checkInInput.value;
+
+        if (checkInValue) {
+            checkOutInput.min = checkInValue;
+            if (checkOutInput.value && checkOutInput.value < checkInValue) {
+                checkOutInput.value = checkInValue;
+                syncDateInputs();
+            }
+        } else {
+            checkOutInput.min = '';
+        }
+    }
+
+    // Функция для установки максимальной даты заезда (не может быть позже даты выезда)
+    function updateMaxCheckInDate() {
+        const checkInInput = document.getElementById('checkInDate');
+        const checkOutInput = document.getElementById('checkOutDate');
+        const checkOutValue = checkOutInput.value;
+
+        if (checkOutValue) {
+            checkInInput.max = checkOutValue;
+            if (checkInInput.value && checkInInput.value > checkOutValue) {
+                checkInInput.value = checkOutValue;
+                syncDateInputs();
+            }
+        } else {
+            checkInInput.max = '';
+        }
     }
 
     function openFullscreen(src) {
@@ -1023,7 +1101,7 @@
                 (selectedCities.size === 0 || selectedCities.has(city)) &&
                 (selectedAmenities.size === 0 || Array.from(selectedAmenities).every(am => cardAmenities.includes(am))) &&
                 isDateRangeAvailable(card.dataset.availableFrom, card.dataset.availableTo, checkInDate, checkOutDate) &&
-                !isDateRangeBooked(premiseId, checkInDate, checkOutDate); // ← НОВАЯ ПРОВЕРКА НА ЗАНЯТЫЕ ДАТЫ
+                !isDateRangeBooked(premiseId, checkInDate, checkOutDate);
 
             if (matches) {
                 indices.push(idx);
@@ -1174,6 +1252,12 @@
         window.currentCheckInISO = '';
         window.currentCheckOutISO = '';
 
+        // Сбрасываем ограничения дат
+        const checkOutInput = document.getElementById('checkOutDate');
+        const checkInInput = document.getElementById('checkInDate');
+        checkOutInput.min = '';
+        checkInInput.max = '';
+
         selectedRegions.clear();
         selectedCities.clear();
         selectedTypes.clear();
@@ -1275,6 +1359,28 @@
         });
     }
 
+    // Настройка обработчиков для дат
+    const checkInDateInput = document.getElementById('checkInDate');
+    const checkOutDateInput = document.getElementById('checkOutDate');
+
+    if (checkInDateInput) {
+        checkInDateInput.addEventListener('change', function() {
+            updateMinCheckOutDate();
+            syncDateInputs();
+            currentPage = 1;
+            applyFiltersAndSort();
+        });
+    }
+
+    if (checkOutDateInput) {
+        checkOutDateInput.addEventListener('change', function() {
+            updateMaxCheckInDate();
+            syncDateInputs();
+            currentPage = 1;
+            applyFiltersAndSort();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
         allPremises = Array.from(document.querySelectorAll('.premise-card'));
 
@@ -1291,7 +1397,7 @@
             }
         });
 
-        document.querySelectorAll('#priceMax, #areaMin, #capacityMin, #checkInDate, #checkOutDate').forEach(input => {
+        document.querySelectorAll('#priceMax, #areaMin, #capacityMin').forEach(input => {
             input.addEventListener('input', () => {
                 currentPage = 1;
                 applyFiltersAndSort();

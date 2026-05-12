@@ -381,6 +381,14 @@
             background: #1976d2;
             transform: translateY(-2px);
         }
+        .bookings-btn.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .bookings-btn.disabled:hover {
+            transform: none;
+            background: #ccc;
+        }
 
         /* Модальное окно для аренд */
         .modal {
@@ -667,7 +675,6 @@
     }
 
     function filterByStatus() {
-
         if (currentStatus === 'active') {
             return premisesData.filter(p => p.active === true);
         } else if (currentStatus === 'inactive') {
@@ -859,22 +866,41 @@
                 `;
             }
 
-            let weekendPriceHtml = '';
-            if (premise.priceWeekend && premise.priceWeekend > 0) {
-                weekendPriceHtml = `
+            // ==================== ИСПРАВЛЕННЫЙ БЛОК ЦЕН ====================
+            let pricesHtml = '';
+            // Проверяем, есть ли разная цена (указаны выходные ИЛИ праздники)
+            const hasDifferentPrices = (premise.priceWeekend && premise.priceWeekend > 0) || (premise.priceHoliday && premise.priceHoliday > 0);
+
+            if (hasDifferentPrices) {
+                // Если есть разная цена - показываем отдельно будни/выходные/праздники
+                pricesHtml = `
                     <div class="price-row">
-                        <span class="price-label">Выходные:</span>
-                        <span class="price-value highlight">${premise.priceWeekend} ₽</span>
+                        <span class="price-label">Будни:</span>
+                        <span class="price-value">${premise.priceWeekday || 0} ₽</span>
                     </div>
                 `;
-            }
-
-            let holidayPriceHtml = '';
-            if (premise.priceHoliday && premise.priceHoliday > 0) {
-                holidayPriceHtml = `
+                if (premise.priceWeekend && premise.priceWeekend > 0) {
+                    pricesHtml += `
+                        <div class="price-row">
+                            <span class="price-label">Выходные:</span>
+                            <span class="price-value highlight">${premise.priceWeekend} ₽</span>
+                        </div>
+                    `;
+                }
+                if (premise.priceHoliday && premise.priceHoliday > 0) {
+                    pricesHtml += `
+                        <div class="price-row">
+                            <span class="price-label">Праздники:</span>
+                            <span class="price-value highlight">${premise.priceHoliday} ₽</span>
+                        </div>
+                    `;
+                }
+            } else {
+                // Иначе показываем единую цену за сутки
+                pricesHtml = `
                     <div class="price-row">
-                        <span class="price-label">Праздники:</span>
-                        <span class="price-value highlight">${premise.priceHoliday} ₽</span>
+                        <span class="price-label">Цена за сутки:</span>
+                        <span class="price-value highlight">${premise.priceWeekday || 0} ₽</span>
                     </div>
                 `;
             }
@@ -907,10 +933,10 @@
             // Кнопка "Аренды" - только для владельца
             let bookingsButtonHtml = '';
             if (isOwnProfile) {
-                const bookingsBtnClass = hasBookingsFlag ? 'bookings-btn' : 'bookings-btn disabled';
+                const bookingsBtnDisabled = !hasBookingsFlag;
                 const bookingsBtnOnclick = hasBookingsFlag ? `showBookingsModal(${premise.id}, '${escapeHtml(getTypeInRussian(premise.type))}')` : 'return false;';
                 bookingsButtonHtml = `
-                    <button class="${bookingsBtnClass}" onclick="${bookingsBtnOnclick}">
+                    <button class="bookings-btn${bookingsBtnDisabled ? ' disabled' : ''}" onclick="${bookingsBtnOnclick}">
                         <i class="fas fa-calendar-check"></i> Аренды
                     </button>
                 `;
@@ -933,12 +959,7 @@
                         </span>
                     </div>
                     <div class="prices">
-                        <div class="price-row">
-                            <span class="price-label">Будни:</span>
-                            <span class="price-value">${premise.priceWeekday || 0} ₽</span>
-                        </div>
-                        ${weekendPriceHtml}
-                        ${holidayPriceHtml}
+                        ${pricesHtml}
                     </div>
                     ${deletionHtml}
                     <div class="card-buttons">

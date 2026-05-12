@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Подтверждение кода</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; font-family: Arial, sans-serif; }
+        .auth-form { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .auth-form h2 { color: #ff5722; margin-bottom: 20px; }
+        .auth-form input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; text-align: center; letter-spacing: 5px; font-size: 20px; }
+        .auth-form button { width: 100%; background: #ff9800; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s; }
+        .auth-form button:hover { background: #f57c00; transform: translateY(-2px); }
+        .auth-form a { display: block; margin-top: 15px; color: #ff9800; text-decoration: none; }
+        .error { color: #ff5722; margin: 10px 0; font-size: 14px; }
+        .info { color: #666; margin-bottom: 20px; font-size: 14px; }
+        .resend-link { margin-top: 20px; }
+        .timer { color: #ff9800; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="auth-form">
+    <h2><i class="fas fa-envelope"></i> Подтверждение</h2>
+    <p class="info">Введите 6-значный код, отправленный на <strong th:text="${email}"></strong></p>
+
+    <div id="errorMessage" class="error" style="display: none;"></div>
+
+    <form id="verifyCodeForm">
+        <input type="text" id="code" name="code" placeholder="Код" maxlength="6" required autocomplete="off">
+        <button type="submit">Подтвердить</button>
+    </form>
+
+    <div class="resend-link">
+        <a href="#" id="resendLink">Не пришёл код? Отправить снова</a>
+    </div>
+    <div id="timerDisplay" class="timer"></div>
+
+    <div class="back-link">
+        <a href="/auth/login">← Вернуться ко входу</a>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const email = /*[[${email}]]*/ '';
+    let timerInterval = null;
+    let canResend = true;
+
+    function startTimer(seconds) {
+        const timerDisplay = document.getElementById('timerDisplay');
+        const resendLink = document.getElementById('resendLink');
+        let remaining = seconds;
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.textContent = '';
+                canResend = true;
+                resendLink.style.pointerEvents = 'auto';
+                resendLink.style.opacity = '1';
+            } else {
+                const minutes = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                timerDisplay.textContent = `⏳ Новый код можно запросить через ${minutes}:${secs < 10 ? '0' + secs : secs}`;
+                remaining--;
+            }
+        }, 1000);
+    }
+
+    document.getElementById('resendLink').addEventListener('click', async function(e) {
+        e.preventDefault();
+        if (!canResend) return;
+
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.style.display = 'none';
+
+        canResend = false;
+        this.style.pointerEvents = 'none';
+        this.style.opacity = '0.5';
+
+        try {
+            const response = await fetch('/auth/api/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                errorDiv.style.color = '#4caf50';
+                errorDiv.textContent = 'Новый код отправлен на почту (или выведен в консоль)';
+                errorDiv.style.display = 'block';
+                startTimer(60);
+
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                    errorDiv.style.color = '#ff5722';
+                }, 3000);
+            } else {
+                errorDiv.style.color = '#ff5722';
+                errorDiv.textContent = data.message;
+                errorDiv.style.display = 'block';
+                canResend = true;
+                this.style.pointerEvents = 'auto';
+                this.style.opacity = '1';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Ошибка соединения';
+            errorDiv.style.display = 'block';
+            canResend = true;
+            this.style.pointerEvents = 'auto';
+            this.style.opacity = '1';
+        }
+    });
+
+    document.getElementById('verifyCodeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const code = document.getElementById('code').value;
+        const errorDiv = document.getElementById('errorMessage');
+
+        errorDiv.style.display = 'none';
+
+        const submitBtn = this.querySelector('button');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Проверка...';
+
+        try {
+            const response = await fetch('/auth/api/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, code: code })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = `/auth/reset-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`;
+            } else {
+                errorDiv.textContent = data.message;
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Ошибка соединения';
+            errorDiv.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    });
+
+    // Автоматически блокируем повторную отправку на 60 секунд после загрузки страницы
+    canResend = false;
+    document.getElementById('resendLink').style.pointerEvents = 'none';
+    document.getElementById('resendLink').style.opacity = '0.5';
+    startTimer(60);
+    setTimeout(() => {
+        canResend = true;
+        document.getElementById('resendLink').style.pointerEvents = 'auto';
+        document.getElementById('resendLink').style.opacity = '1';
+    }, 60000);
+</script>
+</body>
+</html>

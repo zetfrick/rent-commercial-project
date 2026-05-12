@@ -37,6 +37,9 @@ public class BookingService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private ChatService chatService;  // ДОБАВЛЕНО
+
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     // ==================== ЗАПУСК ПРИ СТАРТЕ ПРИЛОЖЕНИЯ ====================
@@ -251,7 +254,7 @@ public class BookingService {
                 .replace("'", "&#39;");
     }
 
-    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ (остаются без изменений) ====================
+    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ ====================
 
     // Получить занятые даты для помещения (только APPROVED) - для проверки доступности
     public List<LocalDate> getBookedDates(Long premiseId) {
@@ -423,6 +426,12 @@ public class BookingService {
             }
         }
         return false;
+    }
+
+    // Получить все APPROVED бронирования арендатора
+    public List<BookingDto> getApprovedBookingsForRenter(Long renterId) {
+        List<Booking> bookings = bookingRepository.findByRenterIdAndStatus(renterId, "APPROVED");
+        return bookings.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
     // Создать запрос на аренду (для арендатора)
@@ -628,6 +637,23 @@ public class BookingService {
                 "Аренда на " + dateRange + " была отменена владельцем",
                 premiseLink
         );
+
+        // Отправляем системное сообщение в чат арендатору
+        try {
+            String systemMessageText = "❌ <strong>Аренда отменена</strong><br>Владелец <strong>" +
+                    (owner != null ? escapeHtml(owner.getLogin()) : "Владелец") +
+                    "</strong> отменил бронирование на период " + dateRange;
+
+            chatService.sendSystemMessageWithPremise(
+                    ownerId,
+                    booking.getRenterId(),
+                    systemMessageText,
+                    booking.getPremiseId()
+            );
+            System.out.println("✓ Системное сообщение об отмене аренды отправлено в чат арендатору");
+        } catch (Exception e) {
+            System.err.println("✗ Ошибка отправки системного сообщения в чат: " + e.getMessage());
+        }
     }
 
     // Отменить бронирование (арендатор)
@@ -659,6 +685,23 @@ public class BookingService {
                 "Аренда на " + dateRange + " была отменена арендатором",
                 premiseLink
         );
+
+        // Отправляем системное сообщение в чат владельцу
+        try {
+            String systemMessageText = "❌ <strong>Аренда отменена</strong><br>Арендатор <strong>" +
+                    (renter != null ? escapeHtml(renter.getLogin()) : "Арендатор") +
+                    "</strong> отменил бронирование на период " + dateRange;
+
+            chatService.sendSystemMessageWithPremise(
+                    renterId,
+                    booking.getOwnerId(),
+                    systemMessageText,
+                    booking.getPremiseId()
+            );
+            System.out.println("✓ Системное сообщение об отмене аренды отправлено в чат владельцу");
+        } catch (Exception e) {
+            System.err.println("✗ Ошибка отправки системного сообщения в чат: " + e.getMessage());
+        }
     }
 
     private BookingDto convertToDto(Booking booking) {

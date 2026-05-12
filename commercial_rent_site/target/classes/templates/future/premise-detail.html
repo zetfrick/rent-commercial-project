@@ -1179,18 +1179,32 @@
 
             <div class="price-card">
                 <h2><i class="fas fa-tag"></i> Стоимость аренды</h2>
-                <div class="price-table">
-                    <div class="price-item">
-                        <span class="label"><i class="fas fa-calendar-week"></i> Будни</span>
-                        <div class="value" th:text="${premise.priceWeekday} + ' ₽'"></div>
+
+                <!-- Проверяем, есть ли разная цена (указаны выходные ИЛИ праздники) -->
+                <div th:if="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
+                    <div class="price-table">
+                        <div class="price-item">
+                            <span class="label"><i class="fas fa-calendar-week"></i> Будни</span>
+                            <div class="value" th:text="${premise.priceWeekday} + ' ₽'"></div>
+                        </div>
+                        <div class="price-item" th:if="${premise.priceWeekend != null and premise.priceWeekend > 0}">
+                            <span class="label"><i class="fas fa-calendar-weekend"></i> Выходные</span>
+                            <div class="value" th:text="${premise.priceWeekend} + ' ₽'"></div>
+                        </div>
+                        <div class="price-item" th:if="${premise.priceHoliday != null and premise.priceHoliday > 0}">
+                            <span class="label"><i class="fas fa-gift"></i> Праздники</span>
+                            <div class="value" th:text="${premise.priceHoliday} + ' ₽'"></div>
+                        </div>
                     </div>
-                    <div class="price-item" th:if="${premise.priceWeekend != null}">
-                        <span class="label"><i class="fas fa-calendar-weekend"></i> Выходные</span>
-                        <div class="value" th:text="${premise.priceWeekend} + ' ₽'"></div>
-                    </div>
-                    <div class="price-item" th:if="${premise.priceHoliday != null}">
-                        <span class="label"><i class="fas fa-gift"></i> Праздники</span>
-                        <div class="value" th:text="${premise.priceHoliday} + ' ₽'"></div>
+                </div>
+
+                <!-- Если разная цена не указана - показываем единую цену за сутки -->
+                <div th:unless="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
+                    <div class="price-table" style="grid-template-columns: 1fr;">
+                        <div class="price-item">
+                            <span class="label"><i class="fas fa-tag"></i> Цена за сутки</span>
+                            <div class="value" th:text="${premise.priceWeekday} + ' ₽'"></div>
+                        </div>
                     </div>
                 </div>
 

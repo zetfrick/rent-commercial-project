@@ -806,9 +806,28 @@
                     📅 Доступно: <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')} + ' — ' + ${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
                 </div>
                 <div class="prices">
-                    <div class="price-row"><span>Будни:</span><span class="price-value" th:text="${premise.priceWeekday} + ' ₽'"></span></div>
-                    <div class="price-row" th:if="${premise.priceWeekend != null && premise.priceWeekend > 0}"><span>Выходные:</span><span class="price-value" th:text="${premise.priceWeekend} + ' ₽'"></span></div>
-                    <div class="price-row" th:if="${premise.priceHoliday != null && premise.priceHoliday > 0}"><span>Праздники:</span><span class="price-value" th:text="${premise.priceHoliday} + ' ₽'"></span></div>
+                    <!-- Если указана разная цена (выходные ИЛИ праздники) -->
+                    <div th:if="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Будни:</span>
+                            <span class="price-value" th:text="${premise.priceWeekday} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${premise.priceWeekend != null and premise.priceWeekend > 0}">
+                            <span class="price-label">Выходные:</span>
+                            <span class="price-value highlight" th:text="${premise.priceWeekend} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${premise.priceHoliday != null and premise.priceHoliday > 0}">
+                            <span class="price-label">Праздники:</span>
+                            <span class="price-value highlight" th:text="${premise.priceHoliday} + ' ₽'"></span>
+                        </div>
+                    </div>
+                    <!-- Иначе показываем единую цену за сутки -->
+                    <div th:unless="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Цена за сутки:</span>
+                            <span class="price-value highlight" th:text="${premise.priceWeekday} + ' ₽'"></span>
+                        </div>
+                    </div>
                 </div>
                 <a th:href="@{/premise/{id}(id=${premise.id})}" class="detail-link" target="_blank">Подробнее →</a>
             </div>
@@ -1153,6 +1172,24 @@
         document.head.appendChild(style);
     }
 
+    // === ФУНКЦИЯ ДЛЯ СИНХРОНИЗАЦИИ ДАТ (НОВАЯ) ===
+    function syncDates() {
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        const startDate = startInput.value;
+        const endDate = endInput.value;
+
+        if (startDate && endDate) {
+            if (startDate > endDate) {
+                startInput.value = endDate;
+            } else if (endDate < startDate) {
+                endInput.value = startDate;
+            }
+        }
+        checkAvailability();
+    }
+
+    // === ОБНОВЛЁННАЯ ФУНКЦИЯ ПРОВЕРКИ ДОСТУПНОСТИ ===
     async function checkAvailability() {
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
@@ -1161,6 +1198,16 @@
 
         if (!startDate || !endDate) {
             indicator.style.display = 'none';
+            submitBtn.disabled = true;
+            currentAvailability = false;
+            return;
+        }
+
+        // Проверка, что дата начала не позже даты окончания
+        if (startDate > endDate) {
+            indicator.style.display = 'block';
+            indicator.className = 'availability-indicator unavailable';
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата начала не может быть позже даты окончания!`;
             submitBtn.disabled = true;
             currentAvailability = false;
             return;
@@ -1236,6 +1283,10 @@
         const endDate = document.getElementById('endDate').value;
         if (!startDate || !endDate) {
             showNotification('Выберите даты', true);
+            return;
+        }
+        if (startDate > endDate) {
+            showNotification('Дата начала не может быть позже даты окончания', true);
             return;
         }
 
@@ -1367,13 +1418,31 @@
     document.getElementById('messageInput').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
     document.getElementById('showOwnerModalBtn')?.addEventListener('click', showModal);
     document.getElementById('showRenterModalBtn')?.addEventListener('click', showModal);
+
+    // === ОБНОВЛЁННЫЕ ОБРАБОТЧИКИ ДАТ С СИНХРОНИЗАЦИЕЙ ===
     document.getElementById('startDate').addEventListener('change', () => {
         const endInput = document.getElementById('endDate');
         const start = document.getElementById('startDate').value;
-        if (start) endInput.min = start;
-        checkAvailability();
+        if (start) {
+            endInput.min = start;
+            if (endInput.value && endInput.value < start) {
+                endInput.value = start;
+            }
+        }
+        syncDates();
     });
-    document.getElementById('endDate').addEventListener('change', checkAvailability);
+
+    document.getElementById('endDate').addEventListener('change', () => {
+        const startInput = document.getElementById('startDate');
+        const end = document.getElementById('endDate').value;
+        if (end) {
+            startInput.max = end;
+            if (startInput.value && startInput.value > end) {
+                startInput.value = end;
+            }
+        }
+        syncDates();
+    });
 
     window.goToProfile = goToProfile;
     window.openFullscreen = openFullscreen;

@@ -214,7 +214,6 @@
             box-shadow: 0 0 0 2px rgba(255,87,34,0.3);
         }
 
-        /* Стили для миниатюр фотографий */
         .photos-preview {
             display: flex;
             flex-wrap: wrap;
@@ -254,6 +253,11 @@
         .remove-photo-btn:hover {
             background: #ff5722;
             transform: scale(1.1);
+        }
+
+        .date-error {
+            border: 2px solid #ff5722 !important;
+            background: rgba(255, 87, 34, 0.15) !important;
         }
     </style>
 </head>
@@ -326,8 +330,10 @@
 
                 <!-- Цена -->
                 <div class="price-section">
-                    <label class="required">Цена за день в будни (руб.)</label>
-                    <input type="number" th:field="*{priceWeekday}" min="0" required placeholder="Цена в будни">
+                    <div id="singlePriceBlock">
+                        <label class="required">Цена в сутки (руб.)</label>
+                        <input type="number" id="dailyPrice" name="dailyPrice" min="0" placeholder="Цена за сутки" required>
+                    </div>
 
                     <div class="checkbox-inline">
                         <input type="checkbox" id="diffPrice">
@@ -335,11 +341,14 @@
                     </div>
 
                     <div id="extraPrices" style="display:none; margin-top:20px;">
-                        <label>Цена в выходные (руб.)</label>
-                        <input type="number" th:field="*{priceWeekend}" min="0">
+                        <label class="required">Цена в будни (руб.)</label>
+                        <input type="number" id="priceWeekday" name="priceWeekday" min="0" placeholder="Цена в будни">
+
+                        <label style="margin-top:15px;">Цена в выходные (руб.)</label>
+                        <input type="number" id="priceWeekend" name="priceWeekend" min="0" placeholder="Цена в выходные">
 
                         <label style="margin-top:15px;">Цена в праздники (руб.)</label>
-                        <input type="number" th:field="*{priceHoliday}" min="0">
+                        <input type="number" id="priceHoliday" name="priceHoliday" min="0" placeholder="Цена в праздники">
                     </div>
                 </div>
 
@@ -347,11 +356,11 @@
                 <div class="row">
                     <div class="col">
                         <label class="required">Доступно с</label>
-                        <input type="date" th:field="*{availableFrom}" required>
+                        <input type="date" id="availableFrom" name="availableFrom" required>
                     </div>
                     <div class="col">
                         <label class="required">Доступно по</label>
-                        <input type="date" th:field="*{availableTo}" required>
+                        <input type="date" id="availableTo" name="availableTo" required>
                     </div>
                 </div>
 
@@ -369,7 +378,7 @@
                             <div class="row">
                                 <div class="col">
                                     <label class="required">Область / Регион</label>
-                                    <input type="text" id="region" th:field="*{region}" placeholder="Автоматически определится по городу" required>
+                                    <input type="text" id="region" name="region" placeholder="Автоматически определится по городу" required>
                                     <div id="regionHint" class="region-auto-fill" style="display: none;"></div>
                                 </div>
                             </div>
@@ -377,14 +386,14 @@
                                 <div class="col-50">
                                     <label class="required">Город</label>
                                     <div class="suggest-wrapper">
-                                        <input type="text" id="city" th:field="*{city}" placeholder="Начните вводить город" required autocomplete="off">
+                                        <input type="text" id="city" name="city" placeholder="Начните вводить город" required autocomplete="off">
                                         <div id="cityDropdown" class="suggestions-dropdown"></div>
                                     </div>
                                 </div>
                                 <div class="col-50">
                                     <label class="required">Улица</label>
                                     <div class="suggest-wrapper">
-                                        <input type="text" id="street" th:field="*{street}" placeholder="Начните вводить улицу" required autocomplete="off">
+                                        <input type="text" id="street" name="street" placeholder="Начните вводить улицу" required autocomplete="off">
                                         <div id="streetDropdown" class="suggestions-dropdown"></div>
                                     </div>
                                 </div>
@@ -393,14 +402,14 @@
                                 <div class="col-50">
                                     <label class="required">Номер дома</label>
                                     <div class="suggest-wrapper">
-                                        <input type="text" id="building" th:field="*{building}" placeholder="Начните вводить номер дома" required autocomplete="off">
+                                        <input type="text" id="building" name="building" placeholder="Начните вводить номер дома" required autocomplete="off">
                                         <div id="buildingDropdown" class="suggestions-dropdown"></div>
                                     </div>
                                 </div>
-                                <div class="col-50"><label>Этаж</label><input type="text" id="floor" th:field="*{floor}"></div>
+                                <div class="col-50"><label>Этаж</label><input type="text" id="floor" name="floor"></div>
                             </div>
                             <div class="row">
-                                <div class="col-50"><label>Квартира / офис</label><input type="text" id="apartment" th:field="*{apartment}"></div>
+                                <div class="col-50"><label>Квартира / офис</label><input type="text" id="apartment" name="apartment"></div>
                             </div>
 
                             <p style="color:#ffcc80; font-size:14px; margin-top:15px; line-height:1.5; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px;">
@@ -427,13 +436,13 @@
 
                 <!-- Описание -->
                 <label>Описание помещения</label>
-                <textarea th:field="*{description}" placeholder="Подробно расскажите о помещении..."></textarea>
+                <textarea name="description" th:field="*{description}" placeholder="Подробно расскажите о помещении..."></textarea>
 
                 <label>Дополнительные платежи (коммуналка, уборка и т.д.)</label>
-                <textarea th:field="*{extraFees}" placeholder="Укажите, если есть"></textarea>
+                <textarea name="extraFees" th:field="*{extraFees}" placeholder="Укажите, если есть"></textarea>
 
                 <label>Важная информация для арендатора</label>
-                <textarea th:field="*{importantInfo}" placeholder="Правила, ограничения, залог и т.п."></textarea>
+                <textarea name="importantInfo" th:field="*{importantInfo}" placeholder="Правила, ограничения, залог и т.п."></textarea>
 
                 <hr style="margin:50px 0; border:1px solid rgba(255,152,0,0.4);">
 
@@ -441,15 +450,15 @@
                 <div class="row">
                     <div class="col-50">
                         <label class="required">Имя</label>
-                        <input type="text" th:field="*{ownerFirstName}" required readonly style="background: rgba(255,255,255,0.8); cursor: not-allowed;">
+                        <input type="text" name="ownerFirstName" th:field="*{ownerFirstName}" required readonly style="background: rgba(255,255,255,0.8); cursor: not-allowed;">
                     </div>
                     <div class="col-50">
                         <label class="required">Фамилия</label>
-                        <input type="text" th:field="*{ownerLastName}" required readonly style="background: rgba(255,255,255,0.8); cursor: not-allowed;">
+                        <input type="text" name="ownerLastName" th:field="*{ownerLastName}" required readonly style="background: rgba(255,255,255,0.8); cursor: not-allowed;">
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-50"><label>Отчество</label><input type="text" th:field="*{ownerMiddleName}"></div>
+                    <div class="col-50"><label>Отчество</label><input type="text" name="ownerMiddleName" th:field="*{ownerMiddleName}"></div>
                     <div class="col-50">
                         <label class="required">Телефон</label>
                         <input type="tel" id="ownerPhone" name="ownerPhone" th:field="*{ownerPhone}" required placeholder="+7 ___ ___ __ __">
@@ -457,7 +466,7 @@
                 </div>
                 <div class="row">
                     <div class="col"><label>Email для связи (необязательно)</label>
-                        <input type="email" th:field="*{ownerEmail}">
+                        <input type="email" name="ownerEmail" th:field="*{ownerEmail}">
                     </div>
                 </div>
 
@@ -494,7 +503,6 @@
             reader.readAsDataURL(file);
         });
 
-        // Добавляем обработчики удаления после того как все элементы созданы
         document.querySelectorAll('.remove-photo-btn').forEach(btn => {
             btn.removeEventListener('click', handleRemoveClick);
             btn.addEventListener('click', handleRemoveClick);
@@ -526,7 +534,6 @@
             }
         }
 
-        // ДОБАВЛЯЕМ новые файлы к существующим, а не заменяем
         selectedFiles.push(...files);
         updatePhotoPreview();
         updateFileInput();
@@ -576,84 +583,94 @@
         }, 4500);
     }
 
-    // ==================== ВАЛИДАЦИЯ АДРЕСА ====================
-    async function validateAddress() {
-        const cityEl = document.getElementById('city');
-        const streetEl = document.getElementById('street');
-        const buildingEl = document.getElementById('building');
+    // ==================== ВАЛИДАЦИЯ ДАТ ====================
+    function validateDates() {
+        const fromDate = document.getElementById('availableFrom').value;
+        const toDate = document.getElementById('availableTo').value;
+        const fromInput = document.getElementById('availableFrom');
+        const toInput = document.getElementById('availableTo');
 
-        const city = cityEl.value.trim();
-        const street = streetEl.value.trim();
-        const building = buildingEl.value.trim();
-
-        if (!city || !street || !building) {
-            showNotification("Пожалуйста, заполните город, улицу и номер дома", true);
-            return false;
-        }
-
-        const userInput = `${city}, ${street}, ${building}`.toLowerCase().trim();
-
-        try {
-            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(userInput + ', Россия')}&results=5`);
-            const data = await response.json();
-
-            const featureMember = data.response?.GeoObjectCollection?.featureMember;
-            if (!featureMember || featureMember.length === 0) {
-                markAddressAsError();
-                showNotification("Адрес не найден. Выберите точку на карте вручную.", true);
+        if (fromDate && toDate) {
+            if (fromDate > toDate) {
+                fromInput.classList.add('date-error');
+                toInput.classList.add('date-error');
+                showNotification('Дата начала не может быть позже даты окончания!', true);
                 return false;
+            } else {
+                fromInput.classList.remove('date-error');
+                toInput.classList.remove('date-error');
+                return true;
             }
+        }
+        return true;
+    }
 
-            let exactMatch = false;
+    function syncDates() {
+        const fromDate = document.getElementById('availableFrom').value;
+        const toDate = document.getElementById('availableTo').value;
+        const fromInput = document.getElementById('availableFrom');
+        const toInput = document.getElementById('availableTo');
 
-            for (const item of featureMember) {
-                const geo = item.GeoObject;
-                const name = (geo.name || '').toLowerCase();
-                const formatted = (geo.metaDataProperty?.GeocoderMetaData?.Address?.formatted || '').toLowerCase();
-
-                if (name.includes(city.toLowerCase()) &&
-                    name.includes(street.toLowerCase()) &&
-                    name.includes(building.toLowerCase())) {
-                    exactMatch = true;
-                    break;
-                }
-                if (formatted.includes(city.toLowerCase()) &&
-                    formatted.includes(street.toLowerCase()) &&
-                    formatted.includes(building.toLowerCase())) {
-                    exactMatch = true;
-                    break;
-                }
+        if (fromDate && toDate) {
+            if (fromDate > toDate) {
+                fromInput.value = toDate;
+            } else if (toDate < fromDate) {
+                toInput.value = fromDate;
             }
+        }
+        validateDates();
+    }
 
-            if (!exactMatch) {
-                markAddressAsError();
-                showNotification("Точного адреса с номером дома " + building + " не найдено. Пожалуйста, выберите точку на карте вручную.", true);
-                return false;
+    document.getElementById('availableFrom').addEventListener('change', function() {
+        const toInput = document.getElementById('availableTo');
+        const fromValue = this.value;
+        if (fromValue && toInput.value && toInput.value < fromValue) {
+            toInput.value = fromValue;
+        }
+        syncDates();
+    });
+
+    document.getElementById('availableTo').addEventListener('change', function() {
+        const fromInput = document.getElementById('availableFrom');
+        const toValue = this.value;
+        if (toValue && fromInput.value && fromInput.value > toValue) {
+            fromInput.value = toValue;
+        }
+        syncDates();
+    });
+
+    // ==================== РАБОТА С ЦЕНАМИ ====================
+    const diffPriceCheckbox = document.getElementById('diffPrice');
+    const singlePriceBlock = document.getElementById('singlePriceBlock');
+    const extraPricesBlock = document.getElementById('extraPrices');
+    const dailyPriceInput = document.getElementById('dailyPrice');
+    const priceWeekdayInput = document.getElementById('priceWeekday');
+    const priceWeekendInput = document.getElementById('priceWeekend');
+    const priceHolidayInput = document.getElementById('priceHoliday');
+
+    function togglePriceMode() {
+        if (diffPriceCheckbox.checked) {
+            singlePriceBlock.style.display = 'none';
+            extraPricesBlock.style.display = 'block';
+
+            dailyPriceInput.removeAttribute('required');
+            priceWeekdayInput.setAttribute('required', 'required');
+
+            const dailyVal = dailyPriceInput.value;
+            if (dailyVal && !priceWeekdayInput.value) {
+                priceWeekdayInput.value = dailyVal;
             }
+        } else {
+            singlePriceBlock.style.display = 'block';
+            extraPricesBlock.style.display = 'none';
 
-            clearAddressError();
-            return true;
-
-        } catch (error) {
-            console.error("Ошибка проверки адреса:", error);
-            showNotification("Ошибка связи с сервисом. Выберите точку на карте вручную.", true);
-            return false;
+            priceWeekdayInput.removeAttribute('required');
+            dailyPriceInput.setAttribute('required', 'required');
         }
     }
 
-    function markAddressAsError() {
-        ['city', 'street', 'building'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.add('address-error');
-        });
-    }
-
-    function clearAddressError() {
-        ['city', 'street', 'building'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('address-error');
-        });
-    }
+    diffPriceCheckbox.addEventListener('change', togglePriceMode);
+    togglePriceMode();
 
     // ==================== КАРТА ====================
     let map, placemark;
@@ -1030,10 +1047,6 @@
             if (!e.target.closest('.suggest-wrapper')) closeAllDropdowns();
         });
 
-        document.getElementById("diffPrice")?.addEventListener("change", function () {
-            document.getElementById("extraPrices").style.display = this.checked ? "block" : "none";
-        });
-
         const cityInput = document.getElementById('city');
         let citySuggestTimer = null;
         cityInput.addEventListener('input', (e) => {
@@ -1273,6 +1286,84 @@
         }
     }
 
+    async function validateAddress() {
+        const cityEl = document.getElementById('city');
+        const streetEl = document.getElementById('street');
+        const buildingEl = document.getElementById('building');
+
+        const city = cityEl.value.trim();
+        const street = streetEl.value.trim();
+        const building = buildingEl.value.trim();
+
+        if (!city || !street || !building) {
+            showNotification("Пожалуйста, заполните город, улицу и номер дома", true);
+            return false;
+        }
+
+        const userInput = `${city}, ${street}, ${building}`.toLowerCase().trim();
+
+        try {
+            const response = await fetch(`https://geocode-maps.yandex.ru/1.x/?apikey=${YANDEX_API_KEY}&format=json&geocode=${encodeURIComponent(userInput + ', Россия')}&results=5`);
+            const data = await response.json();
+
+            const featureMember = data.response?.GeoObjectCollection?.featureMember;
+            if (!featureMember || featureMember.length === 0) {
+                markAddressAsError();
+                showNotification("Адрес не найден. Выберите точку на карте вручную.", true);
+                return false;
+            }
+
+            let exactMatch = false;
+
+            for (const item of featureMember) {
+                const geo = item.GeoObject;
+                const name = (geo.name || '').toLowerCase();
+                const formatted = (geo.metaDataProperty?.GeocoderMetaData?.Address?.formatted || '').toLowerCase();
+
+                if (name.includes(city.toLowerCase()) &&
+                    name.includes(street.toLowerCase()) &&
+                    name.includes(building.toLowerCase())) {
+                    exactMatch = true;
+                    break;
+                }
+                if (formatted.includes(city.toLowerCase()) &&
+                    formatted.includes(street.toLowerCase()) &&
+                    formatted.includes(building.toLowerCase())) {
+                    exactMatch = true;
+                    break;
+                }
+            }
+
+            if (!exactMatch) {
+                markAddressAsError();
+                showNotification("Точного адреса с номером дома " + building + " не найдено. Пожалуйста, выберите точку на карте вручную.", true);
+                return false;
+            }
+
+            clearAddressError();
+            return true;
+
+        } catch (error) {
+            console.error("Ошибка проверки адреса:", error);
+            showNotification("Ошибка связи с сервисом. Выберите точку на карте вручную.", true);
+            return false;
+        }
+    }
+
+    function markAddressAsError() {
+        ['city', 'street', 'building'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('address-error');
+        });
+    }
+
+    function clearAddressError() {
+        ['city', 'street', 'building'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('address-error');
+        });
+    }
+
     document.getElementById('premiseForm').addEventListener('submit', async function(e) {
         const fileInput = document.getElementById('photos');
         const files = fileInput.files;
@@ -1283,6 +1374,11 @@
                 showNotification(`Файл "${file.name}" слишком большой! Максимум ${MAX_FILE_SIZE_MB} МБ.`, true);
                 return false;
             }
+        }
+
+        if (!validateDates()) {
+            e.preventDefault();
+            return false;
         }
 
         const isAddressValid = await validateAddress();

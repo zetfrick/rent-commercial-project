@@ -436,17 +436,27 @@
                 </div>
 
                 <div class="prices">
-                    <div class="price-row">
-                        <span class="price-label">📅 Будни:</span>
-                        <span class="price-value" th:text="${p.priceWeekday} + ' ₽/сутки'"></span>
+                    <!-- Если указана разная цена - показываем отдельно будни/выходные/праздники -->
+                    <div th:if="${p.priceWeekend != null and p.priceWeekend > 0 or p.priceHoliday != null and p.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Будни:</span>
+                            <span class="price-value" th:text="${p.priceWeekday} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${p.priceWeekend != null and p.priceWeekend > 0}">
+                            <span class="price-label">Выходные:</span>
+                            <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽'"></span>
+                        </div>
+                        <div class="price-row" th:if="${p.priceHoliday != null and p.priceHoliday > 0}">
+                            <span class="price-label">Праздники:</span>
+                            <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽'"></span>
+                        </div>
                     </div>
-                    <div class="price-row" th:if="${p.priceWeekend != null && p.priceWeekend > 0}">
-                        <span class="price-label">🎉 Выходные:</span>
-                        <span class="price-value highlight" th:text="${p.priceWeekend} + ' ₽/сутки'"></span>
-                    </div>
-                    <div class="price-row" th:if="${p.priceHoliday != null && p.priceHoliday > 0}">
-                        <span class="price-label">🌟 Праздники:</span>
-                        <span class="price-value highlight" th:text="${p.priceHoliday} + ' ₽/сутки'"></span>
+                    <!-- Иначе показываем единую цену за сутки -->
+                    <div th:unless="${p.priceWeekend != null and p.priceWeekend > 0 or p.priceHoliday != null and p.priceHoliday > 0}">
+                        <div class="price-row">
+                            <span class="price-label">Цена за сутки:</span>
+                            <span class="price-value highlight" th:text="${p.priceWeekday} + ' ₽'"></span>
+                        </div>
                     </div>
                 </div>
 
