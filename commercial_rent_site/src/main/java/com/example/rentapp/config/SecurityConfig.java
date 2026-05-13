@@ -59,11 +59,28 @@ public class SecurityConfig {
                 HttpSession session = request.getSession(false);
                 if (session != null) {
                     String savedUrl = (String) session.getAttribute("redirectAfterLogin");
+
+                    // Проверяем, не является ли сохранённый URL страницей восстановления/смены пароля
                     if (savedUrl != null && !savedUrl.isEmpty()) {
-                        redirectUrl = savedUrl;
-                        session.removeAttribute("redirectAfterLogin");
-                        System.out.println("=== LOGIN SUCCESS ===");
-                        System.out.println("Redirecting to saved URL: " + redirectUrl);
+                        // Список URL, которые нужно игнорировать (страницы восстановления пароля)
+                        boolean isPasswordResetUrl = savedUrl.contains("/auth/reset-password") ||
+                                savedUrl.contains("/auth/verify-code") ||
+                                savedUrl.contains("/auth/forgot-password") ||
+                                savedUrl.contains("code=") ||
+                                savedUrl.contains("reset=success");
+
+                        if (isPasswordResetUrl) {
+                            // Игнорируем URL восстановления пароля
+                            session.removeAttribute("redirectAfterLogin");
+                            System.out.println("=== LOGIN SUCCESS ===");
+                            System.out.println("Ignoring password reset URL: " + savedUrl);
+                            System.out.println("Redirecting to default: " + redirectUrl);
+                        } else {
+                            redirectUrl = savedUrl;
+                            session.removeAttribute("redirectAfterLogin");
+                            System.out.println("=== LOGIN SUCCESS ===");
+                            System.out.println("Redirecting to saved URL: " + redirectUrl);
+                        }
                     } else {
                         System.out.println("=== LOGIN SUCCESS ===");
                         System.out.println("No saved URL, redirecting to default: " + redirectUrl);
@@ -101,7 +118,10 @@ public class SecurityConfig {
                         .permitAll()
 
                         // API для восстановления пароля
-                        .requestMatchers("/auth/api/forgot-password", "/auth/api/verify-code", "/auth/api/reset-password").permitAll()
+                        .requestMatchers("/auth/api/forgot-password", "/auth/api/verify-code",
+                                "/auth/api/reset-password", "/auth/api/change-password-request",
+                                "/auth/api/change-password")
+                        .permitAll()
 
                         // Разрешаем доступ к API уведомлений без авторизации
                         .requestMatchers("/notifications/api/create").permitAll()

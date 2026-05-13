@@ -40,10 +40,17 @@
             color: #333;
             transition: background 0.2s;
             cursor: pointer;
+            position: relative;
         }
 
         .chat-item:hover {
             background: #fef7f2;
+        }
+
+        /* Закреплённый чат */
+        .chat-item.pinned {
+            background: #fffdf5;
+            border-left: 4px solid #ff9800;
         }
 
         .chat-avatar {
@@ -56,6 +63,7 @@
             justify-content: center;
             margin-right: 15px;
             flex-shrink: 0;
+            position: relative;
         }
 
         .chat-avatar i {
@@ -112,6 +120,55 @@
             border-radius: 20px;
             min-width: 20px;
             text-align: center;
+        }
+
+        /* Кнопка закрепления */
+        .pin-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #ccc;
+            padding: 5px;
+            margin-left: 5px;
+            transition: all 0.2s;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .pin-btn:hover {
+            background: #f0f0f0;
+            color: #ff9800;
+        }
+
+        .pin-btn.pinned {
+            color: #ff9800;
+        }
+
+        .pin-btn.pinned:hover {
+            color: #e65100;
+        }
+
+        /* Заголовок секции закреплённых чатов */
+        .pinned-header {
+            background: #fff8e1;
+            padding: 12px 20px;
+            font-size: 13px;
+            color: #ff9800;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #ffe0b3;
+        }
+
+        .pinned-header i {
+            font-size: 14px;
         }
 
         /* Пустое состояние */
@@ -175,6 +232,7 @@
             .chat-avatar { width: 45px; height: 45px; }
             .chat-avatar i { font-size: 20px; }
             .chat-name { font-size: 14px; }
+            .pin-btn { width: 26px; height: 26px; font-size: 12px; }
         }
 
         @media (max-width: 768px) {
@@ -207,27 +265,96 @@
     let lastUpdateHash = '';
     let notificationTimeout = null;
 
+    // Ключ для хранения закреплённых чатов в localStorage
+    const PINNED_CHATS_KEY = 'pinnedChats';
+
+    // Функция для получения уникального ключа чата
+    function getChatKey(chat) {
+        return `${chat.user.id}_${chat.premiseId || '0'}`;
+    }
+
+    // Функция для загрузки закреплённых чатов из localStorage
+    function loadPinnedChats() {
+        const pinned = localStorage.getItem(PINNED_CHATS_KEY);
+        if (pinned) {
+            try {
+                return new Set(JSON.parse(pinned));
+            } catch (e) {
+                return new Set();
+            }
+        }
+        return new Set();
+    }
+
+    // Функция для сохранения закреплённых чатов в localStorage
+    function savePinnedChats(pinnedSet) {
+        localStorage.setItem(PINNED_CHATS_KEY, JSON.stringify(Array.from(pinnedSet)));
+    }
+
+    // Функция для закрепления/открепления чата
+    function togglePin(chatId, event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        const pinnedSet = loadPinnedChats();
+        if (pinnedSet.has(chatId)) {
+            pinnedSet.delete(chatId);
+        } else {
+            pinnedSet.add(chatId);
+        }
+        savePinnedChats(pinnedSet);
+
+        // Перезагружаем список чатов
+        loadChats(true); // force reload
+    }
+
     // Функция для генерации хеша списка чатов (для сравнения изменений)
     function generateChatsHash(chats) {
         if (!chats || chats.length === 0) return 'empty';
+        const pinnedSet = loadPinnedChats();
         return chats.map(chat =>
-            `${chat.user.id}_${chat.premiseId}_${chat.lastMessage}_${chat.lastMessageTime}_${chat.unreadCount}`
+            `${chat.user.id}_${chat.premiseId}_${chat.lastMessage}_${chat.lastMessageTime}_${chat.unreadCount}_${pinnedSet.has(getChatKey(chat))}`
         ).join('|');
     }
 
     // Функция для форматирования времени
     function formatTime(timeStr) {
         const date = new Date(timeStr);
-        return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const now = new Date();
+        const diff = now - date;
+
+        if (diff < 24 * 60 * 60 * 1000) {
+            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        } else if (diff < 7 * 24 * 60 * 60 * 1000) {
+            return date.toLocaleDateString('ru-RU', { weekday: 'short' });
+        } else {
+            return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+        }
     }
 
     // Функция для очистки HTML-тегов из системных сообщений для предпросмотра
     function stripHtml(html) {
         if (!html) return '';
-        // Создаём временный элемент для извлечения текста без HTML-тегов
         const temp = document.createElement('div');
         temp.innerHTML = html;
         return temp.textContent || temp.innerText || '';
+    }
+
+    // Функция для сортировки чатов (закреплённые вверху, затем по времени)
+    function sortChats(chats) {
+        const pinnedSet = loadPinnedChats();
+        return [...chats].sort((a, b) => {
+            const aKey = getChatKey(a);
+            const bKey = getChatKey(b);
+            const aPinned = pinnedSet.has(aKey);
+            const bPinned = pinnedSet.has(bKey);
+
+            if (aPinned && !bPinned) return -1;
+            if (!aPinned && bPinned) return 1;
+
+            // Если оба закреплены или оба не закреплены, сортируем по времени
+            return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
+        });
     }
 
     // Функция для отображения списка чатов
@@ -246,49 +373,100 @@
             return;
         }
 
+        const pinnedSet = loadPinnedChats();
+        const sortedChats = sortChats(chats);
+
+        // Разделяем на закреплённые и обычные
+        const pinnedChats = sortedChats.filter(chat => pinnedSet.has(getChatKey(chat)));
+        const normalChats = sortedChats.filter(chat => !pinnedSet.has(getChatKey(chat)));
+
         let html = '';
-        for (const chat of chats) {
-            const userName = (chat.user.firstName && chat.user.firstName !== '')
-                ? `${chat.user.firstName} ${chat.user.lastName || ''}`
-                : chat.user.login;
 
-            const premiseBadge = chat.premise ? `<span class="chat-premise">📌 ${chat.premise.typeInRussian}</span>` : '';
-            const unreadBadge = chat.unreadCount > 0 ? `<span class="unread-badge">${chat.unreadCount}</span>` : '';
-            const chatUrl = chat.premiseId
-                ? `/chats/with/${chat.user.login}/premise/${chat.premiseId}`
-                : `/chats/with/${chat.user.login}`;
-
-            // Обрабатываем предпросмотр сообщения
-            let previewText = chat.lastMessage || '';
-            // Если сообщение содержит HTML-теги (системное сообщение), извлекаем только текст
-            if (previewText.includes('<strong>') || previewText.includes('<br>')) {
-                previewText = stripHtml(previewText);
-            } else {
-                previewText = escapeHtml(previewText);
-            }
-
+        // Секция закреплённых чатов
+        if (pinnedChats.length > 0) {
             html += `
-                <a href="${chatUrl}" class="chat-item">
-                    <div class="chat-avatar">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <div class="chat-info">
-                        <div class="chat-name">
-                            <span>${escapeHtml(userName)}</span>
-                            ${premiseBadge}
-                            ${unreadBadge}
-                        </div>
-                        <div class="chat-preview">${previewText}</div>
-                    </div>
-                    <div class="chat-time">
-                        <span>${formatTime(chat.lastMessageTime)}</span>
-                    </div>
-                </a>
+                <div class="pinned-header">
+                    <i class="fas fa-thumbtack"></i>
+                    <span>Закреплённые чаты</span>
+                </div>
             `;
+            for (const chat of pinnedChats) {
+                html += renderChatItem(chat, true);
+            }
+        }
+
+        // Секция обычных чатов
+        if (normalChats.length > 0) {
+            if (pinnedChats.length > 0) {
+                html += `<div style="border-top: 8px solid #f0f0f0;"></div>`;
+            }
+            for (const chat of normalChats) {
+                html += renderChatItem(chat, false);
+            }
         }
 
         container.innerHTML = html;
+
+        // Добавляем обработчики для кнопок закрепления
+        document.querySelectorAll('.pin-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const chatId = btn.getAttribute('data-chat-id');
+                if (chatId) {
+                    togglePin(chatId, e);
+                }
+            });
+        });
+
         lastUpdateHash = generateChatsHash(chats);
+    }
+
+    // Функция для рендера отдельного чата
+    function renderChatItem(chat, isPinned) {
+        const userName = (chat.user.firstName && chat.user.firstName !== '')
+            ? `${chat.user.firstName} ${chat.user.lastName || ''}`
+            : chat.user.login;
+
+        const premiseBadge = chat.premise ? `<span class="chat-premise">📌 ${chat.premise.typeInRussian}</span>` : '';
+        const unreadBadge = chat.unreadCount > 0 ? `<span class="unread-badge">${chat.unreadCount}</span>` : '';
+        const chatUrl = chat.premiseId
+            ? `/chats/with/${chat.user.login}/premise/${chat.premiseId}`
+            : `/chats/with/${chat.user.login}`;
+        const chatKey = getChatKey(chat);
+
+        // Обрабатываем предпросмотр сообщения
+        let previewText = chat.lastMessage || '';
+        if (previewText.includes('<strong>') || previewText.includes('<br>')) {
+            previewText = stripHtml(previewText);
+        } else {
+            previewText = escapeHtml(previewText);
+        }
+
+        // Обрезаем слишком длинный предпросмотр
+        if (previewText.length > 60) {
+            previewText = previewText.substring(0, 57) + '...';
+        }
+
+        return `
+            <div class="chat-item ${isPinned ? 'pinned' : ''}" data-chat-id="${chatKey}">
+                <div class="chat-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-name">
+                        <span>${escapeHtml(userName)}</span>
+                        ${premiseBadge}
+                        ${unreadBadge}
+                        <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-chat-id="${chatKey}" title="${isPinned ? 'Открепить чат' : 'Закрепить чат'}">
+                            <i class="fas fa-thumbtack"></i>
+                        </button>
+                    </div>
+                    <div class="chat-preview">${previewText}</div>
+                </div>
+                <div class="chat-time">
+                    <span>${formatTime(chat.lastMessageTime)}</span>
+                </div>
+            </div>
+        `;
     }
 
     // Показать уведомление о новых сообщениях
@@ -301,7 +479,7 @@
         notification.className = 'new-message-notification';
         notification.innerHTML = '<i class="fas fa-comment-dots"></i> Новые сообщения! Нажмите для обновления';
         notification.onclick = () => {
-            loadChats();
+            loadChats(true);
             notification.remove();
         };
         document.body.appendChild(notification);
@@ -315,8 +493,8 @@
     }
 
     // Функция для загрузки чатов с сервера
-    async function loadChats() {
-        if (isPolling) return;
+    async function loadChats(force = false) {
+        if (isPolling && !force) return;
         isPolling = true;
 
         try {
@@ -326,11 +504,11 @@
                 const newHash = generateChatsHash(newChats);
 
                 // Если данные изменились, обновляем список
-                if (newHash !== lastUpdateHash) {
+                if (newHash !== lastUpdateHash || force) {
                     renderChats(newChats);
                     // Показываем уведомление при наличии новых непрочитанных сообщений
                     const hasNewUnread = newChats.some(chat => chat.unreadCount > 0);
-                    if (hasNewUnread && document.visibilityState === 'visible') {
+                    if (hasNewUnread && document.visibilityState === 'visible' && !force) {
                         showNewMessageNotification();
                     }
                 }
@@ -363,7 +541,7 @@
         }
 
         // Запускаем polling каждые 5 секунд
-        pollingInterval = setInterval(loadChats, 5000);
+        pollingInterval = setInterval(() => loadChats(false), 5000);
     });
 
     // Очищаем интервал при уходе со страницы

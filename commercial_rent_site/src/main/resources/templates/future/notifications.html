@@ -39,6 +39,89 @@
             gap: 12px;
         }
 
+        /* Карточка настроек */
+        .settings-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .settings-card h3 {
+            color: #ff5722;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-card p {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 26px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #ff5722;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-status {
+            margin-left: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .toggle-status.enabled {
+            color: #4caf50;
+        }
+        .toggle-status.disabled {
+            color: #999;
+        }
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -282,12 +365,18 @@
             gap: 10px;
         }
 
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             .container { padding: 15px; }
             .notification-item { padding: 15px; }
             .notification-actions { justify-content: flex-start; }
             .action-buttons { justify-content: stretch; }
             .action-btn { flex: 1; text-align: center; }
+            .settings-row { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -301,6 +390,23 @@
 <div class="container">
     <div class="page-header">
         <h1><i class="fas fa-bell"></i> Уведомления</h1>
+    </div>
+
+    <!-- Карточка настроек email-уведомлений -->
+    <div class="settings-card">
+        <div class="settings-row">
+            <div>
+                <h3><i class="fas fa-envelope"></i> Email-уведомления</h3>
+                <p>Получать копии уведомлений на электронную почту</p>
+            </div>
+            <div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="emailNotificationsToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span id="toggleStatus" class="toggle-status"></span>
+            </div>
+        </div>
     </div>
 
     <div class="tabs">
@@ -386,6 +492,47 @@
         'COMMENT': '#9c27b0'
     };
 
+    // ==================== НАСТРОЙКИ EMAIL-УВЕДОМЛЕНИЙ ====================
+    async function loadNotificationSettings() {
+        try {
+            const response = await fetch('/notifications/api/settings');
+            const data = await response.json();
+
+            const toggle = document.getElementById('emailNotificationsToggle');
+            const statusSpan = document.getElementById('toggleStatus');
+
+            if (data.emailNotificationsEnabled !== undefined) {
+                toggle.checked = data.emailNotificationsEnabled;
+                statusSpan.textContent = data.emailNotificationsEnabled ? 'Включены' : 'Отключены';
+                statusSpan.className = data.emailNotificationsEnabled ? 'toggle-status enabled' : 'toggle-status disabled';
+            }
+        } catch (error) {
+            console.error('Error loading notification settings:', error);
+        }
+    }
+
+    async function saveEmailNotificationsSetting(enabled) {
+        try {
+            const response = await fetch('/notifications/api/settings/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: enabled })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                const statusSpan = document.getElementById('toggleStatus');
+                statusSpan.textContent = enabled ? 'Включены' : 'Отключены';
+                statusSpan.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
+                showNotification(enabled ? 'Email-уведомления включены' : 'Email-уведомления отключены');
+            }
+        } catch (error) {
+            console.error('Error saving notification settings:', error);
+            showNotification('Ошибка при сохранении настроек', true);
+        }
+    }
+
+    // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
     async function loadNotifications() {
         const url = `/notifications/api/list?type=${currentTab === 'read' ? 'read' : 'unread'}`;
 
@@ -536,7 +683,6 @@
             case 'BOOKING_ENDS_IN_3_DAYS':
             case 'BOOKING_ENDS_IN_1_DAY':
             case 'BOOKING_ENDS_TODAY':
-                // Убираем иконку, так как content уже содержит всё форматирование с иконкой внутри
                 html = `${notif.content || ''}
                         ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть помещение →</a>` : ''}`;
                 break;
@@ -796,6 +942,7 @@
         return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
     }
 
+    // Инициализация обработчиков вкладок
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -807,11 +954,25 @@
         });
     });
 
+    // Инициализация обработчика переключателя email-уведомлений
+    const emailToggle = document.getElementById('emailNotificationsToggle');
+    if (emailToggle) {
+        emailToggle.addEventListener('change', function() {
+            saveEmailNotificationsSetting(this.checked);
+        });
+    }
+
+    // Загрузка данных при старте
+    loadNotificationSettings();
     loadNotifications();
 
-    const style = document.createElement('style');
-    style.textContent = `@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
-    document.head.appendChild(style);
+    // Добавляем стиль анимации, если его нет
+    if (!document.querySelector('#notificationStyle')) {
+        const style = document.createElement('style');
+        style.id = 'notificationStyle';
+        style.textContent = `@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+        document.head.appendChild(style);
+    }
 </script>
 
 </body>

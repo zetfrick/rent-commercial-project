@@ -21,11 +21,15 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // === Личные данные (для личного кабинета) ===
-    private String firstName;      // Имя
-    private String lastName;       // Фамилия
-    private String middleName;     // Отчество (может быть null)
-    private String phone;          // Телефон (может быть null)
+    // === Личные данные ===
+    private String firstName;
+    private String lastName;
+    private String middleName;
+    private String phone;
+
+    // === НАСТРОЙКИ УВЕДОМЛЕНИЙ ===
+    @Column(nullable = false)
+    private boolean emailNotificationsEnabled = true;  // ← НОВОЕ ПОЛЕ, по умолчанию включено
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -4,6 +4,8 @@ import com.example.rentapp.dto.NotificationDto;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.service.NotificationService;
 import com.example.rentapp.service.UserService;
+import com.example.rentapp.dto.NotificationSettingsDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -212,5 +214,50 @@ public class NotificationController {
             System.err.println("Ошибка при создании уведомления: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+
+    // ==================== НОВЫЕ ЭНДПОИНТЫ ДЛЯ НАСТРОЕК EMAIL-УВЕДОМЛЕНИЙ ====================
+
+    @GetMapping("/api/settings")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getNotificationSettings(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Не авторизован"));
+        }
+
+        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+        if (currentUser == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Пользователь не найден"));
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("emailNotificationsEnabled", notificationService.isEmailNotificationsEnabled(currentUser.getId()));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/api/settings/email")
+    @ResponseBody
+    public ResponseEntity<NotificationSettingsDto> toggleEmailNotifications(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody NotificationSettingsDto settings) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(new NotificationSettingsDto(false));
+        }
+
+        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+        if (currentUser == null) {
+            return ResponseEntity.status(404).body(new NotificationSettingsDto(false));
+        }
+
+        if (settings.getEmailNotificationsEnabled() != null) {
+            notificationService.updateEmailNotificationsEnabled(currentUser.getId(), settings.getEmailNotificationsEnabled());
+            return ResponseEntity.ok(new NotificationSettingsDto(settings.getEmailNotificationsEnabled()));
+        }
+
+        return ResponseEntity.badRequest().body(new NotificationSettingsDto(false));
     }
 }

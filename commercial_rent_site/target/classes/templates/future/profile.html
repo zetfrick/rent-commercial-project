@@ -8,12 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Полный сброс */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             margin: 0;
@@ -43,7 +38,6 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* ====================== ПРОФИЛЬ ====================== */
         .profile-container {
             position: relative;
             background: linear-gradient(135deg, #fff5eb 0%, #ffe0cc 100%);
@@ -320,7 +314,7 @@
             flex-wrap: wrap;
         }
 
-        .profile-save-btn, .profile-edit-btn, .profile-cancel-btn {
+        .profile-save-btn, .profile-edit-btn, .profile-cancel-btn, .change-password-btn {
             padding: 14px 28px;
             border-radius: 60px;
             font-weight: 600;
@@ -370,6 +364,20 @@
         .profile-cancel-btn:hover {
             background: #ffe0cc;
             transform: translateY(-2px);
+        }
+
+        .change-password-btn {
+            background: #fff0e0;
+            color: #e64a19;
+            border: 1px solid #ffe0cc;
+            flex: 1;
+        }
+
+        .change-password-btn:hover {
+            background: #ffe0cc;
+            transform: translateY(-2px);
+            color: #ff5722;
+            border-color: #ff5722;
         }
 
         .profile-right-buttons {
@@ -433,7 +441,6 @@
             transform: translateX(5px);
         }
 
-        /* Специальные стили для кнопок */
         .admin-premium-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -514,7 +521,320 @@
             margin-left: 8px;
         }
 
-        /* Модальное окно для жалобы */
+        /* ==================== УНИКАЛЬНЫЕ СТИЛИ ДЛЯ МОДАЛЬНЫХ ОКОН ==================== */
+
+        /* 1. Модальное окно для email (запрос кода) */
+        .pwreset-email-modal {
+            display: none;
+            position: fixed;
+            z-index: 2100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .pwreset-email-modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 20px;
+            animation: pwreset-modalFadeIn 0.3s ease;
+        }
+        .pwreset-email-modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pwreset-email-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pwreset-email-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .pwreset-email-modal-body {
+            padding: 20px;
+            text-align: center;
+        }
+        .pwreset-email-info {
+            color: #666;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        .pwreset-email-info i {
+            color: #ff5722;
+            margin-right: 8px;
+        }
+        .pwreset-email-error {
+            color: #f44336;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .pwreset-email-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .pwreset-email-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .pwreset-email-submit-btn:hover:not(:disabled) {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        /* 2. Модальное окно для кода */
+        .pwreset-code-modal {
+            display: none;
+            position: fixed;
+            z-index: 2110;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .pwreset-code-modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 20px;
+            animation: pwreset-modalFadeIn 0.3s ease;
+        }
+        .pwreset-code-modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pwreset-code-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pwreset-code-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .pwreset-code-modal-body {
+            padding: 20px;
+        }
+        .pwreset-code-modal-body input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            text-align: center;
+            letter-spacing: 5px;
+            font-size: 20px;
+        }
+        .pwreset-code-error {
+            color: #f44336;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .pwreset-code-timer {
+            color: #ff9800;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .pwreset-code-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .pwreset-code-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .pwreset-code-submit-btn:hover:not(:disabled) {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+        .pwreset-resend-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .pwreset-resend-link a {
+            color: #ff5722;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        .pwreset-resend-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* 3. Модальное окно для нового пароля */
+        .pwreset-password-modal {
+            display: none;
+            position: fixed;
+            z-index: 2120;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .pwreset-password-modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 20px;
+            animation: pwreset-modalFadeIn 0.3s ease;
+        }
+        .pwreset-password-modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pwreset-password-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pwreset-password-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .pwreset-password-modal-body {
+            padding: 20px;
+        }
+        .pwreset-password-wrapper {
+            position: relative;
+            margin: 10px 0;
+        }
+        .pwreset-password-wrapper input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 45px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .pwreset-password-wrapper input:focus {
+            outline: none;
+            border-color: #ff5722;
+        }
+        /* Отключаем нативную кнопку показа пароля */
+        .pwreset-password-wrapper input::-ms-reveal,
+        .pwreset-password-wrapper input::-ms-clear {
+            display: none;
+        }
+        .pwreset-password-wrapper input::-webkit-credentials-auto-fill-button,
+        .pwreset-password-wrapper input::-webkit-textfield-decoration-container {
+            display: none;
+        }
+        .pwreset-toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+        }
+        .pwreset-toggle-password:hover {
+            color: #ff5722;
+        }
+        .pwreset-password-error {
+            color: #f44336;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .pwreset-password-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .pwreset-password-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .pwreset-password-submit-btn:hover:not(:disabled) {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
+        /* 4. Модальное окно для жалобы */
         .report-modal {
             display: none;
             position: fixed;
@@ -536,6 +856,10 @@
             animation: modalFadeIn 0.3s ease;
         }
         @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pwreset-modalFadeIn {
             from { opacity: 0; transform: translateY(-50px); }
             to { opacity: 1; transform: translateY(0); }
         }
@@ -603,7 +927,8 @@
             .profile-label { min-width: auto; }
             .profile-value { text-align: left; width: 100%; }
             .profile-button-group { flex-direction: column; }
-            .profile-save-btn, .profile-cancel-btn { width: 100%; }
+            .profile-save-btn, .profile-cancel-btn, .change-password-btn { width: 100%; }
+            .pwreset-email-modal-content, .pwreset-code-modal-content, .pwreset-password-modal-content { margin: 20% auto; width: 95%; }
         }
 
         @media (max-width: 768px) {
@@ -631,6 +956,10 @@
         <div th:if="${param.updated}" class="profile-success">
             <i class="fas fa-check-circle"></i>
             <span>Профиль успешно обновлён!</span>
+        </div>
+        <div th:if="${param.passwordChanged}" class="profile-success">
+            <i class="fas fa-check-circle"></i>
+            <span>Пароль успешно изменён!</span>
         </div>
 
         <div class="profile-content">
@@ -721,9 +1050,14 @@
                             <span class="profile-label"><i class="fas fa-at"></i> Логин</span>
                             <span class="profile-value" th:text="${profileUser.login}"></span>
                         </div>
-                        <button th:if="${isOwnProfile}" class="profile-edit-btn" onclick="window.location.href='/profile/edit'">
-                            <i class="fas fa-pen"></i> Редактировать профиль
-                        </button>
+                        <div class="profile-button-group">
+                            <button th:if="${isOwnProfile}" class="profile-edit-btn" onclick="window.location.href='/profile/edit'">
+                                <i class="fas fa-pen"></i> Редактировать профиль
+                            </button>
+                            <button th:if="${isOwnProfile}" class="change-password-btn" onclick="openChangePasswordModal()">
+                                <i class="fas fa-key"></i> Изменить пароль
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -736,13 +1070,12 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="alert('⭐ Избранное — в разработке')" style="border-left: 5px solid #ff5722;">
+                <button th:if="${isOwnProfile}" class="profile-action-btn" onclick="window.location.href='/profile/favorites'" style="border-left: 5px solid #ff5722;">
                     <i class="fas fa-heart"></i>
                     <span class="btn-text">Избранное</span>
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- АДМИНИСТРАТОРЫ - для SUPER_ADMIN -->
                 <button th:if="${profileUser.role.name() == 'SUPER_ADMIN'}"
                         class="profile-action-btn admin-premium-btn"
                         onclick="window.location.href='/admin/admins'">
@@ -751,7 +1084,6 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ЖАЛОБЫ - для ADMIN и SUPER_ADMIN (теперь открывает страницу жалоб) -->
                 <button th:if="${profileUser.role.name() == 'ADMIN' or profileUser.role.name() == 'SUPER_ADMIN'}"
                         class="profile-action-btn complaint-danger-btn"
                         onclick="window.location.href='/admin/complaints'">
@@ -760,7 +1092,6 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ПОЖАЛОВАТЬСЯ НА ПОЛЬЗОВАТЕЛЯ -->
                 <button th:if="${!isOwnProfile and (#authorization.expression('isAuthenticated()')) and profileUser.role.name() != 'ADMIN' and profileUser.role.name() != 'SUPER_ADMIN'}"
                         class="profile-action-btn report-user-btn"
                         onclick="openUserReportModal()">
@@ -769,7 +1100,6 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
-                <!-- ОБЪЯВЛЕНИЯ -->
                 <a th:if="${isOwnProfile}"
                    th:href="@{/profile/{username}/premises(username=${profileUser.login})}"
                    class="profile-action-btn"
@@ -804,6 +1134,72 @@
     </div>
 </div>
 
+<!-- Модальное окно для email (запрос кода) - с автоматическим email -->
+<div id="pwresetEmailModal" class="pwreset-email-modal">
+    <div class="pwreset-email-modal-content">
+        <div class="pwreset-email-modal-header">
+            <h3><i class="fas fa-key"></i> Смена пароля</h3>
+            <button class="pwreset-email-modal-close" onclick="closePwresetEmailModal()">&times;</button>
+        </div>
+        <div class="pwreset-email-modal-body">
+            <div class="pwreset-email-info">
+                <i class="fas fa-envelope"></i> Код будет отправлен на email: <strong id="pwresetEmailDisplay"></strong>
+            </div>
+            <div id="pwresetEmailError" class="pwreset-email-error"></div>
+            <button class="pwreset-email-submit-btn" id="pwresetEmailSubmitBtn" onclick="sendPwresetCode()">
+                <i class="fas fa-paper-plane"></i> Отправить код
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для кода -->
+<div id="pwresetCodeModal" class="pwreset-code-modal">
+    <div class="pwreset-code-modal-content">
+        <div class="pwreset-code-modal-header">
+            <h3><i class="fas fa-envelope"></i> Подтверждение кода</h3>
+            <button class="pwreset-code-modal-close" onclick="closePwresetCodeModal()">&times;</button>
+        </div>
+        <div class="pwreset-code-modal-body">
+            <p style="color: #666; margin-bottom: 15px;">Введите 6-значный код, отправленный на почту <strong id="pwresetCodeEmailDisplay"></strong></p>
+            <input type="text" id="pwresetCode" placeholder="Код" maxlength="6" style="text-align: center; letter-spacing: 5px; font-size: 20px;">
+            <div id="pwresetCodeError" class="pwreset-code-error"></div>
+            <div id="pwresetTimerDisplay" class="pwreset-code-timer"></div>
+            <button class="pwreset-code-submit-btn" id="pwresetCodeSubmitBtn" onclick="verifyPwresetCode()">
+                <i class="fas fa-check"></i> Подтвердить
+            </button>
+            <div class="pwreset-resend-link">
+                <a href="#" onclick="resendPwresetCode()" id="pwresetResendLink">Отправить код снова</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для нового пароля -->
+<div id="pwresetPasswordModal" class="pwreset-password-modal">
+    <div class="pwreset-password-modal-content">
+        <div class="pwreset-password-modal-header">
+            <h3><i class="fas fa-lock"></i> Новый пароль</h3>
+            <button class="pwreset-password-modal-close" onclick="closePwresetPasswordModal()">&times;</button>
+        </div>
+        <div class="pwreset-password-modal-body">
+            <p style="color: #666; margin-bottom: 15px;">Придумайте новый пароль для входа</p>
+            <div class="pwreset-password-wrapper">
+                <input type="password" id="pwresetNewPassword" placeholder="Новый пароль (минимум 4 символа)">
+                <i class="fas fa-eye pwreset-toggle-password" onclick="togglePwresetPassword('pwresetNewPassword', this)"></i>
+            </div>
+            <div class="pwreset-password-wrapper">
+                <input type="password" id="pwresetConfirmPassword" placeholder="Повторите пароль">
+                <i class="fas fa-eye pwreset-toggle-password" onclick="togglePwresetPassword('pwresetConfirmPassword', this)"></i>
+            </div>
+            <div id="pwresetPasswordError" class="pwreset-password-error"></div>
+            <button class="pwreset-password-submit-btn" id="pwresetPasswordSubmitBtn" onclick="submitPwresetNewPassword()">
+                <i class="fas fa-save"></i> Сохранить пароль
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Модальное окно для жалобы на пользователя -->
 <div id="userReportModal" class="report-modal">
     <div class="report-modal-content">
@@ -828,6 +1224,12 @@
 </div>
 
 <script>
+    let currentResetEmail = '';
+    let currentResetCode = '';
+    let pwresetTimerInterval = null;
+    let resendCooldown = false;
+    let resendCooldownInterval = null;
+
     function updateChatButtonBadge() {
         const badgeElement = document.getElementById('chatsBadge');
         if (!badgeElement) return;
@@ -858,7 +1260,278 @@
         updateChatButtonBadge();
     });
 
-    // Счётчик символов для темы
+    // ==================== СМЕНА ПАРОЛЯ (с автоматическим email) ====================
+    function openChangePasswordModal() {
+        const emailRows = document.querySelectorAll('.profile-info-row');
+        let userEmail = '';
+
+        for (let row of emailRows) {
+            const label = row.querySelector('.profile-label');
+            if (label && label.textContent.includes('Почта')) {
+                const value = row.querySelector('.profile-value');
+                if (value) {
+                    userEmail = value.textContent.trim();
+                    break;
+                }
+            }
+        }
+
+        currentResetEmail = userEmail;
+        document.getElementById('pwresetEmailDisplay').textContent = userEmail;
+        document.getElementById('pwresetEmailModal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePwresetEmailModal() {
+        document.getElementById('pwresetEmailModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function startResendCooldown(seconds) {
+        const resendLink = document.getElementById('pwresetResendLink');
+        const timerDisplay = document.getElementById('pwresetTimerDisplay');
+        let remaining = seconds;
+
+        resendCooldown = true;
+        if (resendLink) {
+            resendLink.style.pointerEvents = 'none';
+            resendLink.style.opacity = '0.5';
+        }
+
+        if (resendCooldownInterval) clearInterval(resendCooldownInterval);
+
+        resendCooldownInterval = setInterval(() => {
+            if (remaining <= 0) {
+                clearInterval(resendCooldownInterval);
+                resendCooldown = false;
+                if (resendLink) {
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                }
+                if (timerDisplay) timerDisplay.textContent = '';
+            } else {
+                const minutes = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                if (timerDisplay) {
+                    timerDisplay.textContent = `⏳ Новый код можно запросить через ${minutes}:${secs < 10 ? '0' + secs : secs}`;
+                }
+                remaining--;
+            }
+        }, 1000);
+    }
+
+    async function sendPwresetCode() {
+        const errorDiv = document.getElementById('pwresetEmailError');
+        const submitBtn = document.getElementById('pwresetEmailSubmitBtn');
+        const originalText = submitBtn.innerHTML;
+
+        if (!currentResetEmail) {
+            errorDiv.textContent = 'Email не найден в профиле';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+
+        try {
+            const response = await fetch('/auth/api/change-password-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: currentResetEmail })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                closePwresetEmailModal();
+                document.getElementById('pwresetCodeEmailDisplay').textContent = currentResetEmail;
+                document.getElementById('pwresetCode').value = '';
+                document.getElementById('pwresetCodeModal').style.display = 'block';
+                startResendCooldown(300);
+                showNotification('Код отправлен на вашу почту');
+            } else {
+                errorDiv.textContent = data.message || 'Ошибка при отправке кода';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Ошибка соединения. Попробуйте позже.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    async function resendPwresetCode() {
+        if (resendCooldown) {
+            showNotification('Пожалуйста, подождите 5 минут перед повторной отправкой', true);
+            return;
+        }
+
+        const resendLink = document.getElementById('pwresetResendLink');
+
+        if (resendLink) {
+            resendLink.style.pointerEvents = 'none';
+            resendLink.style.opacity = '0.5';
+        }
+
+        try {
+            const response = await fetch('/auth/api/change-password-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: currentResetEmail })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                startResendCooldown(300);
+                showNotification('Новый код отправлен на почту');
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+                if (resendLink) {
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                }
+            }
+        } catch (error) {
+            showNotification('Ошибка соединения', true);
+            if (resendLink) {
+                resendLink.style.pointerEvents = 'auto';
+                resendLink.style.opacity = '1';
+            }
+        }
+    }
+
+    function closePwresetCodeModal() {
+        if (resendCooldownInterval) clearInterval(resendCooldownInterval);
+        document.getElementById('pwresetCodeModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    async function verifyPwresetCode() {
+        const code = document.getElementById('pwresetCode').value.trim();
+        const errorDiv = document.getElementById('pwresetCodeError');
+        const submitBtn = document.getElementById('pwresetCodeSubmitBtn');
+        const originalText = submitBtn.innerHTML;
+
+        if (!code || code.length !== 6) {
+            errorDiv.textContent = 'Введите 6-значный код';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
+
+        try {
+            const response = await fetch('/auth/api/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: currentResetEmail, code: code })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                currentResetCode = code;
+                closePwresetCodeModal();
+                document.getElementById('pwresetNewPassword').value = '';
+                document.getElementById('pwresetConfirmPassword').value = '';
+                document.getElementById('pwresetPasswordModal').style.display = 'block';
+            } else {
+                errorDiv.textContent = data.message || 'Неверный или просроченный код';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Ошибка соединения';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    function closePwresetPasswordModal() {
+        document.getElementById('pwresetPasswordModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function togglePwresetPassword(inputId, iconElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            iconElement.classList.remove('fa-eye');
+            iconElement.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            iconElement.classList.remove('fa-eye-slash');
+            iconElement.classList.add('fa-eye');
+        }
+    }
+
+    async function submitPwresetNewPassword() {
+        const newPassword = document.getElementById('pwresetNewPassword').value;
+        const confirmPassword = document.getElementById('pwresetConfirmPassword').value;
+        const errorDiv = document.getElementById('pwresetPasswordError');
+        const submitBtn = document.getElementById('pwresetPasswordSubmitBtn');
+        const originalText = submitBtn.innerHTML;
+
+        if (!newPassword || newPassword.length < 4) {
+            errorDiv.textContent = 'Пароль должен содержать минимум 4 символа';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            errorDiv.textContent = 'Пароли не совпадают';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+
+        try {
+            const response = await fetch('/auth/api/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: currentResetEmail,
+                    code: currentResetCode,
+                    newPassword: newPassword,
+                    confirmPassword: confirmPassword
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                closePwresetPasswordModal();
+                showNotification('Пароль успешно изменён!');
+                setTimeout(() => {
+                    window.location.href = '/auth/login?reset=success';
+                }, 1500);
+            } else {
+                errorDiv.textContent = data.message || 'Ошибка при смене пароля';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Ошибка соединения';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    // ==================== ЖАЛОБЫ ====================
     document.getElementById('userReportSubject')?.addEventListener('input', function() {
         const maxLength = 100;
         const currentLength = this.value.length;
@@ -945,7 +1618,7 @@
         notification.style.color = 'white';
         notification.style.padding = '14px 22px';
         notification.style.borderRadius = '10px';
-        notification.style.zIndex = '10000';
+        notification.style.zIndex = '10001';
         notification.style.animation = 'slideIn 0.4s ease';
         notification.textContent = message;
         document.body.appendChild(notification);
@@ -960,6 +1633,15 @@
         if (event.target === modal) {
             closeUserReportModal();
         }
+        if (event.target === document.getElementById('pwresetEmailModal')) {
+            closePwresetEmailModal();
+        }
+        if (event.target === document.getElementById('pwresetCodeModal')) {
+            closePwresetCodeModal();
+        }
+        if (event.target === document.getElementById('pwresetPasswordModal')) {
+            closePwresetPasswordModal();
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -972,6 +1654,13 @@
     @keyframes slideIn {
         from { transform: translateX(120%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
+    }
+    .fa-spin {
+        animation: fa-spin 1s infinite linear;
+    }
+    @keyframes fa-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 

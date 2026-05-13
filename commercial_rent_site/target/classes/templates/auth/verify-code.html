@@ -3,30 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <title>Подтверждение кода</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; font-family: Arial, sans-serif; }
-        .auth-form { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 350px; text-align: center; }
-        .auth-form h2 { color: #ff5722; margin-bottom: 20px; }
-        .auth-form input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; text-align: center; letter-spacing: 5px; font-size: 20px; }
-        .auth-form button { width: 100%; background: #ff9800; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s; }
-        .auth-form button:hover { background: #f57c00; transform: translateY(-2px); }
-        .auth-form a { display: block; margin-top: 15px; color: #ff9800; text-decoration: none; }
-        .error { color: #ff5722; margin: 10px 0; font-size: 14px; }
-        .info { color: #666; margin-bottom: 20px; font-size: 14px; }
-        .resend-link { margin-top: 20px; }
-        .timer { color: #ff9800; font-weight: bold; margin-top: 10px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #fff5eb 0%, #ffe0cc 100%);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            right: -10%;
+            width: 40%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(255, 87, 34, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 20%;
+            left: -10%;
+            width: 40%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(255, 152, 0, 0.04) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .auth-form {
+            background: white;
+            padding: 40px;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            width: 450px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-form h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #ff5722;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .auth-form h2 i {
+            font-size: 28px;
+        }
+
+        .auth-form .info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 16px;
+        }
+
+        .auth-form .info strong {
+            color: #ff5722;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 14px 16px;
+            margin: 10px 0;
+            border: 2px solid #ffe0cc;
+            border-radius: 16px;
+            font-size: 20px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: #fffaf5;
+            text-align: center;
+            letter-spacing: 8px;
+            font-weight: 600;
+            box-sizing: border-box;
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: #ff5722;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.1);
+        }
+
+        .auth-form button {
+            width: 100%;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 15px;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .auth-form button:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .auth-form button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-form a {
+            display: block;
+            margin-top: 20px;
+            color: #ff9800;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .auth-form a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            color: #f44336;
+            margin: 10px 0;
+            font-size: 14px;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .timer {
+            color: #ff9800;
+            font-weight: 500;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .resend-link {
+            margin-top: 20px;
+        }
+
+        .back-link {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .fa-spinner {
+            animation: fa-spin 1s infinite linear;
+        }
+
+        @keyframes fa-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .auth-form { width: 90%; padding: 30px 20px; margin: 20px; }
+            .auth-form input { letter-spacing: 4px; font-size: 18px; }
+        }
     </style>
 </head>
 <body>
 <div class="auth-form">
-    <h2><i class="fas fa-envelope"></i> Подтверждение</h2>
+    <h2><i class="fas fa-envelope"></i> Подтверждение кода</h2>
     <p class="info">Введите 6-значный код, отправленный на <strong th:text="${email}"></strong></p>
 
     <div id="errorMessage" class="error" style="display: none;"></div>
 
     <form id="verifyCodeForm">
         <input type="text" id="code" name="code" placeholder="Код" maxlength="6" required autocomplete="off">
-        <button type="submit">Подтвердить</button>
+        <button type="submit" id="submitBtn">
+            <i class="fas fa-check"></i> Подтвердить
+        </button>
     </form>
 
     <div class="resend-link">
@@ -89,7 +270,7 @@
 
             if (data.success) {
                 errorDiv.style.color = '#4caf50';
-                errorDiv.textContent = 'Новый код отправлен на почту (или выведен в консоль)';
+                errorDiv.textContent = 'Новый код отправлен на почту';
                 errorDiv.style.display = 'block';
                 startTimer(60);
 
@@ -119,13 +300,13 @@
 
         const code = document.getElementById('code').value;
         const errorDiv = document.getElementById('errorMessage');
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
 
         errorDiv.style.display = 'none';
 
-        const submitBtn = this.querySelector('button');
-        const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Проверка...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
 
         try {
             const response = await fetch('/auth/api/verify-code', {
@@ -141,17 +322,17 @@
             } else {
                 errorDiv.textContent = data.message;
                 errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             }
         } catch (error) {
             errorDiv.textContent = 'Ошибка соединения';
             errorDiv.style.display = 'block';
-        } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            submitBtn.innerHTML = originalText;
         }
     });
 
-    // Автоматически блокируем повторную отправку на 60 секунд после загрузки страницы
     canResend = false;
     document.getElementById('resendLink').style.pointerEvents = 'none';
     document.getElementById('resendLink').style.opacity = '0.5';

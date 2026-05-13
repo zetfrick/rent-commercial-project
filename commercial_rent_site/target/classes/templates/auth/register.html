@@ -3,48 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <title>Регистрация — Аренда коммерческих помещений</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
-        .container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #d32f2f; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type=text], input[type=email], input[type=password] {
-            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #fff5eb 0%, #ffe0cc 100%);
+            position: relative;
+            padding: 20px;
         }
-        input.error-border { border-color: #f44336; }
-        .error-message { color: #f44336; font-size: 0.8em; margin-top: 5px; display: block; }
-        .global-error { background: #ffebee; color: #c62828; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center; }
-        button { background: #ff9800; color: white; padding: 12px; width: 100%; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #f57c00; }
-        .login-link { text-align: center; margin-top: 20px; }
-        .login-link a { color: #ff9800; text-decoration: none; }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%;
+            right: -10%;
+            width: 40%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(255, 87, 34, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: 20%;
+            left: -10%;
+            width: 40%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(255, 152, 0, 0.04) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            width: 500px;
+            max-width: 100%;
+            position: relative;
+            z-index: 2;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #ff5722;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .required-star {
+            color: #ff5722;
+            margin-left: 2px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #ffe0cc;
+            border-radius: 16px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: #fffaf5;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ff5722;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.1);
+        }
+
+        input.error-border {
+            border-color: #f44336;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        /* Отключаем нативную кнопку показа пароля */
+        .password-wrapper input::-ms-reveal,
+        .password-wrapper input::-ms-clear {
+            display: none;
+        }
+        .password-wrapper input::-webkit-credentials-auto-fill-button,
+        .password-wrapper input::-webkit-textfield-decoration-container {
+            display: none;
+        }
+        .password-wrapper input {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            transition: color 0.3s;
+        }
+
+        .toggle-password:hover {
+            color: #ff5722;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 6px;
+            display: block;
+        }
+
+        .global-error {
+            background: #ffebee;
+            color: #d32f2f;
+            padding: 12px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 15px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .login-link a {
+            color: #ff9800;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 550px) {
+            .container { padding: 30px 20px; margin: 20px; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h2>Регистрация</h2>
 
-    <!-- Глобальная ошибка (логин или email занят) -->
     <div th:if="${error}" class="global-error" th:text="${error}"></div>
 
     <form th:action="@{/auth/register}" th:object="${registerRequest}" method="post">
         <div class="form-group">
-            <label for="firstName">Имя *</label>
+            <label for="firstName">Имя <span class="required-star">*</span></label>
             <input type="text" id="firstName" th:field="*{firstName}"
                    th:classappend="${#fields.hasErrors('firstName')} ? 'error-border' : ''" />
             <span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" class="error-message">Ошибка</span>
         </div>
 
         <div class="form-group">
-            <label for="lastName">Фамилия *</label>
+            <label for="lastName">Фамилия <span class="required-star">*</span></label>
             <input type="text" id="lastName" th:field="*{lastName}"
                    th:classappend="${#fields.hasErrors('lastName')} ? 'error-border' : ''" />
             <span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" class="error-message">Ошибка</span>
         </div>
 
         <div class="form-group">
-            <label for="login">Логин *</label>
+            <label for="login">Логин <span class="required-star">*</span></label>
             <input type="text" id="login" th:field="*{login}"
                    th:classappend="${#fields.hasErrors('login')} ? 'error-border' : ''" />
             <span th:if="${#fields.hasErrors('login')}" th:errors="*{login}" class="error-message">Ошибка</span>
@@ -52,7 +233,7 @@
         </div>
 
         <div class="form-group">
-            <label for="email">Email *</label>
+            <label for="email">Email <span class="required-star">*</span></label>
             <input type="email" id="email" th:field="*{email}"
                    th:classappend="${#fields.hasErrors('email')} ? 'error-border' : ''" />
             <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message">Ошибка</span>
@@ -60,9 +241,12 @@
         </div>
 
         <div class="form-group">
-            <label for="password">Пароль *</label>
-            <input type="password" id="password" th:field="*{password}"
-                   th:classappend="${#fields.hasErrors('password')} ? 'error-border' : ''" />
+            <label for="password">Пароль <span class="required-star">*</span></label>
+            <div class="password-wrapper">
+                <input type="password" id="password" th:field="*{password}"
+                       th:classappend="${#fields.hasErrors('password')} ? 'error-border' : ''" />
+                <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+            </div>
             <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-message">Ошибка</span>
         </div>
 
@@ -73,5 +257,21 @@
         Уже есть аккаунт? <a th:href="@{/auth/login}">Войти</a>
     </div>
 </div>
+
+<script>
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const icon = document.querySelector('#password + .toggle-password');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
 </body>
 </html>

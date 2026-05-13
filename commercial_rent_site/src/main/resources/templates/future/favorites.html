@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <title>Избранное | Аренда помещений</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        a { text-decoration: none; }
+
+        .catalog-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 100px 20px 60px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+            border-left: 4px solid #ff5722;
+            padding-left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .results-counter {
+            max-width: 1400px;
+            margin: 20px auto 0;
+            padding: 12px 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .counter-text {
+            font-size: 15px;
+            color: #666;
+        }
+        .counter-number {
+            font-weight: bold;
+            color: #ff5722;
+            font-size: 20px;
+        }
+
+        .catalog-grid {
+            max-width: 1400px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+        }
+
+        .premise-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .premise-card.inactive {
+            opacity: 0.7;
+            background: #fafafa;
+            order: 999;
+        }
+
+        .premise-card.inactive .info {
+            background: #fafafa;
+        }
+
+        .premise-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(255,152,0,0.2);
+        }
+
+        .inactive-badge {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        .photos-slider {
+            position: relative;
+            height: 260px;
+            overflow: hidden;
+            cursor: grab;
+            background: #f0f0f0;
+        }
+
+        .photos-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .photo-item {
+            min-width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .slider-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .photos-slider:hover .slider-arrow {
+            opacity: 0.9;
+        }
+
+        .slider-arrow:hover {
+            background: #ff5722;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .arrow-left { left: 10px; }
+        .arrow-right { right: 10px; }
+
+        .no-photo {
+            height: 260px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 18px;
+        }
+
+        .premise-card .area-badge,
+        .premise-card .capacity-badge {
+            position: absolute;
+            top: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 13px;
+            z-index: 15;
+        }
+        .premise-card .area-badge { left: 15px; }
+        .premise-card .capacity-badge { right: 15px; }
+
+        /* Кнопка-сердечко для удаления из избранного */
+        .favorite-remove-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            color: #ff5722;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 25;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .favorite-remove-btn i {
+            transition: transform 0.2s ease;
+        }
+        .favorite-remove-btn:hover {
+            background: #ff5722;
+            transform: scale(1.1);
+        }
+        .favorite-remove-btn:hover i {
+            color: white;
+            transform: scale(1.05);
+        }
+        .premise-card.inactive .favorite-remove-btn {
+            background: rgba(0,0,0,0.5);
+        }
+
+        .info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .type { font-size: 20px; font-weight: bold; text-transform: uppercase; margin: 0 0 10px 0; color: #ff9800; }
+        .amenities { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; font-size: 12px; color: #555; }
+        .amenities span { background: #f0f0f0; padding: 4px 10px; border-radius: 18px; }
+        .owner { font-size: 16px; margin: 12px 0 6px; font-weight: 500; color: #333; }
+        .address {
+            color: #777;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .availability {
+            background: #e8f5e9;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            border-left: 3px solid #4caf50;
+        }
+        .availability-label {
+            font-weight: 600;
+            color: #2e7d32;
+            display: block;
+            margin-bottom: 3px;
+            font-size: 11px;
+        }
+        .availability-dates {
+            color: #1b5e20;
+            font-weight: 500;
+            font-size: 12px;
+        }
+
+        .prices {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 12px 0;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .price-label {
+            color: #777;
+            font-weight: normal;
+        }
+        .price-value {
+            font-weight: bold;
+            color: #ff9800;
+            font-size: 15px;
+        }
+        .price-value.highlight {
+            color: #ff5722;
+            font-size: 16px;
+        }
+        .details-btn {
+            display: block;
+            text-align: right;
+            color: #ff9800;
+            font-weight: bold;
+            font-size: 15px;
+            margin-top: auto;
+        }
+        .details-btn:hover { text-decoration: underline; }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: white;
+            border-radius: 20px;
+        }
+        .empty-state i {
+            font-size: 64px;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        .empty-state p {
+            color: #999;
+            margin-bottom: 20px;
+        }
+        .empty-state a {
+            color: #ff5722;
+            font-weight: 600;
+        }
+
+        /* Пагинация */
+        .pagination {
+            max-width: 1400px;
+            margin: 40px auto 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0 20px;
+        }
+        .page-btn {
+            min-width: 44px;
+            height: 44px;
+            padding: 0 14px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            color: #555;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .page-btn:hover:not(:disabled) {
+            background: #fff0e8;
+            border-color: #ff5722;
+            color: #ff5722;
+            transform: scale(1.08);
+        }
+        .page-btn.active {
+            background: #ff5722;
+            border-color: #ff5722;
+            color: white;
+            transform: scale(1.05);
+        }
+        .page-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .page-dots {
+            padding: 0 8px;
+            color: #999;
+            font-size: 16px;
+            letter-spacing: 2px;
+        }
+        .page-info {
+            margin-left: 18px;
+            font-size: 14px;
+            color: #888;
+            background: #f5f5f5;
+            padding: 8px 16px;
+            border-radius: 30px;
+        }
+        .nav-arrow {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .catalog-grid { grid-template-columns: 1fr; }
+            .favorite-remove-btn { top: 10px; right: 10px; width: 36px; height: 36px; font-size: 18px; }
+            .slider-arrow { width: 30px; height: 30px; font-size: 18px; }
+            .pagination { gap: 6px; }
+            .page-btn { min-width: 38px; height: 38px; padding: 0 10px; font-size: 13px; }
+            .page-info { margin-left: 0; margin-top: 10px; width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div th:insert="~{fragments/header :: header(
+    currentUri=${currentUri},
+    headerClass='hd-header-fixed'
+)}"></div>
+
+<div class="catalog-content">
+    <div class="page-title">
+        <span><i class="fas fa-heart" style="color:#ff5722;"></i> Избранное</span>
+        <select id="sortSelect" style="padding: 8px 16px; border-radius: 25px; border: 1px solid #ddd; background: white; font-size: 14px; cursor: pointer;">
+            <option value="newest">📅 Новые (сначала новые)</option>
+            <option value="oldest">📅 Старые (сначала старые)</option>
+            <option value="price_asc">💰 Цена (сначала дешёвые)</option>
+            <option value="price_desc">💰 Цена (сначала дорогие)</option>
+            <option value="area_asc">📐 Площадь (сначала малые)</option>
+            <option value="area_desc">📐 Площадь (сначала большие)</option>
+            <option value="capacity_asc">👥 Вместимость (сначала малые)</option>
+            <option value="capacity_desc">👥 Вместимость (сначала большие)</option>
+        </select>
+    </div>
+
+    <div class="results-counter" id="resultsCounter">
+        <div class="counter-text">❤️ В избранном:</div>
+        <div>
+            <span class="counter-number" id="foundCount">0</span>
+        </div>
+    </div>
+
+    <div class="catalog-grid" id="catalogGrid">
+        <div class="empty-state">
+            <i class="fas fa-heart-broken"></i>
+            <p>У вас пока нет избранных объявлений</p>
+            <a href="/catalog">Перейти в каталог →</a>
+        </div>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<div id="fullscreen" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; cursor:pointer; align-items:center; justify-content:center;" onclick="this.style.display='none'">
+    <img id="fullImg" style="max-width:95%; max-height:95%; object-fit:contain;">
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    let typeInRussianMap = {};
+    let amenityInRussianMap = {};
+
+    const serverTypeInRussianRaw = /*[[${typeInRussian}]]*/ null;
+    const serverAmenityInRussianRaw = /*[[${amenityInRussian}]]*/ null;
+
+    if (serverTypeInRussianRaw && typeof serverTypeInRussianRaw === 'object') {
+        typeInRussianMap = serverTypeInRussianRaw;
+    }
+    if (serverAmenityInRussianRaw && typeof serverAmenityInRussianRaw === 'object') {
+        amenityInRussianMap = serverAmenityInRussianRaw;
+    }
+
+    function getTypeInRussian(type) {
+        if (!type) return '';
+        return typeInRussianMap[type] || type;
+    }
+
+    function getAmenityInRussian(amenity) {
+        if (!amenity) return '';
+        return amenityInRussianMap[amenity] || amenity;
+    }
+
+    let allPremises = [];
+    let currentSort = 'newest';
+    let currentPage = 1;
+    let itemsPerPage = 30;
+    let totalFilteredItems = 0;
+
+    function openFullscreen(src) {
+        document.getElementById('fullImg').src = src;
+        document.getElementById('fullscreen').style.display = 'flex';
+    }
+
+    // Функции для слайдера
+    function prevPhoto(btn) {
+        const slider = btn.parentElement;
+        const container = slider.querySelector('.photos-container');
+        let index = parseInt(container.dataset.current || 0);
+        const total = container.children.length;
+        if (index > 0) {
+            index--;
+            container.dataset.current = index;
+            container.style.transform = `translateX(-${index * 100}%)`;
+            updateArrowsVisibility(slider, index, total);
+        }
+    }
+
+    function nextPhoto(btn) {
+        const slider = btn.parentElement;
+        const container = slider.querySelector('.photos-container');
+        let index = parseInt(container.dataset.current || 0);
+        const total = container.children.length;
+        if (index < total - 1) {
+            index++;
+            container.dataset.current = index;
+            container.style.transform = `translateX(-${index * 100}%)`;
+            updateArrowsVisibility(slider, index, total);
+        }
+    }
+
+    function updateArrowsVisibility(slider, currentIndex, totalPhotos) {
+        const leftArrow = slider.querySelector('.arrow-left');
+        const rightArrow = slider.querySelector('.arrow-right');
+        if (leftArrow) {
+            leftArrow.style.opacity = currentIndex === 0 ? '0' : '0.9';
+            leftArrow.style.pointerEvents = currentIndex === 0 ? 'none' : 'auto';
+        }
+        if (rightArrow) {
+            rightArrow.style.opacity = currentIndex === totalPhotos - 1 ? '0' : '0.9';
+            rightArrow.style.pointerEvents = currentIndex === totalPhotos - 1 ? 'none' : 'auto';
+        }
+    }
+
+    function addArrowsToSlider(slider) {
+        const container = slider.querySelector('.photos-container');
+        const totalPhotos = container ? container.children.length : 0;
+        if (totalPhotos > 1 && !slider.querySelector('.arrow-left')) {
+            const leftArrow = document.createElement('div');
+            leftArrow.className = 'slider-arrow arrow-left';
+            leftArrow.innerHTML = '‹';
+            leftArrow.onclick = (e) => { e.stopPropagation(); prevPhoto(leftArrow); };
+            const rightArrow = document.createElement('div');
+            rightArrow.className = 'slider-arrow arrow-right';
+            rightArrow.innerHTML = '›';
+            rightArrow.onclick = (e) => { e.stopPropagation(); nextPhoto(rightArrow); };
+            slider.appendChild(leftArrow);
+            slider.appendChild(rightArrow);
+            container.dataset.current = '0';
+            container.style.transform = 'translateX(0%)';
+        }
+    }
+
+    // Сортировка
+    function sortPremises() {
+        const sorted = [...allPremises];
+
+        switch(currentSort) {
+            case 'newest':
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+            case 'oldest':
+                sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+            case 'price_asc':
+                sorted.sort((a, b) => (a.priceWeekday || 0) - (b.priceWeekday || 0));
+                break;
+            case 'price_desc':
+                sorted.sort((a, b) => (b.priceWeekday || 0) - (a.priceWeekday || 0));
+                break;
+            case 'area_asc':
+                sorted.sort((a, b) => (a.area || 0) - (b.area || 0));
+                break;
+            case 'area_desc':
+                sorted.sort((a, b) => (b.area || 0) - (a.area || 0));
+                break;
+            case 'capacity_asc':
+                sorted.sort((a, b) => (a.capacity || 0) - (b.capacity || 0));
+                break;
+            case 'capacity_desc':
+                sorted.sort((a, b) => (b.capacity || 0) - (a.capacity || 0));
+                break;
+            default:
+                sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        // Неактивные объявления в конец списка
+        sorted.sort((a, b) => {
+            if (a.active === b.active) return 0;
+            if (!a.active && b.active) return 1;
+            if (a.active && !b.active) return -1;
+            return 0;
+        });
+
+        return sorted;
+    }
+
+    function renderCards() {
+        const container = document.getElementById('catalogGrid');
+        const sorted = sortPremises();
+        totalFilteredItems = sorted.length;
+        document.getElementById('foundCount').textContent = totalFilteredItems;
+
+        const startIdx = (currentPage - 1) * itemsPerPage;
+        const endIdx = startIdx + itemsPerPage;
+        const pagePremises = sorted.slice(startIdx, endIdx);
+
+        if (pagePremises.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-heart-broken"></i>
+                    <p>У вас пока нет избранных объявлений</p>
+                    <a href="/catalog">Перейти в каталог →</a>
+                </div>
+            `;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = pagePremises.map(p => `
+            <div class="premise-card ${!p.active ? 'inactive' : ''}" data-id="${p.id}">
+                ${!p.active ? '<div class="inactive-badge"><i class="fas fa-eye-slash"></i> Снято с публикации</div>' : ''}
+                <div class="top-badges" style="position: absolute; top: 15px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 15px; z-index: 15; pointer-events: none;">
+                    <span class="area-badge" style="position: relative; top: 0; left: 0;">${p.area || 0} м²</span>
+                    <span class="capacity-badge" style="position: relative; top: 0; right: 0;">${p.capacity || 0} чел.</span>
+                </div>
+                ${p.photoPaths && p.photoPaths.length > 0 ? `
+                    <div class="photos-slider">
+                        <div class="photos-container">
+                            ${p.photoPaths.map(photo => `<img src="/uploads/${photo}" class="photo-item" onclick="openFullscreen(this.src)" onerror="this.src='/images/no-photo.jpg';">`).join('')}
+                        </div>
+                        <button class="favorite-remove-btn" onclick="removeFromFavorites(${p.id})" title="Удалить из избранного">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                ` : '<div class="no-photo">📷 Нет фото</div>'}
+                <div class="info">
+                    <div class="type">${getTypeInRussian(p.type) || p.type || ''}</div>
+                    <div class="amenities">
+                        ${p.amenities && p.amenities.length > 0 ? p.amenities.map(a => `<span>${getAmenityInRussian(a)}</span>`).join('') : ''}
+                    </div>
+                    <div class="owner">${p.contactFirstName || ''} ${p.contactLastName || ''}</div>
+                    <div class="address">${p.region || ''}, ${p.city || ''}, ${p.street || ''} ${p.building || ''}</div>
+                    <div class="availability">
+                        <span class="availability-label">📅 Доступно:</span>
+                        <span class="availability-dates">
+                            ${p.availableFrom ? new Date(p.availableFrom).toLocaleDateString('ru-RU') : '—'} —
+                            ${p.availableTo ? new Date(p.availableTo).toLocaleDateString('ru-RU') : '—'}
+                        </span>
+                    </div>
+                    <div class="prices">
+                        ${(p.priceWeekend && p.priceWeekend > 0) || (p.priceHoliday && p.priceHoliday > 0) ? `
+                            <div class="price-row">
+                                <span class="price-label">Будни:</span>
+                                <span class="price-value">${p.priceWeekday || 0} ₽</span>
+                            </div>
+                            ${p.priceWeekend && p.priceWeekend > 0 ? `
+                            <div class="price-row">
+                                <span class="price-label">Выходные:</span>
+                                <span class="price-value highlight">${p.priceWeekend} ₽</span>
+                            </div>
+                            ` : ''}
+                            ${p.priceHoliday && p.priceHoliday > 0 ? `
+                            <div class="price-row">
+                                <span class="price-label">Праздники:</span>
+                                <span class="price-value highlight">${p.priceHoliday} ₽</span>
+                            </div>
+                            ` : ''}
+                        ` : `
+                            <div class="price-row">
+                                <span class="price-label">Цена за сутки:</span>
+                                <span class="price-value highlight">${p.priceWeekday || 0} ₽</span>
+                            </div>
+                        `}
+                    </div>
+                    <a href="/premise/${p.id}" class="details-btn">Подробнее →</a>
+                </div>
+            </div>
+        `).join('');
+
+        // Инициализация слайдеров
+        document.querySelectorAll('.photos-slider').forEach(slider => {
+            const containerEl = slider.querySelector('.photos-container');
+            if (containerEl && containerEl.children.length > 0) {
+                containerEl.dataset.current = '0';
+                containerEl.style.transform = 'translateX(0%)';
+                addArrowsToSlider(slider);
+            }
+        });
+
+        renderPagination();
+    }
+
+    function renderPagination() {
+        const paginationDiv = document.getElementById('pagination');
+        const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
+
+        if (totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+            return;
+        }
+
+        let paginationHtml = '';
+        paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+            <span class="nav-arrow">←</span> Назад
+        </button>`;
+
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+        } else {
+            if (currentPage <= 4) {
+                for (let i = 1; i <= 5; i++) {
+                    paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                }
+                paginationHtml += `<span class="page-dots">...</span>`;
+                paginationHtml += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            } else if (currentPage >= totalPages - 3) {
+                paginationHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+                paginationHtml += `<span class="page-dots">...</span>`;
+                for (let i = totalPages - 4; i <= totalPages; i++) {
+                    paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                }
+            } else {
+                paginationHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+                paginationHtml += `<span class="page-dots">...</span>`;
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                }
+                paginationHtml += `<span class="page-dots">...</span>`;
+                paginationHtml += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+        }
+
+        paginationHtml += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+            Вперёд <span class="nav-arrow">→</span>
+        </button>`;
+
+        paginationHtml += `<span class="page-info">Страница ${currentPage} из ${totalPages}</span>`;
+
+        paginationDiv.innerHTML = paginationHtml;
+    }
+
+    function goToPage(page) {
+        const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        renderCards();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function loadFavorites() {
+        try {
+            const response = await fetch('/api/favorites');
+            allPremises = await response.json();
+            currentPage = 1;
+            renderCards();
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+        }
+    }
+
+    async function removeFromFavorites(premiseId) {
+        try {
+            const response = await fetch(`/api/favorites/toggle/${premiseId}`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) {
+                allPremises = allPremises.filter(p => p.id !== premiseId);
+                // Если текущая страница стала пустой, переходим на предыдущую
+                const totalPages = Math.ceil(allPremises.length / itemsPerPage);
+                if (currentPage > totalPages && totalPages > 0) {
+                    currentPage = totalPages;
+                } else if (allPremises.length === 0) {
+                    currentPage = 1;
+                }
+                renderCards();
+                // Обновляем бейдж в профиле
+                localStorage.setItem('favoritesCount', allPremises.length);
+            }
+        } catch (error) {
+            console.error('Error removing from favorites:', error);
+        }
+    }
+
+    // Сортировка
+    document.getElementById('sortSelect')?.addEventListener('change', function(e) {
+        currentSort = e.target.value;
+        currentPage = 1;
+        renderCards();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFavorites();
+    });
+
+    window.openFullscreen = openFullscreen;
+    window.removeFromFavorites = removeFromFavorites;
+    window.goToPage = goToPage;
+    window.prevPhoto = prevPhoto;
+    window.nextPhoto = nextPhoto;
+    /*]]>*/
+</script>
+</body>
+</html>

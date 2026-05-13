@@ -143,6 +143,38 @@
             transform: translateY(-2px);
         }
 
+        /* Кнопка избранного */
+        .favorite-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            color: #ff5722;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #ff5722;
+        }
+        .favorite-btn:hover {
+            background: #ff5722;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .favorite-btn.active {
+            background: #ff5722;
+            color: white;
+        }
+        .favorite-btn.active i {
+            color: white;
+        }
+        .favorite-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 420px;
@@ -860,7 +892,7 @@
             .details-grid { grid-template-columns: 1fr; }
             .detail-item.full-width { grid-column: span 1; }
             .top-buttons { flex-direction: column; align-items: stretch; gap: 10px; }
-            .edit-btn, .owner-profile-btn, .complaint-btn, .unpublish-btn, .publish-btn, .admin-delete-btn { margin-left: 0; justify-content: center; }
+            .edit-btn, .owner-profile-btn, .complaint-btn, .unpublish-btn, .publish-btn, .admin-delete-btn, .favorite-btn { margin-left: 0; justify-content: center; }
             .comment-actions { justify-content: flex-start; }
             .booking-item { flex-direction: column; align-items: flex-start; }
             .cancel-booking-btn { margin-top: 10px; align-self: flex-start; }
@@ -1073,6 +1105,14 @@
             <a th:href="@{/profile(username=${ownerLogin})}" class="owner-profile-btn">
                 <i class="fas fa-user-circle"></i> Профиль владельца
             </a>
+
+            <!-- Кнопка "В избранное" - для авторизованных пользователей (кроме владельца) -->
+            <button th:if="${#authorization.expression('isAuthenticated()') and !isOwner}"
+                    id="favoriteBtn"
+                    class="favorite-btn"
+                    onclick="toggleFavorite()">
+                <i class="fas fa-heart"></i> В избранное
+            </button>
 
             <!-- Кнопка Снять с публикации / Опубликовать - для владельца -->
             <button th:if="${isOwner and premise.active}"
@@ -1610,6 +1650,58 @@
         window.location.href = '/chats/premise/' + premiseId;
     }
 
+    // ======================== ИЗБРАННОЕ ========================
+    async function checkFavoriteStatus() {
+        try {
+            const response = await fetch(`/api/favorites/check/${premiseId}`);
+            const data = await response.json();
+
+            const favoriteBtn = document.getElementById('favoriteBtn');
+            if (favoriteBtn && data.isFavorite) {
+                favoriteBtn.classList.add('active');
+                favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> В избранном';
+            }
+        } catch (error) {
+            console.error('Error checking favorite status:', error);
+        }
+    }
+
+    async function toggleFavorite() {
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        if (!favoriteBtn) return;
+
+        const originalHtml = favoriteBtn.innerHTML;
+        favoriteBtn.disabled = true;
+        favoriteBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка...';
+
+        try {
+            const response = await fetch(`/api/favorites/toggle/${premiseId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.isFavorite) {
+                    favoriteBtn.classList.add('active');
+                    favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> В избранном';
+                } else {
+                    favoriteBtn.classList.remove('active');
+                    favoriteBtn.innerHTML = '<i class="fas fa-heart"></i> В избранное';
+                }
+                showNotification(data.message);
+            } else {
+                showNotification(data.message || 'Ошибка', true);
+                favoriteBtn.innerHTML = originalHtml;
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            showNotification('Не удалось изменить статус избранного', true);
+            favoriteBtn.innerHTML = originalHtml;
+        } finally {
+            favoriteBtn.disabled = false;
+        }
+    }
+
     // ======================== УПРАВЛЕНИЕ ПУБЛИКАЦИЕЙ ========================
     function togglePublish(active) {
         const action = active ? 'опубликовать' : 'снять с публикации';
@@ -2034,6 +2126,7 @@
         initPhotoSlider();
         if (premiseId) {
             loadComments();
+            checkFavoriteStatus(); // Проверяем статус избранного
         }
     });
 </script>

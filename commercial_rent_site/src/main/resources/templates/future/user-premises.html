@@ -483,6 +483,26 @@
         .booking-user a:hover {
             text-decoration: underline;
         }
+        .booking-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .cancel-booking-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .cancel-booking-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
         .booking-chat-link {
             display: inline-block;
             margin-top: 8px;
@@ -536,6 +556,7 @@
             .card-buttons { flex-direction: column; }
             .top-badges { padding: 0 10px; }
             .area-badge, .capacity-badge { padding: 4px 8px; font-size: 11px; }
+            .booking-actions { justify-content: flex-start; }
         }
     </style>
 </head>
@@ -727,6 +748,28 @@
         return date.toLocaleDateString('ru-RU');
     }
 
+    // Функция для отмены бронирования из модального окна
+    async function cancelBookingFromModal(bookingId) {
+        if (!confirm('Вы уверены, что хотите отменить эту аренду? Это действие нельзя отменить.')) return;
+
+        try {
+            const response = await fetch(`/api/bookings/${bookingId}/cancel-by-owner`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('Аренда отменена');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при отмене', true);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Не удалось отменить аренду', true);
+        }
+    }
+
     function showBookingsModal(premiseId, premiseTitle) {
         if (!isOwnProfile) return;
 
@@ -735,7 +778,7 @@
 
         document.getElementById('modalPremiseTitle').innerHTML = `<i class="fas fa-building"></i> ${premiseTitle}`;
 
-        // Подтверждённые аренды
+        // Подтверждённые аренды - с кнопкой отмены
         const approvedBookings = premise.bookings || [];
         const approvedContainer = document.getElementById('approvedBookingsList');
         if (approvedBookings.length === 0) {
@@ -750,14 +793,19 @@
                         <i class="fas fa-user"></i> Арендатор:
                         <a href="/profile?username=${encodeURIComponent(booking.renterName)}">${escapeHtml(booking.renterName)}</a>
                     </div>
-                    <a href="/chats/with/${encodeURIComponent(booking.renterName)}/premise/${premiseId}" class="booking-chat-link">
-                        <i class="fas fa-comment-dots"></i> Перейти в чат
-                    </a>
+                    <div class="booking-actions">
+                        <button class="cancel-booking-btn" onclick="cancelBookingFromModal(${booking.id})">
+                            <i class="fas fa-times"></i> Отменить аренду
+                        </button>
+                        <a href="/chats/with/${encodeURIComponent(booking.renterName)}/premise/${premiseId}" class="booking-chat-link" style="background: #2196f3; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-comment-dots"></i> Чат
+                        </a>
+                    </div>
                 </div>
             `).join('');
         }
 
-        // Ожидающие аренды
+        // Ожидающие аренды - без кнопки отмены (только чат)
         const pendingBookings = premise.pendingBookings || [];
         const pendingContainer = document.getElementById('pendingBookingsList');
         if (pendingBookings.length === 0) {
@@ -772,9 +820,11 @@
                         <i class="fas fa-user"></i> Арендатор:
                         <a href="/profile?username=${encodeURIComponent(booking.renterName)}">${escapeHtml(booking.renterName)}</a>
                     </div>
-                    <a href="/chats/with/${encodeURIComponent(booking.renterName)}/premise/${premiseId}" class="booking-chat-link">
-                        <i class="fas fa-comment-dots"></i> Перейти в чат
-                    </a>
+                    <div class="booking-actions">
+                        <a href="/chats/with/${encodeURIComponent(booking.renterName)}/premise/${premiseId}" class="booking-chat-link" style="background: #2196f3; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-comment-dots"></i> Чат
+                        </a>
+                    </div>
                 </div>
             `).join('');
         }
@@ -866,13 +916,11 @@
                 `;
             }
 
-            // ==================== ИСПРАВЛЕННЫЙ БЛОК ЦЕН ====================
+            // ==================== БЛОК ЦЕН ====================
             let pricesHtml = '';
-            // Проверяем, есть ли разная цена (указаны выходные ИЛИ праздники)
             const hasDifferentPrices = (premise.priceWeekend && premise.priceWeekend > 0) || (premise.priceHoliday && premise.priceHoliday > 0);
 
             if (hasDifferentPrices) {
-                // Если есть разная цена - показываем отдельно будни/выходные/праздники
                 pricesHtml = `
                     <div class="price-row">
                         <span class="price-label">Будни:</span>
@@ -896,7 +944,6 @@
                     `;
                 }
             } else {
-                // Иначе показываем единую цену за сутки
                 pricesHtml = `
                     <div class="price-row">
                         <span class="price-label">Цена за сутки:</span>
@@ -1046,6 +1093,25 @@
         return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
     }
 
+    function showNotification(message, isError = false) {
+        const notification = document.createElement('div');
+        notification.style.position = 'fixed';
+        notification.style.bottom = '20px';
+        notification.style.right = '20px';
+        notification.style.background = isError ? '#f44336' : '#4caf50';
+        notification.style.color = 'white';
+        notification.style.padding = '12px 20px';
+        notification.style.borderRadius = '10px';
+        notification.style.zIndex = '10001';
+        notification.style.animation = 'slideIn 0.3s ease';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
     document.getElementById('sortSelect').addEventListener('change', function(e) {
         currentSort = e.target.value;
         sortPremises();
@@ -1075,7 +1141,13 @@
     if (isOwnProfile) {
         window.showBookingsModal = showBookingsModal;
         window.closeBookingsModal = closeBookingsModal;
+        window.cancelBookingFromModal = cancelBookingFromModal;
     }
+
+    // Добавляем стиль анимации для уведомлений
+    const style = document.createElement('style');
+    style.textContent = `@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+    document.head.appendChild(style);
     /*]]>*/
 </script>
 </body>
