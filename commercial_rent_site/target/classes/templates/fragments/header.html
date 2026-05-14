@@ -12,6 +12,7 @@
                 <i class="fas fa-home"></i>
             </a>
             <a href="/about">О нас</a>
+            <a href="/catalog">Каталог</a>
         </div>
 
         <div class="hd-nav-right">
@@ -22,27 +23,53 @@
                     <span th:if="${unreadNotificationsCount > 0}" class="hd-notification-badge" th:text="${unreadNotificationsCount}"></span>
                 </a>
 
-                <!-- Профиль пользователя -->
+                <!-- Профиль пользователя с выпадающим меню -->
                 <div class="hd-user-profile" id="hdUserProfile">
                     <a th:href="@{/profile}" class="hd-user-info">
                         <span class="hd-user-avatar">👤</span>
                         <span class="hd-user-name" th:text="${#authentication.name}"></span>
                     </a>
                     <div class="hd-dropdown-menu" id="hdDropdownMenu">
-                        <a th:href="@{/profile}" class="hd-dropdown-item">
-                            <i class="fas fa-user-circle"></i> Мой профиль
-                        </a>
-                        <a th:href="@{/premise/add}" class="hd-dropdown-item">
-                            <i class="fas fa-plus-circle"></i> Сдать помещение
-                        </a>
-                        <a th:href="@{/catalog}" class="hd-dropdown-item">
-                            <i class="fas fa-search"></i> Каталог
-                        </a>
+                        <!-- Уведомления -->
                         <a th:href="@{/notifications}" class="hd-dropdown-item">
                             <i class="fas fa-bell"></i> Уведомления
                             <span th:if="${unreadNotificationsCount > 0}" class="hd-notification-badge" th:text="${unreadNotificationsCount}"></span>
                         </a>
+
+                        <!-- Мой профиль -->
+                        <a th:href="@{/profile}" class="hd-dropdown-item">
+                            <i class="fas fa-user-circle"></i> Мой профиль
+                        </a>
+
+                        <!-- Сообщения и чаты с бейджем -->
+                        <a th:href="@{/chats}" class="hd-dropdown-item" id="hdChatsLink">
+                            <i class="fas fa-comments"></i> Сообщения и чаты
+                            <span id="hdChatsBadge" class="hd-chat-badge" style="display: none;"></span>
+                        </a>
+
+                        <!-- Избранное -->
+                        <a th:href="@{/profile/favorites}" class="hd-dropdown-item">
+                            <i class="fas fa-heart"></i> Избранное
+                        </a>
+
+                        <!-- Сдать помещение -->
+                        <a th:href="@{/premise/add}" class="hd-dropdown-item">
+                            <i class="fas fa-plus-circle"></i> Сдать помещение
+                        </a>
+
+                        <!-- Мои объявления -->
+                        <a th:href="@{/profile/{username}/premises(username=${#authentication.name})}" class="hd-dropdown-item">
+                            <i class="fas fa-key"></i> Мои объявления
+                        </a>
+
+                        <!-- Мои аренды -->
+                        <a th:href="@{/my-rentals}" class="hd-dropdown-item">
+                            <i class="fas fa-building"></i> Мои аренды
+                        </a>
+
                         <div class="hd-dropdown-divider"></div>
+
+                        <!-- Выход -->
                         <form th:action="@{/logout}" method="post" class="hd-logout-form">
                             <button type="submit" class="hd-logout-btn-dropdown">
                                 <i class="fas fa-sign-out-alt"></i> Выйти
@@ -61,19 +88,123 @@
 </th:block>
 
 <script>
-    // Для мобильных устройств - по клику, а не по наведению
-    document.addEventListener('DOMContentLoaded', function() {
-        const userProfile = document.getElementById('hdUserProfile');
-        if (userProfile && window.innerWidth <= 768) {
-            userProfile.addEventListener('click', function(e) {
-                e.stopPropagation();
-                this.classList.toggle('active');
-            });
-            document.addEventListener('click', function() {
-                userProfile.classList.remove('active');
-            });
+    // УЛУЧШЕННАЯ ВЕРСИЯ ДЛЯ ХЕДЕРА
+    (function() {
+        // Функция обновления бейджа
+        function updateChatBadge() {
+            const badgeElement = document.getElementById('hdChatsBadge');
+            if (!badgeElement) {
+                console.warn('Header: badge element not found');
+                return;
+            }
+
+            const unreadCount = localStorage.getItem('unreadChatsCount');
+            const count = unreadCount ? parseInt(unreadCount) : 0;
+
+            if (count > 0) {
+                badgeElement.textContent = count;
+                badgeElement.style.display = 'inline-flex';
+                console.log('Header badge updated:', count);
+            } else {
+                badgeElement.style.display = 'none';
+                badgeElement.textContent = '0';
+            }
         }
-    });
+
+        // Загрузка количества непрочитанных чатов
+        async function loadUnreadChatsCount() {
+            try {
+                const response = await fetch('/chats/api/chats', {
+                    credentials: 'include',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+
+                if (response.ok) {
+                    const chats = await response.json();
+                    // Подсчитываем количество чатов с непрочитанными сообщениями
+                    const chatsWithUnread = chats.filter(chat => chat.unreadCount && chat.unreadCount > 0).length;
+
+                    if (localStorage.getItem('unreadChatsCount') != chatsWithUnread) {
+                        localStorage.setItem('unreadChatsCount', chatsWithUnread);
+                        updateChatBadge();
+                        // Триггерим событие для синхронизации с другими страницами
+                        window.dispatchEvent(new CustomEvent('unreadChatsUpdate', {
+                            detail: { count: chatsWithUnread }
+                        }));
+                    } else {
+                        updateChatBadge();
+                    }
+                    console.log('Header loaded unread chats:', chatsWithUnread);
+                } else if (response.status === 401) {
+                    // Не авторизован - очищаем бейдж
+                    localStorage.removeItem('unreadChatsCount');
+                    updateChatBadge();
+                } else {
+                    console.warn('Header: chats API returned', response.status);
+                    updateChatBadge(); // Показываем то, что есть
+                }
+            } catch (error) {
+                console.error('Header error loading chats count:', error);
+                updateChatBadge(); // Fallback на localStorage
+            }
+        }
+
+        // Для мобильных устройств
+        function initMobileMenu() {
+            const userProfile = document.getElementById('hdUserProfile');
+            if (userProfile && window.innerWidth <= 768) {
+                userProfile.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.classList.toggle('active');
+                });
+                document.addEventListener('click', function() {
+                    userProfile.classList.remove('active');
+                });
+            }
+
+            // Добавляем hover для десктопа
+            if (userProfile && window.innerWidth > 768) {
+                userProfile.addEventListener('mouseenter', function() {
+                    this.classList.add('active');
+                });
+                userProfile.addEventListener('mouseleave', function() {
+                    this.classList.remove('active');
+                });
+            }
+        }
+
+        // Запуск при загрузке страницы
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initMobileMenu();
+                loadUnreadChatsCount();
+                setInterval(loadUnreadChatsCount, 10000);
+            });
+        } else {
+            // DOM уже загружен
+            initMobileMenu();
+            loadUnreadChatsCount();
+            setInterval(loadUnreadChatsCount, 10000);
+        }
+
+        // Слушаем событие обновления из других страниц
+        window.addEventListener('unreadChatsUpdate', function(e) {
+            if (e.detail && e.detail.count !== undefined) {
+                localStorage.setItem('unreadChatsCount', e.detail.count);
+            }
+            updateChatBadge();
+        });
+
+        // Обновляем при возвращении на страницу
+        window.addEventListener('focus', function() {
+            loadUnreadChatsCount();
+        });
+
+        // Экспортируем для отладки
+        window.debugHeaderBadge = { updateChatBadge, loadUnreadChatsCount };
+    })();
 </script>
 
 </body>

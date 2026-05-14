@@ -219,6 +219,24 @@
     margin-left: 8px;
 }
 
+/* ====================== БЕЙДЖ ДЛЯ ЧАТОВ ====================== */
+.hd-chat-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff5722;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 20px;
+    text-align: center;
+    line-height: 1;
+    margin-left: 8px;
+}
+
 .hd-header.hd-header-fixed .hd-notification-btn .hd-notification-badge {
     background: #ff5722;
     color: white;

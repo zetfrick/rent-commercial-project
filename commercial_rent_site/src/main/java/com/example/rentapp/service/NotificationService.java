@@ -70,6 +70,7 @@ public class NotificationService {
 
             if (subject != null && emailBody != null) {
                 SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom("zetfrick@mail.ru");
                 message.setTo(user.getEmail());
                 message.setSubject(subject);
                 message.setText(emailBody);

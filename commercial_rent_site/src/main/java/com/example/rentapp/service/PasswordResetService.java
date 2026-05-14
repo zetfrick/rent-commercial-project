@@ -79,6 +79,7 @@ public class PasswordResetService {
 
     private void sendResetCodeEmail(String email, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("zetfrick@mail.ru");
         message.setTo(email);
         message.setSubject("🔐 Восстановление пароля - Аренда помещений");
         message.setText("Здравствуйте!\n\n" +
@@ -134,6 +135,7 @@ public class PasswordResetService {
 
     private void sendChangePasswordCodeEmail(String email, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("zetfrick@mail.ru");
         message.setTo(email);
         message.setSubject("🔑 Смена пароля - Аренда помещений");
         message.setText("Здравствуйте!\n\n" +
