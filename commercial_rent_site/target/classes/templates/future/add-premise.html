@@ -5,6 +5,7 @@
     <title>Сдать помещение в аренду</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://api-maps.yandex.ru/2.1/?apikey=4a02e3e8-33bf-4c35-ab01-4edcc2923896&lang=ru_RU" type="text/javascript"></script>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; }
@@ -258,6 +259,176 @@
         .date-error {
             border: 2px solid #ff5722 !important;
             background: rgba(255, 87, 34, 0.15) !important;
+            color: #ffffff !important;
+        }
+
+        .date-error::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .date-error-message {
+            color: #ff5722;
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: left;
+            padding-left: 5px;
+            display: block;
+        }
+
+        /* Кастомный календарь */
+        .date-picker-wrapper {
+            position: relative;
+        }
+
+        .calendar-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #ff5722;
+            font-size: 20px;
+            padding: 0 5px;
+            z-index: 10;
+        }
+
+        .custom-calendar {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            width: 300px;
+            margin-top: 5px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .custom-calendar.active {
+            display: block;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .calendar-month-year {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 16px;
+        }
+
+        .calendar-nav span {
+            cursor: pointer;
+            font-size: 18px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .calendar-nav span:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            padding: 10px 0;
+            background: #f8f9fa;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            padding: 8px;
+            gap: 4px;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 8px 4px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s;
+            color: #333; /* ДОБАВИТЬ ЭТУ СТРОКУ */
+            background: white; /* ДОБАВИТЬ ЭТУ СТРОКУ */
+        }
+
+        .calendar-day:hover {
+            background: #fff0e8 !important;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.selected {
+            background: #ff5722 !important;
+            color: white !important;
+        }
+
+        .calendar-day.disabled {
+            color: #f44336 !important;
+            background: #ffebee !important;
+            cursor: not-allowed;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .calendar-day.disabled:hover {
+            background: #ffebee !important;
+            transform: none;
+        }
+
+        .calendar-day.other-month {
+            color: #bbb !important;
+            background: #f5f5f5 !important;
+            opacity: 0.6;
+        }
+
+        .calendar-footer {
+            padding: 10px 16px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .calendar-today-btn {
+            background: none;
+            border: none;
+            color: #ff5722;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .calendar-today-btn:hover {
+            background: #fff0e8;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -352,17 +523,26 @@
                     </div>
                 </div>
 
-                <!-- Даты -->
+                <!-- Даты с кастомным календарём -->
                 <div class="row">
                     <div class="col">
                         <label class="required">Доступно с</label>
-                        <input type="date" id="availableFrom" name="availableFrom" required>
+                        <div class="date-picker-wrapper">
+                            <input type="text" id="availableFrom" name="availableFrom" placeholder="ДД.ММ.ГГГГ" maxlength="10" required autocomplete="off">
+                            <i class="fas fa-calendar-alt calendar-icon" data-target="from"></i>
+                            <div id="calendarFrom" class="custom-calendar"></div>
+                        </div>
                     </div>
                     <div class="col">
                         <label class="required">Доступно по</label>
-                        <input type="date" id="availableTo" name="availableTo" required>
+                        <div class="date-picker-wrapper">
+                            <input type="text" id="availableTo" name="availableTo" placeholder="ДД.ММ.ГГГГ" maxlength="10" required autocomplete="off">
+                            <i class="fas fa-calendar-alt calendar-icon" data-target="to"></i>
+                            <div id="calendarTo" class="custom-calendar"></div>
+                        </div>
                     </div>
                 </div>
+                <div id="dateErrorContainer" class="date-error-message" style="display: none;"></div>
 
                 <!-- АДРЕС + КАРТА -->
                 <div id="addressSection">
@@ -583,61 +763,399 @@
         }, 4500);
     }
 
-    // ==================== ВАЛИДАЦИЯ ДАТ ====================
-    function validateDates() {
-        const fromDate = document.getElementById('availableFrom').value;
-        const toDate = document.getElementById('availableTo').value;
+    // ==================== КАСТОМНЫЙ КАЛЕНДАРЬ ====================
+
+    let currentFromDate = null;
+    let currentToDate = null;
+    let activeCalendar = null;
+
+    // Форматирование даты ДД.ММ.ГГГГ
+    function formatDate(date) {
+        if (!date) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+    }
+
+    // Парсинг даты из ДД.ММ.ГГГГ
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        const parts = dateStr.split('.');
+        if (parts.length !== 3) return null;
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+        const date = new Date(year, month, day);
+        if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) return null;
+        return date;
+    }
+
+    // Получение минимальной даты для календаря
+    function getMinDate() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+    }
+
+    // Получение максимальной даты для "Доступно по"
+    function getMaxDateForTo() {
+        if (currentFromDate) {
+            const maxDate = new Date(currentFromDate);
+            maxDate.setFullYear(maxDate.getFullYear() + 10);
+            return maxDate;
+        }
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + 10);
+        return maxDate;
+    }
+
+    // Получение минимальной даты для "Доступно по"
+    function getMinDateForTo() {
+        if (currentFromDate) {
+            return currentFromDate;
+        }
+        return getMinDate();
+    }
+
+    // Получение максимальной даты для "Доступно с"
+    function getMaxDateForFrom() {
+        if (currentToDate) {
+            return currentToDate;
+        }
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + 10);
+        return maxDate;
+    }
+
+    // Рендер календаря
+    function renderCalendar(calendarId, targetDate, onSelect, minDate, maxDate) {
+        const calendar = document.getElementById(calendarId);
+        if (!calendar) return;
+
+        const now = targetDate ? new Date(targetDate) : new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        const startDayOfWeek = firstDayOfMonth.getDay();
+        const daysInMonth = lastDayOfMonth.getDate();
+
+        // Получаем дни предыдущего месяца для заполнения
+        const prevMonthLastDay = new Date(year, month, 0);
+        const daysFromPrevMonth = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+
+        let days = [];
+
+        // Добавляем дни предыдущего месяца
+        for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
+            const date = new Date(year, month - 1, prevMonthLastDay.getDate() - i);
+            days.push({ date, isCurrentMonth: false });
+        }
+
+        // Добавляем дни текущего месяца
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(year, month, i);
+            days.push({ date, isCurrentMonth: true });
+        }
+
+        // Добавляем дни следующего месяца (до 42 дней всего)
+        const remainingDays = 42 - days.length;
+        for (let i = 1; i <= remainingDays; i++) {
+            const date = new Date(year, month + 1, i);
+            days.push({ date, isCurrentMonth: false });
+        }
+
+        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+        let html = `
+            <div class="calendar-header">
+                <div class="calendar-month-year">${monthNames[month]} ${year}</div>
+                <div class="calendar-nav">
+                    <span class="calendar-prev"><i class="fas fa-chevron-left"></i></span>
+                    <span class="calendar-next"><i class="fas fa-chevron-right"></i></span>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                ${weekdays.map(day => `<div>${day}</div>`).join('')}
+            </div>
+            <div class="calendar-days">
+        `;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        days.forEach(({ date, isCurrentMonth }) => {
+            const dateStr = formatDate(date);
+            const isDisabled = (minDate && date < minDate) || (maxDate && date > maxDate);
+            const isSelected = targetDate && formatDate(targetDate) === dateStr;
+            const isToday = formatDate(today) === dateStr;
+
+            let classes = 'calendar-day';
+            if (!isCurrentMonth) classes += ' other-month';
+            if (isDisabled) classes += ' disabled';
+            if (isSelected) classes += ' selected';
+
+            html += `<div class="${classes}" data-date="${dateStr}" data-timestamp="${date.getTime()}">${date.getDate()}</div>`;
+        });
+
+        html += `
+            </div>
+            <div class="calendar-footer">
+                <button class="calendar-today-btn">Сегодня</button>
+            </div>
+        `;
+
+        calendar.innerHTML = html;
+
+        // Добавляем обработчики событий
+        calendar.querySelectorAll('.calendar-day:not(.disabled)').forEach(day => {
+            day.addEventListener('click', () => {
+                const dateStr = day.dataset.date;
+                onSelect(dateStr);
+                calendar.classList.remove('active');
+                activeCalendar = null;
+            });
+        });
+
+        calendar.querySelector('.calendar-prev')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newDate = new Date(year, month - 1, 1);
+            renderCalendar(calendarId, newDate, onSelect, minDate, maxDate);
+        });
+
+        calendar.querySelector('.calendar-next')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newDate = new Date(year, month + 1, 1);
+            renderCalendar(calendarId, newDate, onSelect, minDate, maxDate);
+        });
+
+        calendar.querySelector('.calendar-today-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0);
+            if ((!minDate || todayDate >= minDate) && (!maxDate || todayDate <= maxDate)) {
+                onSelect(formatDate(todayDate));
+                calendar.classList.remove('active');
+                activeCalendar = null;
+            }
+        });
+    }
+
+    // Инициализация календарей
+    function initCalendars() {
         const fromInput = document.getElementById('availableFrom');
         const toInput = document.getElementById('availableTo');
+        const fromCalendar = document.getElementById('calendarFrom');
+        const toCalendar = document.getElementById('calendarTo');
+        const fromIcon = document.querySelector('.calendar-icon[data-target="from"]');
+        const toIcon = document.querySelector('.calendar-icon[data-target="to"]');
 
-        if (fromDate && toDate) {
-            if (fromDate > toDate) {
-                fromInput.classList.add('date-error');
-                toInput.classList.add('date-error');
-                showNotification('Дата начала не может быть позже даты окончания!', true);
-                return false;
-            } else {
-                fromInput.classList.remove('date-error');
-                toInput.classList.remove('date-error');
-                return true;
+        function getMinDateForFrom() {
+            return getMinDate();
+        }
+
+        function getMaxDateForFromDynamic() {
+            if (currentToDate) {
+                return currentToDate;
+            }
+            const maxDate = new Date();
+            maxDate.setFullYear(maxDate.getFullYear() + 10);
+            return maxDate;
+        }
+
+        function getMinDateForToDynamic() {
+            if (currentFromDate) {
+                return currentFromDate;
+            }
+            return getMinDate();
+        }
+
+        function getMaxDateForToDynamic() {
+            const maxDate = new Date();
+            maxDate.setFullYear(maxDate.getFullYear() + 10);
+            return maxDate;
+        }
+
+        function onSelectFrom(dateStr) {
+            const selectedDate = parseDate(dateStr);
+            if (selectedDate) {
+                currentFromDate = selectedDate;
+                fromInput.value = dateStr;
+                validateDateRange();
+                updateToCalendar();
             }
         }
+
+        function onSelectTo(dateStr) {
+            const selectedDate = parseDate(dateStr);
+            if (selectedDate) {
+                currentToDate = selectedDate;
+                toInput.value = dateStr;
+                validateDateRange();
+                updateFromCalendar();
+            }
+        }
+
+        function updateFromCalendar() {
+            const fromDate = parseDate(fromInput.value);
+            renderCalendar('calendarFrom', fromDate || new Date(), onSelectFrom, getMinDateForFrom(), getMaxDateForFromDynamic());
+        }
+
+        function updateToCalendar() {
+            const toDate = parseDate(toInput.value);
+            renderCalendar('calendarTo', toDate || (currentFromDate || new Date()), onSelectTo, getMinDateForToDynamic(), getMaxDateForToDynamic());
+        }
+
+        fromIcon?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeCalendar && activeCalendar !== fromCalendar) {
+                activeCalendar.classList.remove('active');
+            }
+            fromCalendar.classList.toggle('active');
+            activeCalendar = fromCalendar.classList.contains('active') ? fromCalendar : null;
+            updateFromCalendar();
+        });
+
+        toIcon?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeCalendar && activeCalendar !== toCalendar) {
+                activeCalendar.classList.remove('active');
+            }
+            toCalendar.classList.toggle('active');
+            activeCalendar = toCalendar.classList.contains('active') ? toCalendar : null;
+            updateToCalendar();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.date-picker-wrapper')) {
+                fromCalendar.classList.remove('active');
+                toCalendar.classList.remove('active');
+                activeCalendar = null;
+            }
+        });
+
+        fromInput.addEventListener('input', function() {
+            applyDateMask(this);
+            const parsed = parseDate(this.value);
+            currentFromDate = parsed;
+            if (parsed) {
+                validateDateRange();
+            }
+        });
+
+        toInput.addEventListener('input', function() {
+            applyDateMask(this);
+            const parsed = parseDate(this.value);
+            currentToDate = parsed;
+            if (parsed) {
+                validateDateRange();
+            }
+        });
+
+        fromInput.addEventListener('blur', function() {
+            if (this.value && !parseDate(this.value)) {
+                this.classList.add('date-error');
+                this.style.color = '#ffffff';
+                showNotification('Введите корректную дату в формате ДД.ММ.ГГГГ', true);
+            }
+            validateDateRange();
+        });
+
+        toInput.addEventListener('blur', function() {
+            if (this.value && !parseDate(this.value)) {
+                this.classList.add('date-error');
+                this.style.color = '#ffffff';
+                showNotification('Введите корректную дату в формате ДД.ММ.ГГГГ', true);
+            }
+            validateDateRange();
+        });
+
+        updateFromCalendar();
+        updateToCalendar();
+    }
+
+    // Применение маски при вводе
+    function applyDateMask(input) {
+        let value = input.value.replace(/[^\d]/g, '');
+
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '.' + value.substring(2);
+        }
+        if (value.length >= 5) {
+            value = value.substring(0, 5) + '.' + value.substring(5);
+        }
+        if (value.length > 10) {
+            value = value.substring(0, 10);
+        }
+
+        input.value = value;
+    }
+
+    // Проверка валидности даты
+    function isValidDateString(dateStr) {
+        return parseDate(dateStr) !== null;
+    }
+
+    // Валидация диапазона дат
+    function validateDateRange() {
+        const fromInput = document.getElementById('availableFrom');
+        const toInput = document.getElementById('availableTo');
+        const errorContainer = document.getElementById('dateErrorContainer');
+        const fromDateStr = fromInput.value;
+        const toDateStr = toInput.value;
+
+        errorContainer.style.display = 'none';
+        errorContainer.innerHTML = '';
+
+        fromInput.classList.remove('date-error');
+        toInput.classList.remove('date-error');
+        fromInput.style.color = '#333';
+        toInput.style.color = '#333';
+
+        if (!fromDateStr || !toDateStr) {
+            return true;
+        }
+
+        const fromDate = parseDate(fromDateStr);
+        const toDate = parseDate(toDateStr);
+
+        if (!fromDate || !toDate) {
+            if (!fromDate) {
+                fromInput.classList.add('date-error');
+                fromInput.style.color = '#ffffff';
+            }
+            if (!toDate) {
+                toInput.classList.add('date-error');
+                toInput.style.color = '#ffffff';
+            }
+            return false;
+        }
+
+        if (fromDate > toDate) {
+            errorContainer.style.display = 'block';
+            errorContainer.innerHTML = '<i class="fas fa-exclamation-circle"></i> Дата окончания не может быть раньше даты начала!';
+            fromInput.classList.add('date-error');
+            toInput.classList.add('date-error');
+            fromInput.style.color = '#ffffff';
+            toInput.style.color = '#ffffff';
+            return false;
+        }
+
         return true;
     }
 
-    function syncDates() {
-        const fromDate = document.getElementById('availableFrom').value;
-        const toDate = document.getElementById('availableTo').value;
-        const fromInput = document.getElementById('availableFrom');
-        const toInput = document.getElementById('availableTo');
-
-        if (fromDate && toDate) {
-            if (fromDate > toDate) {
-                fromInput.value = toDate;
-            } else if (toDate < fromDate) {
-                toInput.value = fromDate;
-            }
-        }
-        validateDates();
+    function dateToIso(dateStr) {
+        const date = parseDate(dateStr);
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
-
-    document.getElementById('availableFrom').addEventListener('change', function() {
-        const toInput = document.getElementById('availableTo');
-        const fromValue = this.value;
-        if (fromValue && toInput.value && toInput.value < fromValue) {
-            toInput.value = fromValue;
-        }
-        syncDates();
-    });
-
-    document.getElementById('availableTo').addEventListener('change', function() {
-        const fromInput = document.getElementById('availableFrom');
-        const toValue = this.value;
-        if (toValue && fromInput.value && fromInput.value > toValue) {
-            fromInput.value = toValue;
-        }
-        syncDates();
-    });
 
     // ==================== РАБОТА С ЦЕНАМИ ====================
     const diffPriceCheckbox = document.getElementById('diffPrice');
@@ -1122,6 +1640,9 @@
             statusBadge.innerHTML = autoCenterEnabled ? "🎯 Автоцентровка активна" : "⛔ Автоцентровка отключена";
             showNotification(autoCenterEnabled ? "✅ Автоцентровка включена" : "⚠️ Автоцентровка отключена", !autoCenterEnabled);
         });
+
+        // Инициализация календарей
+        initCalendars();
     });
 
     function init() {
@@ -1364,7 +1885,39 @@
         });
     }
 
+    // Добавляем преобразование даты перед отправкой формы
     document.getElementById('premiseForm').addEventListener('submit', async function(e) {
+        const fromInput = document.getElementById('availableFrom');
+        const toInput = document.getElementById('availableTo');
+
+        // ===== КОПИРУЕМ ЦЕНУ =====
+        if (!diffPriceCheckbox.checked) {
+            const dailyPrice = document.getElementById('dailyPrice').value;
+            document.getElementById('priceWeekday').value = dailyPrice;
+        }
+
+        // Преобразуем даты из формата ДД.ММ.ГГГГ в YYYY-MM-DD для отправки на сервер
+        const fromDateStr = fromInput.value;
+        const toDateStr = toInput.value;
+
+        if (fromDateStr && parseDate(fromDateStr)) {
+            const hiddenFrom = document.createElement('input');
+            hiddenFrom.type = 'hidden';
+            hiddenFrom.name = 'availableFrom';
+            hiddenFrom.value = dateToIso(fromDateStr);
+            this.appendChild(hiddenFrom);
+            fromInput.removeAttribute('name');
+        }
+
+        if (toDateStr && parseDate(toDateStr)) {
+            const hiddenTo = document.createElement('input');
+            hiddenTo.type = 'hidden';
+            hiddenTo.name = 'availableTo';
+            hiddenTo.value = dateToIso(toDateStr);
+            this.appendChild(hiddenTo);
+            toInput.removeAttribute('name');
+        }
+
         const fileInput = document.getElementById('photos');
         const files = fileInput.files;
 
@@ -1376,8 +1929,10 @@
             }
         }
 
-        if (!validateDates()) {
+        // Проверка дат перед отправкой
+        if (!validateDateRange()) {
             e.preventDefault();
+            showNotification('Исправьте ошибки в датах перед публикацией!', true);
             return false;
         }
 

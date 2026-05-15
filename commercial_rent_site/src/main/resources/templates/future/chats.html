@@ -6,6 +6,9 @@
     <title>Мои чаты - RentApp</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/header.css}">
+    <!-- SockJS и STOMP клиенты для WebSocket -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -16,14 +19,12 @@
             padding-top: 80px;
         }
 
-        /* Контейнер основного контента */
         .container {
             max-width: 800px;
             margin: 30px auto;
             padding: 0 20px;
         }
 
-        /* Список чатов */
         .chats-list {
             background: white;
             border-radius: 20px;
@@ -46,7 +47,6 @@
             background: #fef7f2;
         }
 
-        /* Закреплённый чат */
         .chat-item.pinned {
             background: #fffdf5;
             border-left: 4px solid #ff9800;
@@ -121,7 +121,6 @@
             text-align: center;
         }
 
-        /* Кнопка закрепления */
         .pin-btn {
             background: none;
             border: none;
@@ -155,7 +154,6 @@
             color: #e65100;
         }
 
-        /* Заголовок секции закреплённых чатов */
         .pinned-header {
             background: #fff8e1;
             padding: 12px 20px;
@@ -172,7 +170,6 @@
             font-size: 14px;
         }
 
-        /* Пустое состояние */
         .empty-chats {
             text-align: center;
             padding: 60px 20px;
@@ -205,21 +202,20 @@
             transform: translateY(-2px);
         }
 
-        /* Уведомление о новых сообщениях */
-        .new-message-notification {
+        .connection-status {
             position: fixed;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff5722;
+            right: 20px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            background: #4caf50;
             color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 14px;
             z-index: 1000;
-            cursor: pointer;
-            animation: slideUp 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .connection-status.disconnected {
+            background: #f44336;
         }
 
         @keyframes slideUp {
@@ -243,38 +239,53 @@
     </style>
 </head>
 <body>
-<!-- Хедер - фиксированное позиционирование для страницы деталей (прилипает при скролле) -->
 <div th:insert="~{fragments/header :: header(
     currentUri=${currentUri},
     headerClass='hd-header-fixed'
 )}"></div>
 
-<!-- Основной контент -->
 <div class="container">
-    <div class="chats-list" id="chatsList">
-        <!-- Список чатов будет загружаться через JavaScript -->
-    </div>
+    <div class="chats-list" id="chatsList"></div>
 </div>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    const chatsData = /*[[${chats}]]*/ [];
-    /*]]>*/
+<div id="connectionStatus" class="connection-status">🔄 Инициализация...</div>
 
+<script th:inline="javascript">
+    // Константы из Thymeleaf
+    const chatsData = /*[[${chats}]]*/ [];
+    const currentUsername = /*[[${#authentication.name}]]*/ null;
+
+    // WebSocket переменные
+    let stompClient = null;
+    let isWsConnected = false;
+    let reconnectAttempts = 0;
+    let maxReconnectAttempts = 5;
     let pollingInterval = null;
     let isPolling = false;
     let lastUpdateHash = '';
-    let notificationTimeout = null;
+    let currentUserId = null;
 
-    // Ключ для хранения закреплённых чатов в localStorage
     const PINNED_CHATS_KEY = 'pinnedChats';
 
-    // Функция для получения уникального ключа чата
+    // Получение ID текущего пользователя
+    async function getCurrentUserId() {
+        try {
+            const response = await fetch('/api/auth/current-user');
+            if (response.ok) {
+                const data = await response.json();
+                currentUserId = data.id;
+                return currentUserId;
+            }
+        } catch (error) {
+            console.error('Error getting current user ID:', error);
+        }
+        return null;
+    }
+
     function getChatKey(chat) {
         return `${chat.user.id}_${chat.premiseId || '0'}`;
     }
 
-    // Функция для загрузки закреплённых чатов из localStorage
     function loadPinnedChats() {
         const pinned = localStorage.getItem(PINNED_CHATS_KEY);
         if (pinned) {
@@ -287,12 +298,10 @@
         return new Set();
     }
 
-    // Функция для сохранения закреплённых чатов в localStorage
     function savePinnedChats(pinnedSet) {
         localStorage.setItem(PINNED_CHATS_KEY, JSON.stringify(Array.from(pinnedSet)));
     }
 
-    // Функция для закрепления/открепления чата
     function togglePin(chatId, event) {
         event.stopPropagation();
         event.preventDefault();
@@ -304,12 +313,9 @@
             pinnedSet.add(chatId);
         }
         savePinnedChats(pinnedSet);
-
-        // Перезагружаем список чатов
-        loadChats(true); // force reload
+        loadChats(true);
     }
 
-    // Функция для генерации хеша списка чатов (для сравнения изменений)
     function generateChatsHash(chats) {
         if (!chats || chats.length === 0) return 'empty';
         const pinnedSet = loadPinnedChats();
@@ -318,7 +324,6 @@
         ).join('|');
     }
 
-    // Функция для форматирования времени
     function formatTime(timeStr) {
         const date = new Date(timeStr);
         const now = new Date();
@@ -333,7 +338,6 @@
         }
     }
 
-    // Функция для очистки HTML-тегов из системных сообщений для предпросмотра
     function stripHtml(html) {
         if (!html) return '';
         const temp = document.createElement('div');
@@ -341,7 +345,6 @@
         return temp.textContent || temp.innerText || '';
     }
 
-    // Функция для сортировки чатов (закреплённые вверху, затем по времени)
     function sortChats(chats) {
         const pinnedSet = loadPinnedChats();
         return [...chats].sort((a, b) => {
@@ -352,13 +355,10 @@
 
             if (aPinned && !bPinned) return -1;
             if (!aPinned && bPinned) return 1;
-
-            // Если оба закреплены или оба не закреплены, сортируем по времени
             return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
         });
     }
 
-    // Функция для отображения списка чатов
     function renderChats(chats) {
         const container = document.getElementById('chatsList');
         if (!container) return;
@@ -377,13 +377,11 @@
         const pinnedSet = loadPinnedChats();
         const sortedChats = sortChats(chats);
 
-        // Разделяем на закреплённые и обычные
         const pinnedChats = sortedChats.filter(chat => pinnedSet.has(getChatKey(chat)));
         const normalChats = sortedChats.filter(chat => !pinnedSet.has(getChatKey(chat)));
 
         let html = '';
 
-        // Секция закреплённых чатов
         if (pinnedChats.length > 0) {
             html += `
                 <div class="pinned-header">
@@ -396,7 +394,6 @@
             }
         }
 
-        // Секция обычных чатов
         if (normalChats.length > 0) {
             if (pinnedChats.length > 0) {
                 html += `<div style="border-top: 8px solid #f0f0f0;"></div>`;
@@ -408,7 +405,6 @@
 
         container.innerHTML = html;
 
-        // Добавляем обработчики для кнопок закрепления
         document.querySelectorAll('.pin-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -422,7 +418,6 @@
         lastUpdateHash = generateChatsHash(chats);
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ: рендер отдельного чата с обёрткой в ссылку
     function renderChatItem(chat, isPinned) {
         const userName = (chat.user.firstName && chat.user.firstName !== '')
             ? `${chat.user.firstName} ${chat.user.lastName || ''}`
@@ -435,7 +430,6 @@
             : `/chats/with/${encodeURIComponent(chat.user.login)}`;
         const chatKey = getChatKey(chat);
 
-        // Обрабатываем предпросмотр сообщения
         let previewText = chat.lastMessage || '';
         if (previewText.includes('<strong>') || previewText.includes('<br>')) {
             previewText = stripHtml(previewText);
@@ -443,13 +437,10 @@
             previewText = escapeHtml(previewText);
         }
 
-        // Обрезаем слишком длинный предпросмотр
         if (previewText.length > 60) {
             previewText = previewText.substring(0, 57) + '...';
         }
 
-        // ВАЖНО: оборачиваем ВЕСЬ контент в ссылку <a>
-        // Кнопка закрепления имеет z-index и stopPropagation, чтобы не срабатывал переход
         return `
             <a href="${chatUrl}" class="chat-item ${isPinned ? 'pinned' : ''}" data-chat-id="${chatKey}" style="text-decoration: none; display: flex; align-items: center;">
                 <div class="chat-avatar">
@@ -473,30 +464,60 @@
         `;
     }
 
-    // Показать уведомление о новых сообщениях
-    function showNewMessageNotification() {
-        const existing = document.querySelector('.new-message-notification');
-        if (existing) existing.remove();
-        if (notificationTimeout) clearTimeout(notificationTimeout);
-
-        const notification = document.createElement('div');
-        notification.className = 'new-message-notification';
-        notification.innerHTML = '<i class="fas fa-comment-dots"></i> Новые сообщения! Нажмите для обновления';
-        notification.onclick = () => {
-            loadChats(true);
-            notification.remove();
-        };
-        document.body.appendChild(notification);
-
-        notificationTimeout = setTimeout(() => {
-            if (notification && notification.parentNode) {
-                notification.style.opacity = '0';
-                setTimeout(() => notification.remove(), 300);
-            }
-        }, 5000);
+    function updateConnectionStatus(connected) {
+        const statusDiv = document.getElementById('connectionStatus');
+        if (connected) {
+            statusDiv.textContent = '🟢 WebSocket';
+            statusDiv.classList.remove('disconnected');
+        } else {
+            statusDiv.textContent = '🔴 HTTP режим';
+            statusDiv.classList.add('disconnected');
+        }
     }
 
-    // Функция для загрузки чатов с сервера
+    // Подключение WebSocket для мгновенных обновлений
+    async function connectWebSocket() {
+        if (!currentUsername) {
+            currentUsername = await getCurrentUserId();
+            if (!currentUsername) return;
+        }
+
+        const socket = new SockJS('/ws-chat');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({},
+            function(frame) {
+                isWsConnected = true;
+                reconnectAttempts = 0;
+                updateConnectionStatus(true);
+
+                // Подписываемся на новые сообщения
+                const subscribeUrl = '/user/' + currentUsername + '/queue/messages';
+                stompClient.subscribe(subscribeUrl, function(response) {
+                    const message = JSON.parse(response.body);
+                    // Обновляем список чатов при новом сообщении
+                    loadChats(true);
+                });
+
+                // Подписываемся на уведомления о прочтении
+                stompClient.subscribe('/user/' + currentUsername + '/queue/read', function() {
+                    loadChats(true);
+                });
+            },
+            function(error) {
+                isWsConnected = false;
+                updateConnectionStatus(false);
+
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    const delay = 3000 * reconnectAttempts;
+                    setTimeout(connectWebSocket, delay);
+                }
+            }
+        );
+    }
+
     async function loadChats(force = false) {
         if (isPolling && !force) return;
         isPolling = true;
@@ -507,14 +528,8 @@
                 const newChats = await response.json();
                 const newHash = generateChatsHash(newChats);
 
-                // Если данные изменились, обновляем список
                 if (newHash !== lastUpdateHash || force) {
                     renderChats(newChats);
-                    // Показываем уведомление при наличии новых непрочитанных сообщений
-                    const hasNewUnread = newChats.some(chat => chat.unreadCount > 0);
-                    if (hasNewUnread && document.visibilityState === 'visible' && !force) {
-                        showNewMessageNotification();
-                    }
                 }
             }
         } catch (error) {
@@ -534,24 +549,34 @@
             .replace(/'/g, '&#39;');
     }
 
-    // Запускаем polling при загрузке страницы
-    document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', async function() {
+        await getCurrentUserId();
+
         if (chatsData && chatsData.length > 0) {
             renderChats(chatsData);
         } else {
             renderChats([]);
-            // Если данных нет, сразу загружаем с сервера
             loadChats();
         }
 
-        // Запускаем polling каждые 5 секунд
-        pollingInterval = setInterval(() => loadChats(false), 5000);
+        // Подключаем WebSocket
+        connectWebSocket();
+
+        // Polling как резервный канал (раз в 30 секунд)
+        pollingInterval = setInterval(() => {
+            if (!isWsConnected) {
+                loadChats(false);
+            }
+        }, 30000);
     });
 
-    // Очищаем интервал при уходе со страницы
     window.addEventListener('beforeunload', function() {
         if (pollingInterval) {
             clearInterval(pollingInterval);
+        }
+        if (stompClient) {
+            stompClient.disconnect();
         }
     });
 </script>

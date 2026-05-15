@@ -6,8 +6,10 @@ import com.example.rentapp.dto.ChatMessageDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.ChatMessage;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.entity.UserBan;
 import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.ChatService;
+import com.example.rentapp.service.UserBanService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +37,9 @@ public class ChatController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private UserBanService userBanService;
 
     @GetMapping
     public String chatsPage(@AuthenticationPrincipal UserDetails userDetails,
@@ -113,6 +118,10 @@ public class ChatController {
 
         List<ChatMessage> messages = chatService.getChatBetween(currentUser.getId(), otherUser.getId());
 
+        // Проверяем, заблокирован ли другой пользователь
+        boolean otherUserBanned = userBanService.isUserBanned(otherUser.getId());
+        UserBan otherUserBanInfo = userBanService.getActiveBan(otherUser.getId()).orElse(null);
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("otherUser", otherUser);
         model.addAttribute("messages", messages);
@@ -121,6 +130,8 @@ public class ChatController {
         model.addAttribute("premise", null);
         model.addAttribute("isOwner", false);
         model.addAttribute("pendingBookingRequest", false);
+        model.addAttribute("otherUserBanned", otherUserBanned);
+        model.addAttribute("otherUserBanInfo", otherUserBanInfo);
 
         return "future/chat-window";
     }
@@ -143,6 +154,10 @@ public class ChatController {
         // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
         boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), otherUser.getId());
 
+        // Проверяем, заблокирован ли другой пользователь
+        boolean otherUserBanned = userBanService.isUserBanned(otherUser.getId());
+        UserBan otherUserBanInfo = userBanService.getActiveBan(otherUser.getId()).orElse(null);
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("otherUser", otherUser);
         model.addAttribute("messages", messages);
@@ -151,6 +166,8 @@ public class ChatController {
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", currentUser.getId().equals(premise.getOwnerId()));
         model.addAttribute("pendingBookingRequest", hasPendingRequest);
+        model.addAttribute("otherUserBanned", otherUserBanned);
+        model.addAttribute("otherUserBanInfo", otherUserBanInfo);
 
         return "future/chat-window";
     }
@@ -177,6 +194,10 @@ public class ChatController {
         // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
         boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), owner.getId());
 
+        // Проверяем, заблокирован ли владелец
+        boolean otherUserBanned = userBanService.isUserBanned(owner.getId());
+        UserBan otherUserBanInfo = userBanService.getActiveBan(owner.getId()).orElse(null);
+
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("otherUser", owner);
         model.addAttribute("messages", messages);
@@ -186,6 +207,8 @@ public class ChatController {
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", currentUser.getId().equals(premise.getOwnerId()));
         model.addAttribute("pendingBookingRequest", hasPendingRequest);
+        model.addAttribute("otherUserBanned", otherUserBanned);
+        model.addAttribute("otherUserBanInfo", otherUserBanInfo);
 
         return "future/chat-window";
     }

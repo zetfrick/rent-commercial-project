@@ -104,7 +104,8 @@ public class SecurityConfig {
                                 "/chats/**",
                                 "/admin/**",
                                 "/notifications/api/**",
-                                "/auth/api/**"
+                                "/auth/api/**",
+                                "/ws-chat/**"  // WebSocket endpoints
                         )
                 )
                 .authorizeHttpRequests(authz -> authz
@@ -126,6 +127,11 @@ public class SecurityConfig {
                         // Разрешаем доступ к API уведомлений без авторизации
                         .requestMatchers("/notifications/api/create").permitAll()
                         .requestMatchers("/notifications/api/**").permitAll()
+
+                        // ========== WEBSOCKET ENDPOINTS ==========
+                        // Разрешаем WebSocket соединения без авторизации (авторизация внутри)
+                        .requestMatchers("/ws-chat", "/ws-chat/**", "/ws-chat/info/**", "/ws-chat/info")
+                        .permitAll()
 
                         // Защищённые страницы - только для авторизованных
                         .requestMatchers("/profile", "/profile/**", "/api/premise/**",

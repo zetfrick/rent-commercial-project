@@ -7,6 +7,7 @@ import com.example.rentapp.dto.PremiseForm;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.FileStorageService;
+import com.example.rentapp.service.UserBanService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,6 +35,9 @@ public class ProfileController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private UserBanService userBanService;
 
     // ==================== ПРОФИЛЬ ====================
 
@@ -121,6 +125,11 @@ public class ProfileController {
                                  Model model) {
         User owner = getCurrentUser(userDetails);
 
+        if (userBanService.isUserBanned(owner.getId())) {
+            model.addAttribute("error", "Ваш аккаунт заблокирован. Вы не можете добавлять помещения.");
+            return "redirect:/profile?banned=true";
+        }
+
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
@@ -140,9 +149,15 @@ public class ProfileController {
                              @ModelAttribute PremiseForm form,
                              @RequestParam(value = "photos", required = false) List<MultipartFile> photos,
                              @RequestParam("latitude") String latitudeStr,
-                             @RequestParam("longitude") String longitudeStr) {
+                             @RequestParam("longitude") String longitudeStr,
+                             Model model) {
 
         User owner = getCurrentUser(userDetails);
+
+        if (userBanService.isUserBanned(owner.getId())) {
+            model.addAttribute("error", "Ваш аккаунт заблокирован. Вы не можете добавлять помещения.");
+            return "redirect:/profile?banned=true";
+        }
 
         PremiseDto premiseDto = new PremiseDto();
         premiseDto.setOwnerId(owner.getId());

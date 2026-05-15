@@ -1,5 +1,6 @@
 package com.example.catalog.controller;
 
+import com.example.catalog.config.PremiseConfig;
 import com.example.catalog.dto.CommentDto;
 import com.example.catalog.dto.PremiseDto;
 import com.example.catalog.entity.Comment;
@@ -9,6 +10,7 @@ import com.example.catalog.repository.PremiseRepository;
 import com.example.catalog.service.NotificationService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,6 +45,12 @@ public class CatalogController {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${main.service.url:http://localhost:8080}")
+    private String mainServiceUrl;
 
     // Выполняется после полного запуска приложения (вместо @PostConstruct)
     @EventListener(ApplicationReadyEvent.class)
@@ -76,11 +85,20 @@ public class CatalogController {
             if (premise.getOwnerId() == null) {
                 System.err.println("!!! ПРЕДУПРЕЖДЕНИЕ: У объявления #" + premise.getId() + " отсутствует владелец (owner_id = null)");
                 System.err.println("!!! Уведомление не будет отправлено");
-                // Все равно снимаем с публикации
                 premise.setActive(false);
                 premise.setUnpublishedAt(LocalDateTime.now());
                 premiseRepository.save(premise);
                 System.out.println("Объявление #" + premise.getId() + " снято с публикации (без уведомления владельца)");
+                continue;
+            }
+
+            // Проверяем, не заблокирован ли пользователь
+            if (isUserBanned(premise.getOwnerId())) {
+                System.out.println("⚠ Владелец #" + premise.getOwnerId() + " заблокирован, объявление снимается без уведомления");
+                premise.setActive(false);
+                premise.setUnpublishedAt(LocalDateTime.now());
+                premiseRepository.save(premise);
+                System.out.println("Объявление #" + premise.getId() + " снято с публикации (владелец заблокирован)");
                 continue;
             }
 
@@ -89,22 +107,23 @@ public class CatalogController {
             premiseRepository.save(premise);
             System.out.println("✓ Объявление #" + premise.getId() + " снято с публикации (истек срок доступности)");
 
-            // Отправляем уведомление владельцу о снятии помещения
+            // Отправляем уведомление владельцу о снятии помещения с русским названием типа
             try {
                 System.out.println("→ Попытка отправить уведомление владельцу ID=" + premise.getOwnerId());
+                String typeInRussian = PremiseConfig.TYPE_RUSSIAN.getOrDefault(premise.getType(), premise.getType());
                 notificationService.sendNotification(
                         premise.getOwnerId(),
                         "PREMISE_EXPIRED",
                         premise.getId(),
                         null,
                         null,
-                        "Помещение \"" + premise.getType() + "\" снято с публикации (истек срок доступности)",
+                        "Помещение \"" + typeInRussian + "\" снято с публикации (истек срок доступности)",
                         "/premise/" + premise.getId()
                 );
+                System.out.println("✓ Уведомление отправлено владельцу");
             } catch (Exception e) {
                 System.err.println("✗ ОШИБКА отправки уведомления для помещения #" + premise.getId());
                 System.err.println("  Сообщение: " + e.getMessage());
-                // Не прерываем выполнение, продолжаем со следующими объявлениями
             }
             System.out.println("---");
         }
@@ -117,7 +136,6 @@ public class CatalogController {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(60);
         System.out.println("=== [SCHEDULED] Проверка старых объявлений для удаления (до " + cutoffDate + ") ===");
 
-        // Находим неактивные объявления, которые были сняты более 60 дней назад
         List<Premise> oldPremises = premiseRepository.findByActiveFalseAndUnpublishedAtBefore(cutoffDate);
 
         System.out.println("Найдено объявлений для удаления: " + oldPremises.size());
@@ -151,16 +169,58 @@ public class CatalogController {
                 System.out.println("  Удалено файлов: " + deletedCount + " из " + photoPaths.size());
             }
 
-            // Удаляем комментарии
             commentRepository.deleteByPremiseId(premise.getId());
             System.out.println("  ✓ Комментарии удалены");
 
-            // Удаляем объявление
             premiseRepository.delete(premise);
             System.out.println("✓ Объявление #" + premise.getId() + " полностью удалено (снято более 60 дней назад)");
             System.out.println("---");
         }
         System.out.println("=== [SCHEDULED] Удаление старых объявлений завершено ===");
+    }
+
+    @PostMapping("/internal/users/{userId}/unpublish-all")
+    public ResponseEntity<Map<String, Object>> unpublishAllUserPremises(@PathVariable Long userId) {
+        Map<String, Object> response = new HashMap<>();
+
+        System.out.println("=== Снятие всех объявлений пользователя #" + userId + " ===");
+
+        List<Premise> userPremises = premiseRepository.findByOwnerId(userId);
+        int unpublishedCount = 0;
+
+        for (Premise premise : userPremises) {
+            if (premise.isActive()) {
+                premise.setActive(false);
+                premise.setUnpublishedAt(LocalDateTime.now());
+                premiseRepository.save(premise);
+                unpublishedCount++;
+                System.out.println("✓ Объявление #" + premise.getId() + " снято с публикации");
+
+                // ===== ДОБАВЬТЕ ОТПРАВКУ УВЕДОМЛЕНИЯ ДЛЯ КАЖДОГО ОБЪЯВЛЕНИЯ =====
+                try {
+                    String typeInRussian = PremiseConfig.TYPE_RUSSIAN.getOrDefault(premise.getType(), premise.getType());
+                    notificationService.sendNotification(
+                            userId,
+                            "PREMISE_EXPIRED",
+                            premise.getId(),
+                            null,
+                            null,
+                            "Помещение \"" + typeInRussian + "\" снято с публикации (аккаунт заблокирован)",
+                            "/premise/" + premise.getId()
+                    );
+                    System.out.println("  ✓ Уведомление отправлено владельцу #" + userId);
+                } catch (Exception e) {
+                    System.err.println("  ✗ Ошибка отправки уведомления для объявления #" + premise.getId() + ": " + e.getMessage());
+                }
+                // ===== КОНЕЦ БЛОКА =====
+            }
+        }
+
+        response.put("success", true);
+        response.put("unpublishedCount", unpublishedCount);
+        System.out.println("=== Снято объявлений: " + unpublishedCount + " ===");
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/catalog")
@@ -191,16 +251,22 @@ public class CatalogController {
 
     @PostMapping("/premise/add")
     public ResponseEntity<Premise> addPremise(@RequestBody PremiseDto premiseDto) {
+
         System.out.println("=== Добавление нового помещения ===");
         System.out.println("OwnerId: " + premiseDto.getOwnerId());
         System.out.println("Тип: " + premiseDto.getType());
+
+        // Проверяем, не заблокирован ли пользователь
+        if (premiseDto.getOwnerId() != null && isUserBanned(premiseDto.getOwnerId())) {
+            System.err.println("!!! Ошибка: Пользователь #" + premiseDto.getOwnerId() + " заблокирован и не может добавлять помещения");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         Premise premise = new Premise();
         BeanUtils.copyProperties(premiseDto, premise, "id", "createdAt", "unpublishedAt");
         premise.setLatitude(premiseDto.getLatitude());
         premise.setLongitude(premiseDto.getLongitude());
 
-        // Проверяем, что ownerId не null
         if (premise.getOwnerId() == null) {
             System.err.println("!!! ВНИМАНИЕ: Помещение добавляется без владельца (owner_id = null)");
         }
@@ -215,6 +281,11 @@ public class CatalogController {
         Premise existingPremise = premiseRepository.findById(id).orElse(null);
         if (existingPremise == null) {
             return ResponseEntity.notFound().build();
+        }
+
+        // Проверяем, не заблокирован ли владелец
+        if (existingPremise.getOwnerId() != null && isUserBanned(existingPremise.getOwnerId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         existingPremise.setType(premiseDto.getType());
@@ -281,6 +352,13 @@ public class CatalogController {
             System.out.println("Стало активно: " + active);
             System.out.println("Владелец ID: " + premise.getOwnerId());
 
+            // Проверяем, не заблокирован ли владелец (нельзя опубликовать если заблокирован)
+            if (active && premise.getOwnerId() != null && isUserBanned(premise.getOwnerId())) {
+                response.put("success", false);
+                response.put("message", "Невозможно опубликовать объявление - ваш аккаунт заблокирован");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
             premise.setActive(active);
             if (!active && premise.getUnpublishedAt() == null) {
                 premise.setUnpublishedAt(LocalDateTime.now());
@@ -290,22 +368,22 @@ public class CatalogController {
             response.put("success", true);
             response.put("active", active);
 
-            // Если помещение было снято с публикации вручную, отправляем уведомление
             if (wasActive && !active) {
                 if (premise.getOwnerId() == null) {
                     System.err.println("!!! ПРЕДУПРЕЖДЕНИЕ: У помещения #" + id + " отсутствует владелец, уведомление не отправлено");
                     response.put("notificationSent", false);
                     response.put("notificationError", "Отсутствует владелец помещения");
-                } else {
+                } else if (!isUserBanned(premise.getOwnerId())) {
                     try {
                         System.out.println("→ Попытка отправить уведомление владельцу ID=" + premise.getOwnerId());
+                        String typeInRussian = PremiseConfig.TYPE_RUSSIAN.getOrDefault(premise.getType(), premise.getType());
                         notificationService.sendNotification(
                                 premise.getOwnerId(),
                                 "PREMISE_EXPIRED",
                                 premise.getId(),
                                 null,
                                 null,
-                                "Помещение \"" + premise.getType() + "\" снято с публикации",
+                                "Помещение \"" + typeInRussian + "\" снято с публикации",
                                 "/premise/" + premise.getId()
                         );
                         System.out.println("✓ Уведомление успешно отправлено владельцу о снятии помещения #" + premise.getId());
@@ -316,6 +394,8 @@ public class CatalogController {
                         response.put("notificationSent", false);
                         response.put("notificationError", e.getMessage());
                     }
+                } else {
+                    System.out.println("Уведомление не отправлено (владелец заблокирован)");
                 }
             } else {
                 System.out.println("Уведомление не требуется (помещение не было снято с публикации)");
@@ -388,6 +468,11 @@ public class CatalogController {
             return ResponseEntity.badRequest().build();
         }
 
+        // Проверяем, не заблокирован ли пользователь по authorId
+        if (commentDto.getAuthorId() != null && isUserBanned(commentDto.getAuthorId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         Comment comment = new Comment(
                 commentDto.getPremiseId(),
                 commentDto.getAuthorName(),
@@ -405,7 +490,6 @@ public class CatalogController {
                 saved.getCreatedAt()
         );
 
-        // Уведомление о комментарии отправляется из rentapp
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -438,4 +522,27 @@ public class CatalogController {
         }
         return result;
     }
+
+    // ==================== МЕТОДЫ ДЛЯ ПРОВЕРКИ БЛОКИРОВКИ ПОЛЬЗОВАТЕЛЯ ====================
+
+    /**
+     * Проверяет, заблокирован ли пользователь
+     * @param userId ID пользователя
+     * @return true если пользователь заблокирован
+     */
+    private boolean isUserBanned(Long userId) {
+        if (userId == null) return false;
+
+        try {
+            String url = mainServiceUrl + "/api/internal/users/" + userId + "/banned";
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (response.getBody() != null && response.getBody().containsKey("banned")) {
+                return (boolean) response.getBody().get("banned");
+            }
+        } catch (Exception e) {
+            System.err.println("Ошибка при проверке блокировки пользователя " + userId + ": " + e.getMessage());
+        }
+        return false;
+    }
+
 }

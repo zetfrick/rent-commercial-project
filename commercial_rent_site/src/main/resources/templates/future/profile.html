@@ -504,6 +504,25 @@
             box-shadow: 0 12px 35px rgba(244, 67, 54, 0.4);
         }
 
+        /* Кнопка блокировки */
+        .ban-btn {
+            background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+            color: white !important;
+        }
+
+        .ban-btn i {
+            color: white !important;
+        }
+
+        .unban-btn {
+            background: linear-gradient(135deg, #4caf50, #45a049) !important;
+            color: white !important;
+        }
+
+        .unban-btn i {
+            color: white !important;
+        }
+
         .chat-badge {
             display: inline-flex;
             align-items: center;
@@ -521,9 +540,141 @@
             margin-left: 8px;
         }
 
+        /* Информация о блокировке */
+        .ban-info {
+            background: #ffebee;
+            border-radius: 16px;
+            padding: 16px;
+            border-left: 4px solid #f44336;
+            margin-top: 15px;
+        }
+
+        .ban-info-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .ban-info-header i {
+            color: #f44336;
+            font-size: 20px;
+        }
+
+        .ban-info-header strong {
+            color: #c62828;
+        }
+
+        .ban-info-text {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .ban-info-text strong {
+            color: #333;
+        }
+
+        /* Модальное окно блокировки */
+        .ban-modal {
+            display: none;
+            position: fixed;
+            z-index: 2150;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .ban-modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        .ban-modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ban-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .ban-modal-body {
+            padding: 20px;
+        }
+
+        .ban-duration-select {
+            margin-bottom: 20px;
+        }
+
+        .ban-duration-select select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .ban-custom-date {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .ban-custom-date input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+        }
+
+        .ban-reason textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+            margin-top: 10px;
+        }
+
+        .ban-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .ban-submit-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+
         /* ==================== УНИКАЛЬНЫЕ СТИЛИ ДЛЯ МОДАЛЬНЫХ ОКОН ==================== */
 
-        /* 1. Модальное окно для email (запрос кода) */
         .pwreset-email-modal {
             display: none;
             position: fixed;
@@ -613,7 +764,6 @@
             transform: translateY(-2px);
         }
 
-        /* 2. Модальное окно для кода */
         .pwreset-code-modal {
             display: none;
             position: fixed;
@@ -720,7 +870,6 @@
             text-decoration: underline;
         }
 
-        /* 3. Модальное окно для нового пароля */
         .pwreset-password-modal {
             display: none;
             position: fixed;
@@ -782,7 +931,6 @@
             outline: none;
             border-color: #ff5722;
         }
-        /* Отключаем нативную кнопку показа пароля */
         .pwreset-password-wrapper input::-ms-reveal,
         .pwreset-password-wrapper input::-ms-clear {
             display: none;
@@ -834,7 +982,6 @@
             transform: translateY(-2px);
         }
 
-        /* 4. Модальное окно для жалобы */
         .report-modal {
             display: none;
             position: fixed;
@@ -928,7 +1075,7 @@
             .profile-value { text-align: left; width: 100%; }
             .profile-button-group { flex-direction: column; }
             .profile-save-btn, .profile-cancel-btn, .change-password-btn { width: 100%; }
-            .pwreset-email-modal-content, .pwreset-code-modal-content, .pwreset-password-modal-content { margin: 20% auto; width: 95%; }
+            .pwreset-email-modal-content, .pwreset-code-modal-content, .pwreset-password-modal-content, .ban-modal-content { margin: 20% auto; width: 95%; }
         }
 
         @media (max-width: 768px) {
@@ -952,6 +1099,7 @@
 
 <!-- ОСНОВНОЙ КОНТЕНТ ПРОФИЛЯ -->
 <div class="profile-container">
+    <input type="hidden" id="profileUserId" th:value="${profileUser.id}">
     <div class="profile-overlay">
         <div th:if="${param.updated}" class="profile-success">
             <i class="fas fa-check-circle"></i>
@@ -960,6 +1108,20 @@
         <div th:if="${param.passwordChanged}" class="profile-success">
             <i class="fas fa-check-circle"></i>
             <span>Пароль успешно изменён!</span>
+        </div>
+
+        <!-- Информация о блокировке (видна всем) -->
+        <div id="banInfo" class="ban-info" style="display: none;">
+            <div class="ban-info-header">
+                <i class="fas fa-ban"></i>
+                <strong>Пользователь заблокирован</strong>
+            </div>
+            <div class="ban-info-text">
+                <strong>Причина:</strong> <span id="banReason"></span>
+            </div>
+            <div class="ban-info-text">
+                <strong>До:</strong> <span id="banUntil"></span>
+            </div>
         </div>
 
         <div class="profile-content">
@@ -1092,6 +1254,20 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
 
+                <!-- Кнопка блокировки/разблокировки - только для администраторов (не для себя и не для админов) -->
+                <div th:if="${#authorization.expression('hasAnyRole(''ADMIN'', ''SUPER_ADMIN'')') and !isOwnProfile and profileUser.role.name() != 'ADMIN' and profileUser.role.name() != 'SUPER_ADMIN'}">
+                    <button id="banUserBtn" class="profile-action-btn ban-btn" style="border-left: 5px solid #d32f2f;">
+                        <i class="fas fa-gavel"></i>
+                        <span class="btn-text">Заблокировать пользователя</span>
+                        <i class="fas fa-chevron-right profile-arrow-icon"></i>
+                    </button>
+                    <button id="unbanUserBtn" class="profile-action-btn unban-btn" style="border-left: 5px solid #4caf50; display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="btn-text">Разблокировать пользователя</span>
+                        <i class="fas fa-chevron-right profile-arrow-icon"></i>
+                    </button>
+                </div>
+
                 <button th:if="${!isOwnProfile and (#authorization.expression('isAuthenticated()')) and profileUser.role.name() != 'ADMIN' and profileUser.role.name() != 'SUPER_ADMIN'}"
                         class="profile-action-btn report-user-btn"
                         onclick="openUserReportModal()">
@@ -1223,12 +1399,49 @@
     </div>
 </div>
 
+<!-- Модальное окно для блокировки пользователя -->
+<div id="banModal" class="ban-modal">
+    <div class="ban-modal-content">
+        <div class="ban-modal-header">
+            <h3><i class="fas fa-gavel"></i> Блокировка пользователя</h3>
+            <button class="ban-modal-close" onclick="closeBanModal()">&times;</button>
+        </div>
+        <div class="ban-modal-body">
+            <div class="ban-duration-select">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Срок блокировки</label>
+                <select id="banDuration">
+                    <option value="1_DAY">1 день</option>
+                    <option value="1_WEEK">1 неделя</option>
+                    <option value="1_MONTH">1 месяц</option>
+                    <option value="1_YEAR">1 год</option>
+                    <option value="CUSTOM">Своя дата</option>
+                </select>
+            </div>
+            <div id="banCustomDateContainer" class="ban-custom-date">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Дата окончания</label>
+                <input type="date" id="banCustomDate" min="">
+            </div>
+            <div class="ban-reason">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Причина блокировки *</label>
+                <textarea id="banReasonInput" placeholder="Укажите причину блокировки..."></textarea>
+            </div>
+            <button class="ban-submit-btn" onclick="submitBan()">
+                <i class="fas fa-gavel"></i> Заблокировать
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     let currentResetEmail = '';
     let currentResetCode = '';
     let pwresetTimerInterval = null;
     let resendCooldown = false;
     let resendCooldownInterval = null;
+
+    // Переменные для блокировки
+    let currentBanProfileUserId = document.getElementById('profileUserId')?.value;
+    console.log('Profile user ID from hidden field:', currentBanProfileUserId);
 
     function updateChatButtonBadge() {
         const badgeElement = document.getElementById('chatsBadge');
@@ -1259,6 +1472,189 @@
         }
         updateChatButtonBadge();
     });
+
+    // ==================== БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ ====================
+    async function checkUserBanStatus() {
+        if (!currentBanProfileUserId) return;
+
+        try {
+            const response = await fetch(`/api/admin/bans/check/${currentBanProfileUserId}`);
+            const data = await response.json();
+
+            const banInfoDiv = document.getElementById('banInfo');
+            const banBtn = document.getElementById('banUserBtn');
+            const unbanBtn = document.getElementById('unbanUserBtn');
+
+            if (data.banned) {
+                if (banInfoDiv) {
+                    banInfoDiv.style.display = 'block';
+                    document.getElementById('banReason').textContent = data.reason || 'Не указана';
+                    document.getElementById('banUntil').textContent = formatBanDate(data.bannedUntil);
+                }
+                if (banBtn) banBtn.style.display = 'none';
+                if (unbanBtn) unbanBtn.style.display = 'flex';
+            } else {
+                if (banInfoDiv) banInfoDiv.style.display = 'none';
+                if (banBtn) banBtn.style.display = 'flex';
+                if (unbanBtn) unbanBtn.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error checking ban status:', error);
+        }
+    }
+
+    function formatBanDate(dateStr) {
+        if (!dateStr) return 'не указана';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function openBanModal() {
+        const banModal = document.getElementById('banModal');
+        if (!banModal) return;
+
+        // Устанавливаем минимальную дату для кастомной даты - завтра
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const customDateInput = document.getElementById('banCustomDate');
+        if (customDateInput) customDateInput.min = tomorrow.toISOString().split('T')[0];
+
+        const durationSelect = document.getElementById('banDuration');
+        const customDateContainer = document.getElementById('banCustomDateContainer');
+
+        const handleDurationChange = function() {
+            customDateContainer.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
+        };
+
+        durationSelect.removeEventListener('change', handleDurationChange);
+        durationSelect.addEventListener('change', handleDurationChange);
+
+        // Сбрасываем поля
+        document.getElementById('banReasonInput').value = '';
+        document.getElementById('banDuration').value = '1_WEEK';
+        customDateContainer.style.display = 'none';
+
+        banModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeBanModal() {
+        const banModal = document.getElementById('banModal');
+        if (banModal) banModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function getDurationText(duration) {
+        switch(duration) {
+            case '1_DAY': return '1 день';
+            case '1_WEEK': return '1 неделя';
+            case '1_MONTH': return '1 месяц';
+            case '1_YEAR': return '1 год';
+            case 'CUSTOM': return 'своя дата';
+            default: return 'не указано';
+        }
+    }
+
+    async function submitBan() {
+        const duration = document.getElementById('banDuration').value;
+        const reason = document.getElementById('banReasonInput').value.trim();
+        let customDate = null;
+
+        console.log('=== submitBan ===');
+        console.log('userId:', currentBanProfileUserId);
+        console.log('duration:', duration);
+        console.log('reason:', reason);
+
+        if (!currentBanProfileUserId) {
+            showNotification('ID пользователя не найден', true);
+            return;
+        }
+
+        if (duration === 'CUSTOM') {
+            customDate = document.getElementById('banCustomDate').value;
+            if (!customDate) {
+                showNotification('Выберите дату окончания блокировки', true);
+                return;
+            }
+            const customDateObj = new Date(customDate);
+            customDateObj.setHours(23, 59, 59);
+            customDate = customDateObj.toISOString();
+        }
+
+        if (!reason) {
+            showNotification('Укажите причину блокировки', true);
+            return;
+        }
+
+        if (reason.length > 500) {
+            showNotification('Причина блокировки не должна превышать 500 символов', true);
+            return;
+        }
+
+        if (!confirm(`Вы уверены, что хотите заблокировать пользователя?\nПричина: ${reason}\nСрок: ${getDurationText(duration)}`)) return;
+
+        const submitBtn = document.querySelector('.ban-submit-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Блокировка...';
+
+        const requestBody = {
+            userId: currentBanProfileUserId,
+            reason: reason,
+            duration: duration,
+            customDate: customDate
+        };
+
+        console.log('Отправляем запрос:', requestBody);
+
+        try {
+            const response = await fetch('/api/admin/bans/ban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+            console.log('Ответ сервера:', data);
+
+            if (data.success) {
+                showNotification('Пользователь заблокирован');
+                closeBanModal();
+                await checkUserBanStatus();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при блокировке', true);
+            }
+        } catch (error) {
+            console.error('Error banning user:', error);
+            showNotification('Не удалось заблокировать пользователя', true);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    async function unbanUser() {
+        if (!confirm('Вы уверены, что хотите разблокировать этого пользователя?')) return;
+
+        try {
+            const response = await fetch(`/api/admin/bans/unban/${currentBanProfileUserId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('Пользователь разблокирован');
+                await checkUserBanStatus();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при разблокировке', true);
+            }
+        } catch (error) {
+            console.error('Error unbanning user:', error);
+            showNotification('Не удалось разблокировать пользователя', true);
+        }
+    }
 
     // ==================== СМЕНА ПАРОЛЯ (с автоматическим email) ====================
     function openChangePasswordModal() {
@@ -1629,24 +2025,41 @@
     }
 
     window.onclick = function(event) {
-        const modal = document.getElementById('userReportModal');
-        if (event.target === modal) {
+        const userReportModal = document.getElementById('userReportModal');
+        if (event.target === userReportModal) {
             closeUserReportModal();
         }
-        if (event.target === document.getElementById('pwresetEmailModal')) {
+        const pwresetEmailModal = document.getElementById('pwresetEmailModal');
+        if (event.target === pwresetEmailModal) {
             closePwresetEmailModal();
         }
-        if (event.target === document.getElementById('pwresetCodeModal')) {
+        const pwresetCodeModal = document.getElementById('pwresetCodeModal');
+        if (event.target === pwresetCodeModal) {
             closePwresetCodeModal();
         }
-        if (event.target === document.getElementById('pwresetPasswordModal')) {
+        const pwresetPasswordModal = document.getElementById('pwresetPasswordModal');
+        if (event.target === pwresetPasswordModal) {
             closePwresetPasswordModal();
+        }
+        const banModal = document.getElementById('banModal');
+        if (event.target === banModal) {
+            closeBanModal();
         }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         loadUnreadChatsCount();
         setInterval(loadUnreadChatsCount, 10000);
+
+        // Проверяем статус блокировки
+        checkUserBanStatus();
+
+        // Привязываем кнопки блокировки
+        const banBtn = document.getElementById('banUserBtn');
+        if (banBtn) banBtn.addEventListener('click', openBanModal);
+
+        const unbanBtn = document.getElementById('unbanUserBtn');
+        if (unbanBtn) unbanBtn.addEventListener('click', unbanUser);
     });
 </script>
 

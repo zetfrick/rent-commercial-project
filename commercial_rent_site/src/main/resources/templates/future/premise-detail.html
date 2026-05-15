@@ -1115,24 +1115,28 @@
             </button>
 
             <!-- Кнопка Снять с публикации / Опубликовать - для владельца -->
-            <button th:if="${isOwner and premise.active}"
+            <button th:if="${isOwner and premise.active and not isUserBanned}"
                     class="unpublish-btn"
                     onclick="togglePublish(false)">
                 <i class="fas fa-eye-slash"></i> Снять с публикации
             </button>
-            <button th:if="${isOwner and not premise.active}"
+
+            <!-- Кнопка Опубликовать снова - для владельца (если не заблокирован) -->
+            <button th:if="${isOwner and not premise.active and not isUserBanned}"
                     class="publish-btn"
                     onclick="togglePublish(true)">
                 <i class="fas fa-eye"></i> Опубликовать снова
             </button>
 
             <!-- Кнопка редактирования - для владельца -->
-            <a th:if="${isOwner}" th:href="@{/premise/{id}/edit(id=${premise.id})}" class="edit-btn">
+            <a th:if="${isOwner and not isUserBanned}"
+               th:href="@{/premise/{id}/edit(id=${premise.id})}"
+               class="edit-btn">
                 <i class="fas fa-pen"></i> Редактировать
             </a>
 
             <!-- Кнопка пожаловаться на объявление - для авторизованных (кроме владельца) -->
-            <button th:if="${#authorization.expression('isAuthenticated()') and !isOwner}"
+            <button th:if="${#authorization.expression('isAuthenticated()') and !isOwner and not isUserBanned}"
                     class="complaint-btn"
                     onclick="openComplaintModal('premise')">
                 <i class="fas fa-flag"></i> Пожаловаться на объявление
@@ -1466,14 +1470,26 @@
 
         <!-- Блок для авторизованных пользователей -->
         <div th:if="${#authorization.expression('isAuthenticated()')}">
-            <div style="background: #e3f2fd; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-info-circle" style="color: #2196f3; font-size: 20px;"></i>
-                <span style="color: #1565c0; font-size: 14px;">✍️ Здесь вы можете оставить свой комментарий</span>
+            <!-- Проверяем, заблокирован ли текущий пользователь -->
+            <div th:if="${isUserBanned}">
+                <div style="background: #ffebee; padding: 16px 20px; border-radius: 16px; text-align: center; margin-bottom: 20px; border-left: 4px solid #f44336;">
+                    <i class="fas fa-ban" style="color: #f44336; font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    <p style="color: #c62828; margin: 0;">
+                        <strong>Ваш аккаунт заблокирован</strong><br>
+                        Вы не можете оставлять комментарии.
+                    </p>
+                </div>
             </div>
-            <form id="commentForm" class="comment-form">
-                <textarea id="commentText" placeholder="Напишите ваш комментарий или вопрос..." required></textarea>
-                <button type="submit">Отправить</button>
-            </form>
+            <div th:unless="${isUserBanned}">
+                <div style="background: #e3f2fd; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-info-circle" style="color: #2196f3; font-size: 20px;"></i>
+                    <span style="color: #1565c0; font-size: 14px;">✍️ Здесь вы можете оставить свой комментарий</span>
+                </div>
+                <form id="commentForm" class="comment-form">
+                    <textarea id="commentText" placeholder="Напишите ваш комментарий или вопрос..." required></textarea>
+                    <button type="submit">Отправить</button>
+                </form>
+            </div>
         </div>
 
         <!-- Блок для неавторизованных пользователей -->
@@ -1546,6 +1562,7 @@
     const currentUsername = /*[[${#authentication.name}]]*/ null;
     const isAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'', ''SUPER_ADMIN'')')}]]*/ false;
     const isOwner = /*[[${isOwner}]]*/ false;
+    const isUserBanned = /*[[${isUserBanned}]]*/ false;
     const pendingDateRanges = /*[[${pendingDateRanges}]]*/ [];
     const bookedDateRanges = /*[[${bookedDateRanges}]]*/ [];
 
@@ -1857,6 +1874,12 @@
     let currentCommentText = null;
 
     function openCommentComplaintModal(commentId, authorName, commentText) {
+        const isUserBanned = /*[[${isUserBanned}]]*/ false;
+        if (isUserBanned) {
+            showNotification('Ваш аккаунт заблокирован. Вы не можете отправлять жалобы.', true);
+            return;
+        }
+
         currentCommentId = commentId;
         currentCommentAuthor = authorName;
         currentCommentText = commentText;
@@ -2040,9 +2063,16 @@
                 return;
             }
 
+            // Получаем статус блокировки из глобальной переменной
+            const isUserBannedGlobally = typeof isUserBanned !== 'undefined' ? isUserBanned : false;
+            const isAuthenticated = currentUsername !== null && currentUsername !== '';
+
             comments.forEach(c => {
                 const isCommentAuthor = currentUsername === c.authorName;
                 const canDelete = isCommentAuthor || isAdmin;
+
+                // Проверяем, может ли пользователь отправлять жалобы
+                const canReport = isAuthenticated && !isUserBannedGlobally;
 
                 const div = document.createElement('div');
                 div.className = 'comment';
@@ -2057,12 +2087,16 @@
                     </div>
                     <div class="comment-text">${escapeHtml(c.text)}</div>
                     <div class="comment-actions">
-                        <button class="comment-action-btn report" onclick="openCommentComplaintModal(${c.id}, '${escapeHtml(c.authorName)}', '${escapeHtml(c.text)}')">
-                            <i class="fas fa-flag"></i> Пожаловаться
-                        </button>
-                        ${canDelete ? `<button class="comment-action-btn delete" onclick="deleteComment(${c.id})">
-                            <i class="fas fa-trash-alt"></i> Удалить
-                        </button>` : ''}
+                        ${canReport ? `
+                            <button class="comment-action-btn report" onclick="openCommentComplaintModal(${c.id}, '${escapeHtml(c.authorName)}', '${escapeHtml(c.text)}')">
+                                <i class="fas fa-flag"></i> Пожаловаться
+                            </button>
+                        ` : ''}
+                        ${canDelete ? `
+                            <button class="comment-action-btn delete" onclick="deleteComment(${c.id})">
+                                <i class="fas fa-trash-alt"></i> Удалить
+                            </button>
+                        ` : ''}
                     </div>
                 `;
                 list.appendChild(div);

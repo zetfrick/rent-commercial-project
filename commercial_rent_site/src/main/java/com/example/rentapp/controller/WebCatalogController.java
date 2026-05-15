@@ -5,9 +5,11 @@ import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.CommentDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.entity.UserBan;
 import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.CommentService;
 import com.example.rentapp.service.NotificationService;
+import com.example.rentapp.service.UserBanService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,6 +42,9 @@ public class WebCatalogController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private UserBanService userBanService;
+
     // УПРОЩЁННО: types, amenities, typeInRussian, amenityInRussian добавляются автоматически через GlobalModelAdvice
     @GetMapping("/catalog")
     public String catalog(Model model) {
@@ -67,11 +72,21 @@ public class WebCatalogController {
         // Проверяем, является ли текущий пользователь владельцем помещения (только если пользователь авторизован)
         boolean isOwner = false;
         String ownerLogin = null;
+        boolean isBanned = false;
+        UserBan activeBan = null;
 
         if (userDetails != null) {
             User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
             if (currentUser != null && premise.getOwnerId() != null) {
                 isOwner = currentUser.getId().equals(premise.getOwnerId());
+            }
+
+            // Проверяем блокировку текущего пользователя
+            if (currentUser != null) {
+                isBanned = userBanService.isUserBanned(currentUser.getId());
+                if (isBanned) {
+                    activeBan = userBanService.getActiveBan(currentUser.getId()).orElse(null);
+                }
             }
         }
 
@@ -115,6 +130,9 @@ public class WebCatalogController {
         model.addAttribute("premise", premise);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("ownerLogin", ownerLogin);
+        model.addAttribute("isBanned", isBanned);
+        model.addAttribute("banInfo", activeBan);
+        model.addAttribute("isUserBanned", isBanned);
         model.addAttribute("bookedDates", bookedDates);                          // для всех пользователей
         model.addAttribute("bookedDateRanges", bookedDateRanges);                // для компактного отображения (только APPROVED)
         model.addAttribute("pendingDateRanges", pendingDateRanges);              // диапазоны ожидающих запросов
@@ -144,8 +162,13 @@ public class WebCatalogController {
         model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
         model.addAttribute("currentUri", request.getRequestURI());
 
-        // Проверяем, является ли текущий пользователь владельцем
+        // Проверяем, заблокирован ли пользователь
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
+        if (userBanService.isUserBanned(currentUser.getId())) {
+            return "redirect:/premise/" + id + "?error=banned";
+        }
+
+        // Проверяем, является ли текущий пользователь владельцем
         if (!currentUser.getId().equals(premise.getOwnerId())) {
             return "redirect:/premise/" + id + "?error=access_denied";
         }
@@ -174,8 +197,13 @@ public class WebCatalogController {
             return "redirect:/catalog";
         }
 
-        // Проверяем, является ли текущий пользователь владельцем
+        // Проверяем, заблокирован ли пользователь
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
+        if (userBanService.isUserBanned(currentUser.getId())) {
+            return "redirect:/premise/" + id + "?error=banned";
+        }
+
+        // Проверяем, является ли текущий пользователь владельцем
         if (!currentUser.getId().equals(premise.getOwnerId())) {
             return "redirect:/premise/" + id + "?error=access_denied";
         }
@@ -202,6 +230,11 @@ public class WebCatalogController {
     public CommentDto addComment(@RequestBody CommentDto commentDto,
                                  @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails != null) {
+            // Проверяем, не заблокирован ли пользователь
+            User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+            if (currentUser != null && userBanService.isUserBanned(currentUser.getId())) {
+                throw new RuntimeException("Ваш аккаунт заблокирован. Вы не можете оставлять комментарии.");
+            }
             commentDto.setAuthorName(userDetails.getUsername());
         }
 

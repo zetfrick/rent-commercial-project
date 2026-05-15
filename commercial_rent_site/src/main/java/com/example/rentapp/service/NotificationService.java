@@ -12,6 +12,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -120,6 +122,21 @@ public class NotificationService {
     private String getEmailBody(String type, String fromUserName, String content, String link, String fromFullName) {
         String baseUrl = "http://localhost:8080";
 
+        // Декодируем content, если нужно
+        String decodedContent = content;
+        if (content != null && content.contains("%")) {
+            try {
+                decodedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.toString());
+                System.out.println("Декодирован content: " + decodedContent);
+            } catch (Exception e) {
+                System.err.println("Ошибка декодирования: " + e.getMessage());
+                decodedContent = content;
+            }
+        }
+
+        // Используем декодированную версию для отображения
+        String displayContent = decodedContent != null ? decodedContent : "";
+
         // Используем отображаемое имя (если есть полное имя, иначе логин)
         String displayName = (fromFullName != null && !fromFullName.trim().isEmpty())
                 ? fromFullName + " (" + fromUserName + ")"
@@ -134,6 +151,14 @@ public class NotificationService {
                                 "С уважением,\nКоманда Аренда помещений",
                         displayName, baseUrl, link
                 );
+            case "PREMISE_EXPIRED":
+                return String.format(
+                        "Здравствуйте!\n\n" +
+                                "%s\n\n" +
+                                "Подробнее: %s%s\n\n" +
+                                "С уважением,\nКоманда Аренда помещений",
+                        displayContent, baseUrl, link
+                );
             case "BOOKING_REQUEST":
                 return String.format(
                         "Здравствуйте!\n\n" +
@@ -141,7 +166,7 @@ public class NotificationService {
                                 "Подробности: %s\n\n" +
                                 "Перейти к чату: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, content != null ? content : "", baseUrl, link
+                        displayName, displayContent, baseUrl, link
                 );
             case "BOOKING_APPROVED":
                 return String.format(
@@ -150,7 +175,7 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Перейти к чату: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, content != null ? content : "", baseUrl, link
+                        displayName, displayContent, baseUrl, link
                 );
             case "BOOKING_REJECTED":
                 return String.format(
@@ -168,7 +193,7 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Подробнее: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, content != null ? content : "", baseUrl, link
+                        displayName, displayContent, baseUrl, link
                 );
             case "COMMENT":
                 return String.format(
@@ -177,7 +202,7 @@ public class NotificationService {
                                 "«%s»\n\n" +
                                 "Перейти к объявлению: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, content != null ? content : "", baseUrl, link
+                        displayName, displayContent, baseUrl, link
                 );
             default:
                 return String.format(
@@ -185,7 +210,7 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Подробнее: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        content != null ? content : "Новое уведомление", baseUrl, link
+                        displayContent, baseUrl, link
                 );
         }
     }

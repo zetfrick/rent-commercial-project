@@ -22,6 +22,13 @@ public class UserService implements UserDetailsService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private UserBanService userBanService;
+
+    public boolean isUserBanned(Long userId) {
+        return userBanService.isUserBanned(userId);
+    }
+
     // Поиск пользователя по логину (для личного кабинета)
     public Optional<User> findByLogin(String login) {
         return userRepository.findByLogin(login);
