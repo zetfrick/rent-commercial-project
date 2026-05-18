@@ -1122,11 +1122,17 @@
             </button>
 
             <!-- Кнопка Опубликовать снова - для владельца (если не заблокирован) -->
-            <button th:if="${isOwner and not premise.active and not isUserBanned}"
+            <button th:if="${isOwner and not premise.active and not isUserBanned and canRepublish}"
                     class="publish-btn"
                     onclick="togglePublish(true)">
                 <i class="fas fa-eye"></i> Опубликовать снова
             </button>
+
+            <!-- Сообщение, если дата окончания прошла -->
+            <div th:if="${isOwner and not premise.active and not isUserBanned and not canRepublish}"
+                 style="background: #ffebee; padding: 8px 12px; border-radius: 8px; font-size: 12px; color: #c62828; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-ban"></i> Невозможно опубликовать - срок доступности истёк
+            </div>
 
             <!-- Кнопка редактирования - для владельца -->
             <a th:if="${isOwner and not isUserBanned}"

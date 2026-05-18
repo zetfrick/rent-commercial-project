@@ -140,6 +140,15 @@ public class WebCatalogController {
         model.addAttribute("approvedBookings", isOwner ? approvedBookings : List.of()); // подтверждённые бронирования
         model.addAttribute("pendingBookings", isOwner ? pendingBookings : List.of());   // ожидающие бронирования
 
+        // Проверяем, можно ли опубликовать объявление снова (дата окончания не прошла)
+        boolean canRepublish = false;
+        if (premise != null && premise.getAvailableTo() != null) {
+            LocalDate today = LocalDate.now();
+            // Можно опубликовать, если сегодняшняя дата не позже даты окончания
+            canRepublish = !today.isAfter(premise.getAvailableTo());
+        }
+        model.addAttribute("canRepublish", canRepublish);
+
         // types, amenities и прочее уже в модели через GlobalModelAdvice
 
         return "future/premise-detail";
