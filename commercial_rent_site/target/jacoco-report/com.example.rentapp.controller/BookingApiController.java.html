@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingApiController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">BookingApiController.java</span></div><h1>BookingApiController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
+import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.BookingService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/bookings&quot;)
+<span class="nc" id="L23">public class BookingApiController {</span>
+
+    @Autowired
+    private BookingService bookingService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CatalogClient catalogClient;
+
+    // Получить все занятые даты для помещения (только APPROVED)
+    @GetMapping(&quot;/premise/{premiseId}/booked-dates&quot;)
+    public ResponseEntity&lt;List&lt;LocalDate&gt;&gt; getBookedDates(@PathVariable Long premiseId) {
+<span class="nc" id="L37">        return ResponseEntity.ok(bookingService.getBookedDates(premiseId));</span>
+    }
+
+    // Получить все одобренные бронирования для помещения (с деталями арендаторов)
+    @GetMapping(&quot;/premise/{premiseId}&quot;)
+    public ResponseEntity&lt;List&lt;BookingDto&gt;&gt; getBookings(@PathVariable Long premiseId) {
+<span class="nc" id="L43">        return ResponseEntity.ok(bookingService.getApprovedBookingsWithDetails(premiseId));</span>
+    }
+
+    // Получить PENDING запросы для владельца
+    @GetMapping(&quot;/owner/{ownerId}/pending&quot;)
+    public ResponseEntity&lt;List&lt;BookingDto&gt;&gt; getPendingRequests(@PathVariable Long ownerId) {
+<span class="nc" id="L49">        return ResponseEntity.ok(bookingService.getPendingRequestsForOwner(ownerId));</span>
+    }
+
+    // НОВЫЙ ЭНДПОИНТ: получить PENDING запросы для владельца по конкретному помещению
+    @GetMapping(&quot;/owner/{ownerId}/pending/premise/{premiseId}&quot;)
+    public ResponseEntity&lt;List&lt;BookingDto&gt;&gt; getPendingRequestsForOwnerByPremise(
+            @PathVariable Long ownerId,
+            @PathVariable Long premiseId) {
+<span class="nc" id="L57">        return ResponseEntity.ok(bookingService.getPendingRequestsForOwnerByPremise(ownerId, premiseId));</span>
+    }
+
+    // Получить все запросы арендатора (с разными статусами)
+    @GetMapping(&quot;/renter/{renterId}/requests&quot;)
+    public ResponseEntity&lt;List&lt;BookingDto&gt;&gt; getRenterRequests(@PathVariable Long renterId) {
+<span class="nc" id="L63">        return ResponseEntity.ok(bookingService.getRequestsForRenter(renterId));</span>
+    }
+
+    // НОВЫЙ ЭНДПОИНТ: получить диапазоны ожидающих дат для помещения (только PENDING)
+    @GetMapping(&quot;/premise/{premiseId}/pending-ranges&quot;)
+    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getPendingDateRanges(@PathVariable Long premiseId) {
+<span class="nc" id="L69">        return ResponseEntity.ok(bookingService.getPendingDateRanges(premiseId));</span>
+    }
+
+    // Создать запрос на аренду (для арендатора)
+    @PostMapping(&quot;/request&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; createBookingRequest(
+            @RequestParam Long premiseId,
+            @RequestParam Long ownerId,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate endDate,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L81">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L84">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L85">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L86">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L89">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L91">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L92">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L93">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (currentUser.getId().equals(ownerId)) {</span>
+<span class="nc" id="L97">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L98">            response.put(&quot;message&quot;, &quot;Вы не можете арендовать собственное помещение&quot;);</span>
+<span class="nc" id="L99">            return ResponseEntity.badRequest().body(response);</span>
+        }
+
+        try {
+<span class="nc" id="L103">            BookingDto booking = bookingService.createBookingRequest(</span>
+<span class="nc" id="L104">                    premiseId, currentUser.getId(), ownerId, startDate, endDate</span>
+            );
+<span class="nc" id="L106">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L107">            response.put(&quot;booking&quot;, booking);</span>
+<span class="nc" id="L108">            response.put(&quot;message&quot;, &quot;Запрос на аренду отправлен владельцу&quot;);</span>
+<span class="nc" id="L109">            return ResponseEntity.ok(response);</span>
+<span class="nc" id="L110">        } catch (Exception e) {</span>
+<span class="nc" id="L111">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L112">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L113">            return ResponseEntity.badRequest().body(response);</span>
+        }
+    }
+
+    // Создать бронирование напрямую (для владельца)
+    @PostMapping(&quot;/create&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; createBookingDirect(
+            @RequestParam Long premiseId,
+            @RequestParam Long renterId,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate endDate,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L126">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L129">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L130">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L131">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L134">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L136">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L137">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L138">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+<span class="nc" id="L141">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L143">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L144">            response.put(&quot;message&quot;, &quot;Помещение не найдено&quot;);</span>
+<span class="nc" id="L145">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (!currentUser.getId().equals(premise.getOwnerId())) {</span>
+<span class="nc" id="L149">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L150">            response.put(&quot;message&quot;, &quot;Только владелец может создать бронирование&quot;);</span>
+<span class="nc" id="L151">            return ResponseEntity.status(403).body(response);</span>
+        }
+
+<span class="nc" id="L154">        User renter = userService.findById(renterId).orElse(null);</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (renter == null) {</span>
+<span class="nc" id="L156">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L157">            response.put(&quot;message&quot;, &quot;Арендатор не найден&quot;);</span>
+<span class="nc" id="L158">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+        try {
+<span class="nc" id="L162">            BookingDto booking = bookingService.createBookingDirect(</span>
+<span class="nc" id="L163">                    premiseId, renterId, premise.getOwnerId(), startDate, endDate</span>
+            );
+<span class="nc" id="L165">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L166">            response.put(&quot;booking&quot;, booking);</span>
+<span class="nc" id="L167">            response.put(&quot;message&quot;, &quot;Аренда оформлена!&quot;);</span>
+<span class="nc" id="L168">            return ResponseEntity.ok(response);</span>
+<span class="nc" id="L169">        } catch (Exception e) {</span>
+<span class="nc" id="L170">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L171">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L172">            return ResponseEntity.badRequest().body(response);</span>
+        }
+    }
+
+    // Одобрить запрос (владелец)
+    @PostMapping(&quot;/{bookingId}/approve&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; approveBooking(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L182">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L185">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L186">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L187">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L190">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L192">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L193">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L194">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+        try {
+<span class="nc" id="L198">            bookingService.approveBooking(bookingId, currentUser.getId());</span>
+<span class="nc" id="L199">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L200">            response.put(&quot;message&quot;, &quot;Запрос одобрен, даты забронированы&quot;);</span>
+<span class="nc" id="L201">            return ResponseEntity.ok(response);</span>
+<span class="nc" id="L202">        } catch (Exception e) {</span>
+<span class="nc" id="L203">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L204">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L205">            return ResponseEntity.badRequest().body(response);</span>
+        }
+    }
+
+    // Отказать в запросе (владелец)
+    @PostMapping(&quot;/{bookingId}/reject&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; rejectBooking(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L215">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L218">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L219">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L220">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L223">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L225">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L226">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L227">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+        try {
+<span class="nc" id="L231">            bookingService.rejectBooking(bookingId, currentUser.getId());</span>
+<span class="nc" id="L232">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L233">            response.put(&quot;message&quot;, &quot;Запрос отклонён&quot;);</span>
+<span class="nc" id="L234">            return ResponseEntity.ok(response);</span>
+<span class="nc" id="L235">        } catch (Exception e) {</span>
+<span class="nc" id="L236">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L237">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L238">            return ResponseEntity.badRequest().body(response);</span>
+        }
+    }
+
+    // Отменить бронирование (владелец)
+    @DeleteMapping(&quot;/{bookingId}/cancel-by-owner&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; cancelByOwner(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L248">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L251">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L252">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L253">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L256">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L258">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L259">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L260">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+        try {
+<span class="nc" id="L264">            bookingService.cancelBookingByOwner(bookingId, currentUser.getId());</span>
+<span class="nc" id="L265">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L266">            response.put(&quot;message&quot;, &quot;Бронирование отменено&quot;);</span>
+<span class="nc" id="L267">            return ResponseEntity.ok(response);</span>
+<span class="nc" id="L268">        } catch (Exception e) {</span>
+<span class="nc" id="L269">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L270">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L271">            return ResponseEntity.badRequest().body(response);</span>
+        }
+    }
+
+    // Отменить бронирование (арендатор)
+    @DeleteMapping(&quot;/{bookingId}/cancel-by-renter&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; cancelByRenter(
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L281">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L284">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L285">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L286">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L289">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L291">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L292">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L293">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+        try {
+<span class="nc" id="L297">            bookingService.cancelBookingByRenter(bookingId, currentUser.getId());</span>
+<span class="nc" id="L298">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L299">            response.put(&quot;message&quot;, &quot;Бронирование отменено&quot;);</span>
+<span class="nc" id="L300">            return ResponseEntity.ok(response);</span>
+<span class="nc" id="L301">        } catch (Exception e) {</span>
+<span class="nc" id="L302">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L303">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L304">            return ResponseEntity.badRequest().body(response);</span>
+        }
+    }
+
+    // Проверить доступность дат (только для одобренных бронирований)
+    @GetMapping(&quot;/check-availability&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; checkAvailability(
+            @RequestParam Long premiseId,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate endDate) {
+
+<span class="nc" id="L315">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L316">        boolean available = bookingService.areDatesAvailable(premiseId, startDate, endDate);</span>
+<span class="nc" id="L317">        response.put(&quot;available&quot;, available);</span>
+<span class="nc" id="L318">        return ResponseEntity.ok(response);</span>
+    }
+
+    // Получить диапазоны подтверждённых дат для помещения (только APPROVED)
+    @GetMapping(&quot;/premise/{premiseId}/booked-ranges&quot;)
+    public ResponseEntity&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; getBookedDateRanges(@PathVariable Long premiseId) {
+<span class="nc" id="L324">        return ResponseEntity.ok(bookingService.getBookedDateRanges(premiseId));</span>
+    }
+
+    // Проверить доступность дат с учётом периода доступности помещения
+    @GetMapping(&quot;/check-availability-with-period&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; checkAvailabilityWithPeriod(
+            @RequestParam Long premiseId,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate startDate,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd&quot;) LocalDate endDate) {
+
+<span class="nc" id="L334">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L336">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L338">            response.put(&quot;available&quot;, false);</span>
+<span class="nc" id="L339">            response.put(&quot;message&quot;, &quot;Помещение не найдено&quot;);</span>
+<span class="nc" id="L340">            return ResponseEntity.badRequest().body(response);</span>
+        }
+
+<span class="nc bnc" id="L343" title="All 4 branches missed.">        if (startDate.isBefore(premise.getAvailableFrom()) || endDate.isAfter(premise.getAvailableTo())) {</span>
+<span class="nc" id="L344">            response.put(&quot;available&quot;, false);</span>
+<span class="nc" id="L345">            response.put(&quot;message&quot;, &quot;Выбранные даты выходят за пределы доступного периода аренды&quot;);</span>
+<span class="nc" id="L346">            response.put(&quot;availableFrom&quot;, premise.getAvailableFrom());</span>
+<span class="nc" id="L347">            response.put(&quot;availableTo&quot;, premise.getAvailableTo());</span>
+<span class="nc" id="L348">            return ResponseEntity.ok(response);</span>
+        }
+
+<span class="nc" id="L351">        boolean available = bookingService.areDatesAvailable(premiseId, startDate, endDate);</span>
+<span class="nc" id="L352">        response.put(&quot;available&quot;, available);</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">        if (!available) {</span>
+<span class="nc" id="L354">            response.put(&quot;message&quot;, &quot;Выбранные даты уже заняты&quot;);</span>
+        }
+<span class="nc" id="L356">        return ResponseEntity.ok(response);</span>
+    }
+
+    @GetMapping(&quot;/renter/{renterId}/approved&quot;)
+    public ResponseEntity&lt;List&lt;BookingDto&gt;&gt; getApprovedBookingsForRenter(@PathVariable Long renterId) {
+<span class="nc" id="L361">        List&lt;BookingDto&gt; bookings = bookingService.getApprovedBookingsForRenter(renterId);</span>
+<span class="nc" id="L362">        return ResponseEntity.ok(bookings);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

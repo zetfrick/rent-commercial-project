@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChatService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.service</a> &gt; <span class="el_source">ChatService.java</span></div><h1>ChatService.java</h1><pre class="source lang-java linenums">package com.example.rentapp.service;
+
+import com.example.rentapp.entity.ChatMessage;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.repository.ChatMessageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+<span class="nc" id="L13">public class ChatService {</span>
+
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    public ChatMessage sendMessage(Long senderId, Long receiverId, String text) {
+<span class="nc" id="L25">        User sender = userService.findById(senderId)</span>
+<span class="nc" id="L26">                .orElseThrow(() -&gt; new RuntimeException(&quot;Отправитель не найден&quot;));</span>
+<span class="nc" id="L27">        User receiver = userService.findById(receiverId)</span>
+<span class="nc" id="L28">                .orElseThrow(() -&gt; new RuntimeException(&quot;Получатель не найден&quot;));</span>
+
+<span class="nc" id="L30">        ChatMessage message = new ChatMessage(</span>
+                senderId,
+                receiverId,
+<span class="nc" id="L33">                sender.getLogin(),</span>
+                text
+        );
+
+<span class="nc" id="L37">        ChatMessage saved = chatMessageRepository.save(message);</span>
+
+<span class="nc" id="L39">        String chatLink = &quot;/chats/with/&quot; + sender.getLogin();</span>
+
+<span class="nc bnc" id="L41" title="All 2 branches missed.">        if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, null)) {</span>
+<span class="nc" id="L42">            notificationService.createNotification(</span>
+                    receiverId,
+                    &quot;MESSAGE&quot;,
+                    null,
+                    senderId,
+<span class="nc" id="L47">                    sender.getLogin(),</span>
+                    null,
+                    chatLink
+            );
+<span class="nc" id="L51">            System.out.println(&quot;Создано новое уведомление о сообщении от &quot; + sender.getLogin() + &quot; для &quot; + receiver.getLogin());</span>
+        } else {
+<span class="nc" id="L53">            System.out.println(&quot;Уведомление уже существует, пропускаем дубликат&quot;);</span>
+        }
+
+<span class="nc" id="L56">        return saved;</span>
+    }
+
+    public ChatMessage sendMessageWithPremise(Long senderId, Long receiverId, String text, Long premiseId) {
+<span class="nc" id="L60">        User sender = userService.findById(senderId)</span>
+<span class="nc" id="L61">                .orElseThrow(() -&gt; new RuntimeException(&quot;Отправитель не найден&quot;));</span>
+<span class="nc" id="L62">        User receiver = userService.findById(receiverId)</span>
+<span class="nc" id="L63">                .orElseThrow(() -&gt; new RuntimeException(&quot;Получатель не найден&quot;));</span>
+
+<span class="nc" id="L65">        ChatMessage message = new ChatMessage(</span>
+                senderId,
+                receiverId,
+<span class="nc" id="L68">                sender.getLogin(),</span>
+                text,
+                premiseId
+        );
+
+<span class="nc" id="L73">        ChatMessage saved = chatMessageRepository.save(message);</span>
+
+<span class="nc" id="L75">        String chatLink = &quot;/chats/with/&quot; + sender.getLogin() + &quot;/premise/&quot; + premiseId;</span>
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, premiseId)) {</span>
+<span class="nc" id="L78">            notificationService.createNotification(</span>
+                    receiverId,
+                    &quot;MESSAGE&quot;,
+                    premiseId,
+                    senderId,
+<span class="nc" id="L83">                    sender.getLogin(),</span>
+                    null,
+                    chatLink
+            );
+<span class="nc" id="L87">            System.out.println(&quot;Создано новое уведомление о сообщении от &quot; + sender.getLogin() + &quot; по помещению #&quot; + premiseId);</span>
+        } else {
+<span class="nc" id="L89">            System.out.println(&quot;Уведомление уже существует, пропускаем дубликат&quot;);</span>
+        }
+
+<span class="nc" id="L92">        return saved;</span>
+    }
+
+    // НОВЫЙ МЕТОД: отправка сообщения с файлом
+    public ChatMessage sendMessageWithFile(Long senderId, Long receiverId, String text, Long premiseId,
+                                           String fileName, String fileUrl, String fileType, Long fileSize) {
+<span class="nc" id="L98">        User sender = userService.findById(senderId)</span>
+<span class="nc" id="L99">                .orElseThrow(() -&gt; new RuntimeException(&quot;Отправитель не найден&quot;));</span>
+<span class="nc" id="L100">        User receiver = userService.findById(receiverId)</span>
+<span class="nc" id="L101">                .orElseThrow(() -&gt; new RuntimeException(&quot;Получатель не найден&quot;));</span>
+
+<span class="nc" id="L103">        ChatMessage message = new ChatMessage(</span>
+                senderId,
+                receiverId,
+<span class="nc" id="L106">                sender.getLogin(),</span>
+                text,
+                premiseId,
+                fileName,
+                fileUrl,
+                fileType,
+                fileSize
+        );
+
+<span class="nc" id="L115">        ChatMessage saved = chatMessageRepository.save(message);</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        String chatLink = (premiseId != null)</span>
+<span class="nc" id="L118">                ? &quot;/chats/with/&quot; + sender.getLogin() + &quot;/premise/&quot; + premiseId</span>
+<span class="nc" id="L119">                : &quot;/chats/with/&quot; + sender.getLogin();</span>
+
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, premiseId)) {</span>
+<span class="nc" id="L122">            notificationService.createNotification(</span>
+                    receiverId,
+                    &quot;MESSAGE&quot;,
+                    premiseId,
+                    senderId,
+<span class="nc" id="L127">                    sender.getLogin(),</span>
+                    null,
+                    chatLink
+            );
+        }
+
+<span class="nc" id="L133">        return saved;</span>
+    }
+
+    public ChatMessage sendSystemMessage(Long senderId, Long receiverId, String text) {
+<span class="nc" id="L137">        ChatMessage message = new ChatMessage(</span>
+                senderId,
+                receiverId,
+                &quot;Система&quot;,
+                text
+        );
+<span class="nc" id="L143">        return chatMessageRepository.save(message);</span>
+    }
+
+    public ChatMessage sendSystemMessageWithPremise(Long senderId, Long receiverId, String text, Long premiseId) {
+<span class="nc" id="L147">        ChatMessage message = new ChatMessage(</span>
+                senderId,
+                receiverId,
+                &quot;Система&quot;,
+                text,
+                premiseId
+        );
+<span class="nc" id="L154">        return chatMessageRepository.save(message);</span>
+    }
+
+    public List&lt;ChatMessage&gt; getChatBetween(Long userId1, Long userId2) {
+<span class="nc" id="L158">        return chatMessageRepository.findChatBetweenUsers(userId1, userId2);</span>
+    }
+
+    public List&lt;ChatMessage&gt; getChatBetweenByPremise(Long userId1, Long userId2, Long premiseId) {
+<span class="nc" id="L162">        return chatMessageRepository.findChatBetweenUsersByPremise(userId1, userId2, premiseId);</span>
+    }
+
+    public List&lt;ChatMessage&gt; getAllUserMessages(Long userId) {
+<span class="nc" id="L166">        return chatMessageRepository.findAllMessagesForUser(userId);</span>
+    }
+
+    public List&lt;ChatMessage&gt; getUnreadMessages(Long userId) {
+<span class="nc" id="L170">        return chatMessageRepository.findByReceiverIdAndReadFalse(userId);</span>
+    }
+
+    @Transactional
+    public void markMessagesAsRead(Long currentUserId, Long otherUserId) {
+<span class="nc" id="L175">        chatMessageRepository.markMessagesAsRead(otherUserId, currentUserId);</span>
+<span class="nc" id="L176">        System.out.println(&quot;Marked messages as read from user &quot; + otherUserId);</span>
+<span class="nc" id="L177">    }</span>
+
+    @Transactional
+    public void markMessagesAsReadByPremise(Long currentUserId, Long otherUserId, Long premiseId) {
+<span class="nc" id="L181">        chatMessageRepository.markMessagesAsReadByPremise(otherUserId, currentUserId, premiseId);</span>
+<span class="nc" id="L182">        System.out.println(&quot;Marked messages as read from user &quot; + otherUserId + &quot; for premise &quot; + premiseId);</span>
+<span class="nc" id="L183">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

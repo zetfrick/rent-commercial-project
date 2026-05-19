@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommentApiController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">CommentApiController.java</span></div><h1>CommentApiController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.CommentService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/comments&quot;)
+<span class="nc" id="L17">public class CommentApiController {</span>
+
+    @Autowired
+    private CommentService commentService;
+
+    @Autowired
+    private UserService userService;
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; deleteComment(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L30">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L33">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L34">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L35">            return ResponseEntity.status(401).body(response);</span>
+        }
+
+<span class="nc" id="L38">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L40">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L41">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L42">            return ResponseEntity.status(404).body(response);</span>
+        }
+
+        // Проверка прав: админ или SUPER_ADMIN могут удалять любые комментарии
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        boolean isAdmin = currentUser.getRole() == User.Role.ADMIN ||</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">                currentUser.getRole() == User.Role.SUPER_ADMIN;</span>
+
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (!isAdmin) {</span>
+            // Если не админ, нужно проверить, что комментарий принадлежит этому пользователю
+            // Но т.к. у нас нет прямого доступа к комментарию в rentapp,
+            // лучше разрешить удаление только админам для простоты
+<span class="nc" id="L53">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L54">            response.put(&quot;message&quot;, &quot;Недостаточно прав для удаления комментария&quot;);</span>
+<span class="nc" id="L55">            return ResponseEntity.status(403).body(response);</span>
+        }
+
+<span class="nc" id="L58">        boolean deleted = commentService.deleteComment(id);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (deleted) {</span>
+<span class="nc" id="L60">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L61">            return ResponseEntity.ok(response);</span>
+        } else {
+<span class="nc" id="L63">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L64">            response.put(&quot;message&quot;, &quot;Не удалось удалить комментарий&quot;);</span>
+<span class="nc" id="L65">            return ResponseEntity.status(404).body(response);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

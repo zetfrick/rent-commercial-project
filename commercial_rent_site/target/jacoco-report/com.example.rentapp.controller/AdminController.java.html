@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">AdminController.java</span></div><h1>AdminController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.entity.User;
+import com.example.rentapp.repository.UserRepository;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping(&quot;/admin&quot;)
+<span class="nc" id="L19">public class AdminController {</span>
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SessionRegistry sessionRegistry;
+
+    // Страница управления администраторами (только для SUPER_ADMIN)
+    @GetMapping(&quot;/admins&quot;)
+    public String adminsPage(Model model) {
+        // Загружаем всех пользователей с ролью ADMIN или SUPER_ADMIN
+<span class="nc" id="L37">        List&lt;User&gt; admins = userRepository.findAll().stream()</span>
+<span class="nc bnc" id="L38" title="All 4 branches missed.">                .filter(user -&gt; user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN)</span>
+<span class="nc" id="L39">                .collect(Collectors.toList());</span>
+<span class="nc" id="L40">        model.addAttribute(&quot;admins&quot;, admins);</span>
+<span class="nc" id="L41">        return &quot;future/admin-admins&quot;;</span>
+    }
+
+    // API для получения списка администраторов (для AJAX)
+    @GetMapping(&quot;/api/admins&quot;)
+    @ResponseBody
+    public List&lt;User&gt; getAdminsApi() {
+<span class="nc" id="L48">        return userRepository.findAll().stream()</span>
+<span class="nc bnc" id="L49" title="All 4 branches missed.">                .filter(user -&gt; user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN)</span>
+<span class="nc" id="L50">                .collect(Collectors.toList());</span>
+    }
+
+    // API для получения роли пользователя по логину
+    @GetMapping(&quot;/api/user/role/{username}&quot;)
+    @ResponseBody
+    public String getUserRole(@PathVariable String username) {
+<span class="nc" id="L57">        User user = userService.findByLogin(username).orElse(null);</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (user != null) {</span>
+<span class="nc" id="L59">            return user.getRole().name();</span>
+        }
+<span class="nc" id="L61">        return &quot;USER&quot;;</span>
+    }
+
+    // Добавление нового администратора
+    @PostMapping(&quot;/api/admins/add&quot;)
+    @ResponseBody
+    public String addAdmin(@RequestParam String login,
+                           @RequestParam String email,
+                           @RequestParam String firstName,
+                           @RequestParam String lastName,
+                           @RequestParam String password) {
+
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if (userRepository.existsByLogin(login)) {</span>
+<span class="nc" id="L74">            return &quot;error: Логин уже существует&quot;;</span>
+        }
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (userRepository.existsByEmail(email)) {</span>
+<span class="nc" id="L77">            return &quot;error: Email уже существует&quot;;</span>
+        }
+
+<span class="nc" id="L80">        User admin = new User();</span>
+<span class="nc" id="L81">        admin.setLogin(login);</span>
+<span class="nc" id="L82">        admin.setEmail(email);</span>
+<span class="nc" id="L83">        admin.setFirstName(firstName);</span>
+<span class="nc" id="L84">        admin.setLastName(lastName);</span>
+<span class="nc" id="L85">        admin.setPassword(passwordEncoder.encode(password));</span>
+<span class="nc" id="L86">        admin.setRole(User.Role.ADMIN);</span>
+
+<span class="nc" id="L88">        userRepository.save(admin);</span>
+<span class="nc" id="L89">        return &quot;ok&quot;;</span>
+    }
+
+    // Удаление администратора с принудительным завершением сессии
+    @DeleteMapping(&quot;/api/admins/{id}&quot;)
+    @ResponseBody
+    public String deleteAdmin(@PathVariable Long id) {
+<span class="nc" id="L96">        User admin = userRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L97" title="All 4 branches missed.">        if (admin != null &amp;&amp; admin.getRole() != User.Role.SUPER_ADMIN) {</span>
+<span class="nc" id="L98">            String adminLogin = admin.getLogin();</span>
+
+            // Завершаем все активные сессии пользователя
+<span class="nc" id="L101">            List&lt;Object&gt; principals = sessionRegistry.getAllPrincipals();</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            for (Object principal : principals) {</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                if (principal instanceof org.springframework.security.core.userdetails.User) {</span>
+<span class="nc" id="L104">                    org.springframework.security.core.userdetails.User user =</span>
+                            (org.springframework.security.core.userdetails.User) principal;
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                    if (user.getUsername().equals(adminLogin)) {</span>
+<span class="nc" id="L107">                        List&lt;SessionInformation&gt; sessions = sessionRegistry.getAllSessions(principal, false);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">                        for (SessionInformation session : sessions) {</span>
+<span class="nc" id="L109">                            session.expireNow(); // Завершаем сессию</span>
+<span class="nc" id="L110">                        }</span>
+<span class="nc" id="L111">                        break;</span>
+                    }
+                }
+<span class="nc" id="L114">            }</span>
+
+<span class="nc" id="L116">            userRepository.deleteById(id);</span>
+<span class="nc" id="L117">            return &quot;ok&quot;;</span>
+        }
+<span class="nc" id="L119">        return &quot;error: Нельзя удалить главного администратора&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

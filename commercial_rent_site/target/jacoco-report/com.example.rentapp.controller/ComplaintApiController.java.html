@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ComplaintApiController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">ComplaintApiController.java</span></div><h1>ComplaintApiController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.dto.ComplaintDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.ComplaintService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/complaints&quot;)
+<span class="nc" id="L17">public class ComplaintApiController {</span>
+
+    @Autowired
+    private ComplaintService complaintService;
+
+    @Autowired
+    private UserService userService;
+
+    @PostMapping
+    public Map&lt;String, Object&gt; createComplaint(@RequestBody ComplaintDto complaintDto,
+                                               @AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L28">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L31">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L32">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L33">            return response;</span>
+        }
+
+<span class="nc" id="L36">        User complainant = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (complainant == null) {</span>
+<span class="nc" id="L38">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L39">            response.put(&quot;message&quot;, &quot;Пользователь не найден&quot;);</span>
+<span class="nc" id="L40">            return response;</span>
+        }
+
+<span class="nc" id="L43">        complaintDto.setComplainantId(complainant.getId());</span>
+<span class="nc" id="L44">        complaintDto.setComplainantName(complainant.getLogin());</span>
+
+        try {
+<span class="nc" id="L47">            complaintService.saveComplaint(complaintDto);</span>
+<span class="nc" id="L48">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L49">        } catch (Exception e) {</span>
+<span class="nc" id="L50">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L51">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L52">        }</span>
+<span class="nc" id="L53">        return response;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

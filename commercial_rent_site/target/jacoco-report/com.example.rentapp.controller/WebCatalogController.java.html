@@ -1,19 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebCatalogController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">WebCatalogController.java</span></div><h1>WebCatalogController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
 
 import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.CommentDto;
 import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.entity.UserBan;
+import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.CommentService;
+import com.example.rentapp.service.NotificationService;
+import com.example.rentapp.service.UserBanService;
+import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
-<span class="nc" id="L16">public class WebCatalogController {</span>
+<span class="nc" id="L28">public class WebCatalogController {</span>
 
     @Autowired
     private CatalogClient catalogClient;
@@ -21,53 +33,255 @@ import java.util.Map;
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private BookingService bookingService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserBanService userBanService;
+
+    // УПРОЩЁННО: types, amenities, typeInRussian, amenityInRussian добавляются автоматически через GlobalModelAdvice
     @GetMapping(&quot;/catalog&quot;)
     public String catalog(Model model) {
-<span class="nc" id="L26">        List&lt;PremiseDto&gt; premises = catalogClient.getAllPremises();</span>
-<span class="nc" id="L27">        model.addAttribute(&quot;premises&quot;, premises);</span>
-
-<span class="nc" id="L29">        model.addAttribute(&quot;types&quot;, List.of(&quot;OFFICE&quot;, &quot;TRADING&quot;, &quot;WAREHOUSE&quot;, &quot;PRODUCTION&quot;, &quot;HOSPITALITY&quot;, &quot;UNIVERSAL&quot;));</span>
-<span class="nc" id="L30">        model.addAttribute(&quot;amenities&quot;, List.of(&quot;CONDITIONER&quot;, &quot;WI_FI&quot;, &quot;FURNITURE&quot;, &quot;PARKING&quot;, &quot;SECURITY&quot;, &quot;ELEVATOR&quot;, &quot;KITCHEN&quot;, &quot;CONFERENCE&quot;));</span>
-
-<span class="nc" id="L32">        model.addAttribute(&quot;typeInRussian&quot;, Map.of(</span>
-                &quot;OFFICE&quot;, &quot;Офисное&quot;, &quot;TRADING&quot;, &quot;Торговое&quot;, &quot;WAREHOUSE&quot;, &quot;Складское&quot;,
-                &quot;PRODUCTION&quot;, &quot;Производственное&quot;, &quot;HOSPITALITY&quot;, &quot;Гостиничное&quot;, &quot;UNIVERSAL&quot;, &quot;Универсальное&quot;
-        ));
-
-<span class="nc" id="L37">        model.addAttribute(&quot;amenityInRussian&quot;, Map.of(</span>
-                &quot;CONDITIONER&quot;, &quot;Кондиционер&quot;, &quot;WI_FI&quot;, &quot;Wi-Fi&quot;, &quot;FURNITURE&quot;, &quot;Мебель&quot;,
-                &quot;PARKING&quot;, &quot;Парковка&quot;, &quot;SECURITY&quot;, &quot;Охрана&quot;, &quot;ELEVATOR&quot;, &quot;Лифт&quot;,
-                &quot;KITCHEN&quot;, &quot;Кухня&quot;, &quot;CONFERENCE&quot;, &quot;Конференц-зал&quot;
-        ));
-
-<span class="nc" id="L43">        return &quot;future/catalog&quot;;</span>
+<span class="nc" id="L51">        List&lt;PremiseDto&gt; premises = catalogClient.getAllPremises();</span>
+<span class="nc" id="L52">        model.addAttribute(&quot;premises&quot;, premises);</span>
+<span class="nc" id="L53">        return &quot;future/catalog&quot;;</span>
     }
 
     @GetMapping(&quot;/premise/{id}&quot;)
-    public String premiseDetail(@PathVariable Long id, Model model) {
-<span class="nc" id="L48">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
+    public String premiseDetail(@PathVariable Long id,
+                                @AuthenticationPrincipal UserDetails userDetails,
+                                jakarta.servlet.http.HttpServletRequest request,
+                                @RequestParam(required = false) String city,
+                                Model model) {
+<span class="nc" id="L62">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
 
-<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (premise == null) {</span>
-<span class="nc" id="L51">            return &quot;redirect:/catalog&quot;; // или ошибка 404</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L65">            return &quot;redirect:/catalog&quot;;</span>
         }
 
-<span class="nc" id="L54">        model.addAttribute(&quot;premise&quot;, premise);</span>
-<span class="nc" id="L55">        return &quot;future/premise-detail&quot;;</span>
+        // Для header
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L70">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+
+        // Проверяем, является ли текущий пользователь владельцем помещения (только если пользователь авторизован)
+<span class="nc" id="L73">        boolean isOwner = false;</span>
+<span class="nc" id="L74">        String ownerLogin = null;</span>
+<span class="nc" id="L75">        boolean isBanned = false;</span>
+<span class="nc" id="L76">        UserBan activeBan = null;</span>
+
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (userDetails != null) {</span>
+<span class="nc" id="L79">            User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L80" title="All 4 branches missed.">            if (currentUser != null &amp;&amp; premise.getOwnerId() != null) {</span>
+<span class="nc" id="L81">                isOwner = currentUser.getId().equals(premise.getOwnerId());</span>
+            }
+
+            // Проверяем блокировку текущего пользователя
+<span class="nc bnc" id="L85" title="All 2 branches missed.">            if (currentUser != null) {</span>
+<span class="nc" id="L86">                isBanned = userBanService.isUserBanned(currentUser.getId());</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                if (isBanned) {</span>
+<span class="nc" id="L88">                    activeBan = userBanService.getActiveBan(currentUser.getId()).orElse(null);</span>
+                }
+            }
+        }
+
+        // Получаем логин владельца по ownerId
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (premise.getOwnerId() != null) {</span>
+<span class="nc" id="L95">            Optional&lt;User&gt; owner = userService.findById(premise.getOwnerId());</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">            if (owner.isPresent()) {</span>
+<span class="nc" id="L97">                ownerLogin = owner.get().getLogin();</span>
+            }
+        }
+
+        // Получаем занятые даты (только APPROVED) - для проверки доступности и отображения обычным пользователям
+<span class="nc" id="L102">        List&lt;LocalDate&gt; bookedDates = bookingService.getBookedDates(id);</span>
+
+        // Получаем диапазоны занятых дат для компактного отображения (только APPROVED)
+<span class="nc" id="L105">        List&lt;Map&lt;String, Object&gt;&gt; bookedDateRanges = bookingService.getBookedDateRanges(id);</span>
+
+        // Получаем диапазоны ожидающих дат для компактного отображения (только PENDING)
+<span class="nc" id="L108">        List&lt;Map&lt;String, Object&gt;&gt; pendingDateRanges = bookingService.getPendingDateRanges(id);</span>
+
+        // Получаем ожидающие запросы с деталями (с информацией об арендаторе)
+<span class="nc" id="L111">        List&lt;Map&lt;String, Object&gt;&gt; pendingRequestsWithDetails = bookingService.getPendingRequestsWithDetails(id);</span>
+
+        // Получаем ВСЕ бронирования
+<span class="nc" id="L114">        List&lt;BookingDto&gt; allBookings = bookingService.getBookingsWithDetails(id);</span>
+
+        // Разделяем бронирования на APPROVED и PENDING
+<span class="nc" id="L117">        List&lt;BookingDto&gt; approvedBookings = allBookings.stream()</span>
+<span class="nc" id="L118">                .filter(b -&gt; &quot;APPROVED&quot;.equals(b.getStatus()))</span>
+<span class="nc" id="L119">                .collect(Collectors.toList());</span>
+
+<span class="nc" id="L121">        List&lt;BookingDto&gt; pendingBookings = allBookings.stream()</span>
+<span class="nc" id="L122">                .filter(b -&gt; &quot;PENDING&quot;.equals(b.getStatus()))</span>
+<span class="nc" id="L123">                .collect(Collectors.toList());</span>
+
+        // Устанавливаем данные в DTO
+<span class="nc" id="L126">        premise.setBookedDates(bookedDates);</span>
+<span class="nc" id="L127">        premise.setBookings(approvedBookings);</span>
+
+        // Добавляем атрибуты в модель
+<span class="nc" id="L130">        model.addAttribute(&quot;premise&quot;, premise);</span>
+<span class="nc" id="L131">        model.addAttribute(&quot;isOwner&quot;, isOwner);</span>
+<span class="nc" id="L132">        model.addAttribute(&quot;ownerLogin&quot;, ownerLogin);</span>
+<span class="nc" id="L133">        model.addAttribute(&quot;isBanned&quot;, isBanned);</span>
+<span class="nc" id="L134">        model.addAttribute(&quot;banInfo&quot;, activeBan);</span>
+<span class="nc" id="L135">        model.addAttribute(&quot;isUserBanned&quot;, isBanned);</span>
+<span class="nc" id="L136">        model.addAttribute(&quot;bookedDates&quot;, bookedDates);                          // для всех пользователей</span>
+<span class="nc" id="L137">        model.addAttribute(&quot;bookedDateRanges&quot;, bookedDateRanges);                // для компактного отображения (только APPROVED)</span>
+<span class="nc" id="L138">        model.addAttribute(&quot;pendingDateRanges&quot;, pendingDateRanges);              // диапазоны ожидающих запросов</span>
+<span class="nc" id="L139">        model.addAttribute(&quot;pendingRequestsWithDetails&quot;, pendingRequestsWithDetails); // детали ожидающих запросов (с арендаторами)</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">        model.addAttribute(&quot;approvedBookings&quot;, isOwner ? approvedBookings : List.of()); // подтверждённые бронирования</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        model.addAttribute(&quot;pendingBookings&quot;, isOwner ? pendingBookings : List.of());   // ожидающие бронирования</span>
+
+        // Проверяем, можно ли опубликовать объявление снова (дата окончания не прошла)
+<span class="nc" id="L144">        boolean canRepublish = false;</span>
+<span class="nc bnc" id="L145" title="All 4 branches missed.">        if (premise != null &amp;&amp; premise.getAvailableTo() != null) {</span>
+<span class="nc" id="L146">            LocalDate today = LocalDate.now();</span>
+            // Можно опубликовать, если сегодняшняя дата не позже даты окончания
+<span class="nc bnc" id="L148" title="All 2 branches missed.">            canRepublish = !today.isAfter(premise.getAvailableTo());</span>
+        }
+<span class="nc" id="L150">        model.addAttribute(&quot;canRepublish&quot;, canRepublish);</span>
+
+        // types, amenities и прочее уже в модели через GlobalModelAdvice
+
+<span class="nc" id="L154">        return &quot;future/premise-detail&quot;;</span>
+    }
+
+    // НОВЫЙ МЕТОД: страница редактирования помещения
+    @GetMapping(&quot;/premise/{id}/edit&quot;)
+    public String editPremiseForm(@PathVariable Long id,
+                                  @AuthenticationPrincipal UserDetails userDetails,
+                                  jakarta.servlet.http.HttpServletRequest request,
+                                  @RequestParam(required = false) String city,
+                                  Model model) {
+<span class="nc" id="L164">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
+
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L167">            return &quot;redirect:/catalog&quot;;</span>
+        }
+
+        // Для header
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L172">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+
+        // Проверяем, заблокирован ли пользователь
+<span class="nc" id="L175">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (userBanService.isUserBanned(currentUser.getId())) {</span>
+<span class="nc" id="L177">            return &quot;redirect:/premise/&quot; + id + &quot;?error=banned&quot;;</span>
+        }
+
+        // Проверяем, является ли текущий пользователь владельцем
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if (!currentUser.getId().equals(premise.getOwnerId())) {</span>
+<span class="nc" id="L182">            return &quot;redirect:/premise/&quot; + id + &quot;?error=access_denied&quot;;</span>
+        }
+
+<span class="nc" id="L185">        model.addAttribute(&quot;premise&quot;, premise);</span>
+        // types, amenities и прочее уже в модели через GlobalModelAdvice
+
+<span class="nc" id="L188">        return &quot;future/premise-edit&quot;;</span>
+    }
+
+    // НОВЫЙ МЕТОД: сохранение изменений помещения
+    @PostMapping(&quot;/premise/{id}/edit&quot;)
+    public String updatePremise(@PathVariable Long id,
+                                @RequestParam String type,
+                                @RequestParam Integer area,
+                                @RequestParam Integer capacity,
+                                @RequestParam(required = false) List&lt;String&gt; amenities,
+                                @RequestParam String description,
+                                @RequestParam(required = false) String extraFees,
+                                @RequestParam(required = false) String importantInfo,
+                                @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L203">        PremiseDto premise = catalogClient.getPremiseById(id);</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L206">            return &quot;redirect:/catalog&quot;;</span>
+        }
+
+        // Проверяем, заблокирован ли пользователь
+<span class="nc" id="L210">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (userBanService.isUserBanned(currentUser.getId())) {</span>
+<span class="nc" id="L212">            return &quot;redirect:/premise/&quot; + id + &quot;?error=banned&quot;;</span>
+        }
+
+        // Проверяем, является ли текущий пользователь владельцем
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if (!currentUser.getId().equals(premise.getOwnerId())) {</span>
+<span class="nc" id="L217">            return &quot;redirect:/premise/&quot; + id + &quot;?error=access_denied&quot;;</span>
+        }
+
+        // Обновляем только разрешённые поля
+<span class="nc" id="L221">        premise.setType(type);</span>
+<span class="nc" id="L222">        premise.setArea(area);</span>
+<span class="nc" id="L223">        premise.setCapacity(capacity);</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">        premise.setAmenities(amenities != null ? amenities : List.of());</span>
+<span class="nc" id="L225">        premise.setDescription(description);</span>
+<span class="nc" id="L226">        premise.setExtraFees(extraFees);</span>
+<span class="nc" id="L227">        premise.setImportantInfo(importantInfo);</span>
+
+        // Отправляем обновление через Feign клиент
+<span class="nc" id="L230">        catalogClient.updatePremise(id, premise);</span>
+
+<span class="nc" id="L232">        return &quot;redirect:/premise/&quot; + id + &quot;?updated=true&quot;;</span>
     }
 
     // ==================== REST ЭНДПОИНТЫ ДЛЯ КОММЕНТАРИЕВ ====================
 
     @PostMapping(&quot;/api/comments&quot;)
     @ResponseBody
-    public CommentDto addComment(@RequestBody CommentDto commentDto) {
-<span class="nc" id="L63">        return commentService.addComment(commentDto);</span>
+    public CommentDto addComment(@RequestBody CommentDto commentDto,
+                                 @AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (userDetails != null) {</span>
+            // Проверяем, не заблокирован ли пользователь
+<span class="nc" id="L243">            User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L244" title="All 4 branches missed.">            if (currentUser != null &amp;&amp; userBanService.isUserBanned(currentUser.getId())) {</span>
+<span class="nc" id="L245">                throw new RuntimeException(&quot;Ваш аккаунт заблокирован. Вы не можете оставлять комментарии.&quot;);</span>
+            }
+<span class="nc" id="L247">            commentDto.setAuthorName(userDetails.getUsername());</span>
+        }
+
+<span class="nc" id="L250">        CommentDto saved = commentService.addComment(commentDto);</span>
+
+        // ===== СОЗДАЁМ УВЕДОМЛЕНИЕ ВЛАДЕЛЬЦУ ПОМЕЩЕНИЯ =====
+        try {
+            // Получаем информацию о помещении, чтобы узнать владельца
+<span class="nc" id="L255">            PremiseDto premise = catalogClient.getPremiseById(commentDto.getPremiseId());</span>
+
+<span class="nc bnc" id="L257" title="All 4 branches missed.">            if (premise != null &amp;&amp; userDetails != null) {</span>
+<span class="nc" id="L258">                User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+
+                // Отправляем уведомление владельцу, если комментатор не является владельцем
+<span class="nc bnc" id="L261" title="All 4 branches missed.">                if (currentUser != null &amp;&amp; !currentUser.getId().equals(premise.getOwnerId())) {</span>
+<span class="nc" id="L262">                    notificationService.createNotification(</span>
+<span class="nc" id="L263">                            premise.getOwnerId(),                    // кому (владельцу помещения)</span>
+                            &quot;COMMENT&quot;,                               // тип
+<span class="nc" id="L265">                            saved.getId(),                           // ID комментария</span>
+<span class="nc" id="L266">                            currentUser.getId(),                     // от кого (комментатор)</span>
+<span class="nc" id="L267">                            currentUser.getLogin(),                  // имя комментатора</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">                            commentDto.getText() != null ? commentDto.getText().substring(0, Math.min(commentDto.getText().length(), 100)) : &quot;&quot;,  // текст комментария (первые 100 символов)</span>
+<span class="nc" id="L269">                            &quot;/premise/&quot; + commentDto.getPremiseId()   // ссылка на объявление</span>
+                    );
+                }
+            }
+<span class="nc" id="L273">        } catch (Exception e) {</span>
+<span class="nc" id="L274">            System.err.println(&quot;Failed to send notification for comment: &quot; + e.getMessage());</span>
+            // Не прерываем выполнение, если уведомление не отправилось
+<span class="nc" id="L276">        }</span>
+
+<span class="nc" id="L278">        return saved;</span>
     }
 
     @GetMapping(&quot;/api/comments/premise/{premiseId}&quot;)
     @ResponseBody
     public List&lt;CommentDto&gt; getComments(@PathVariable Long premiseId) {
-        // Вызываем сервис, который через Feign клиент обращается к catalog-service
-<span class="nc" id="L70">        return commentService.getCommentsByPremiseId(premiseId);</span>
+<span class="nc" id="L284">        return commentService.getCommentsByPremiseId(premiseId);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

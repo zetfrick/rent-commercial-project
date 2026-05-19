@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
@@ -40,6 +42,51 @@ public class ChatController {
 
     @Autowired
     private UserBanService userBanService;
+
+    /**
+     * Форматирует текст сообщения для отображения в превью чата
+     * Для файловых сообщений показывает иконку и имя файла
+     */
+    private String formatMessagePreview(String text) {
+        if (text == null || text.isEmpty()) return "";
+
+        // Проверяем, является ли сообщение файловым
+        if (text.contains("file-attachment") || text.contains("file-preview-image")) {
+            // Определяем иконку по типу файла
+            String icon = "📎";
+            if (text.contains("fa-file-image")) icon = "🖼️";
+            else if (text.contains("fa-file-pdf")) icon = "📄";
+            else if (text.contains("fa-file-word")) icon = "📝";
+            else if (text.contains("fa-file-excel")) icon = "📊";
+            else if (text.contains("fa-file-video")) icon = "🎬";
+            else if (text.contains("fa-file-audio")) icon = "🎵";
+            else if (text.contains("fa-file-archive")) icon = "🗜️";
+            else if (text.contains("fa-image")) icon = "🖼️";
+
+            // Извлекаем имя файла из HTML
+            Pattern pattern = Pattern.compile("file-name[^>]*>([^<]+)<");
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                String fileName = matcher.group(1);
+                // Ограничиваем длину имени файла
+                if (fileName.length() > 40) {
+                    fileName = fileName.substring(0, 37) + "...";
+                }
+                return icon + " " + fileName;
+            }
+            return icon + " Файл";
+        }
+
+        // Удаляем HTML-теги из обычных сообщений
+        String plain = text.replaceAll("<[^>]*>", "");
+
+        // Ограничиваем длину
+        if (plain.length() > 60) {
+            plain = plain.substring(0, 57) + "...";
+        }
+
+        return plain;
+    }
 
     @GetMapping
     public String chatsPage(@AuthenticationPrincipal UserDetails userDetails,
@@ -66,7 +113,7 @@ public class ChatController {
                     ChatInfo info = new ChatInfo();
                     info.user = otherUser;
                     info.premiseId = premiseIdObj;
-                    info.lastMessage = msg.getText();
+                    info.lastMessage = formatMessagePreview(msg.getText());
                     info.lastMessageTime = msg.getSentAt();
                     info.unreadCount = (msg.getReceiverId().equals(currentUser.getId()) && !msg.isRead()) ? 1 : 0;
 
@@ -76,10 +123,8 @@ public class ChatController {
                         } catch (Exception e) {
                             System.err.println("Error loading premise: " + e.getMessage());
                         }
-                        // ТОЛЬКО для чатов с привязкой к помещению проверяем наличие запроса
                         info.pendingBookingRequest = bookingService.hasPendingRequestForChat(premiseIdObj, currentUser.getId(), otherUserId);
                     } else {
-                        // Для чатов без привязки к помещению - запросов быть не может
                         info.pendingBookingRequest = false;
                     }
 
@@ -91,7 +136,7 @@ public class ChatController {
                     info.unreadCount++;
                 }
                 if (msg.getSentAt().isAfter(info.lastMessageTime)) {
-                    info.lastMessage = msg.getText();
+                    info.lastMessage = formatMessagePreview(msg.getText());
                     info.lastMessageTime = msg.getSentAt();
                 }
             }
@@ -118,7 +163,6 @@ public class ChatController {
 
         List<ChatMessage> messages = chatService.getChatBetween(currentUser.getId(), otherUser.getId());
 
-        // Проверяем, заблокирован ли другой пользователь
         boolean otherUserBanned = userBanService.isUserBanned(otherUser.getId());
         UserBan otherUserBanInfo = userBanService.getActiveBan(otherUser.getId()).orElse(null);
 
@@ -151,10 +195,8 @@ public class ChatController {
 
         List<ChatMessage> messages = chatService.getChatBetweenByPremise(currentUser.getId(), otherUser.getId(), premiseId);
 
-        // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
         boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), otherUser.getId());
 
-        // Проверяем, заблокирован ли другой пользователь
         boolean otherUserBanned = userBanService.isUserBanned(otherUser.getId());
         UserBan otherUserBanInfo = userBanService.getActiveBan(otherUser.getId()).orElse(null);
 
@@ -191,10 +233,8 @@ public class ChatController {
 
         List<ChatMessage> messages = chatService.getChatBetweenByPremise(currentUser.getId(), owner.getId(), premiseId);
 
-        // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
         boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), owner.getId());
 
-        // Проверяем, заблокирован ли владелец
         boolean otherUserBanned = userBanService.isUserBanned(owner.getId());
         UserBan otherUserBanInfo = userBanService.getActiveBan(owner.getId()).orElse(null);
 
@@ -341,7 +381,7 @@ public class ChatController {
                     ChatInfo info = new ChatInfo();
                     info.user = otherUser;
                     info.premiseId = premiseIdObj;
-                    info.lastMessage = msg.getText();
+                    info.lastMessage = formatMessagePreview(msg.getText());
                     info.lastMessageTime = msg.getSentAt();
                     info.unreadCount = (msg.getReceiverId().equals(currentUser.getId()) && !msg.isRead()) ? 1 : 0;
 
@@ -351,7 +391,6 @@ public class ChatController {
                         } catch (Exception e) {
                             System.err.println("Error loading premise: " + e.getMessage());
                         }
-                        // ТОЛЬКО для чатов с привязкой к помещению проверяем наличие запроса
                         info.pendingBookingRequest = bookingService.hasPendingRequestForChat(premiseIdObj, currentUser.getId(), otherUserId);
                     } else {
                         info.pendingBookingRequest = false;
@@ -364,7 +403,7 @@ public class ChatController {
                     info.unreadCount++;
                 }
                 if (msg.getSentAt().isAfter(info.lastMessageTime)) {
-                    info.lastMessage = msg.getText();
+                    info.lastMessage = formatMessagePreview(msg.getText());
                     info.lastMessageTime = msg.getSentAt();
                 }
             }

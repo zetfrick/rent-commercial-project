@@ -22,49 +22,60 @@ import java.util.Optional;
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private UserBanService userBanService;
+
+    public boolean isUserBanned(Long userId) {
+<span class="nc" id="L29">        return userBanService.isUserBanned(userId);</span>
+    }
+
     // Поиск пользователя по логину (для личного кабинета)
     public Optional&lt;User&gt; findByLogin(String login) {
-<span class="fc" id="L27">        return userRepository.findByLogin(login);</span>
+<span class="fc" id="L34">        return userRepository.findByLogin(login);</span>
     }
 
     // Проверка, занят ли логин
     public boolean existsByLogin(String login) {
-<span class="fc" id="L32">        return userRepository.existsByLogin(login);</span>
+<span class="fc" id="L39">        return userRepository.existsByLogin(login);</span>
     }
 
     // Проверка, занят ли email
     public boolean existsByEmail(String email) {
-<span class="fc" id="L37">        return userRepository.existsByEmail(email);</span>
+<span class="fc" id="L44">        return userRepository.existsByEmail(email);</span>
     }
 
     // Регистрация нового пользователя (с именем и фамилией)
     public User registerUser(String login, String email, String rawPassword,
                              String firstName, String lastName) {
-<span class="fc" id="L43">        User user = new User();</span>
-<span class="fc" id="L44">        user.setLogin(login);</span>
-<span class="fc" id="L45">        user.setEmail(email);</span>
-<span class="fc" id="L46">        user.setPassword(passwordEncoder.encode(rawPassword));</span>
-<span class="fc" id="L47">        user.setFirstName(firstName);</span>
-<span class="fc" id="L48">        user.setLastName(lastName);</span>
-<span class="fc" id="L49">        user.setRole(User.Role.USER);</span>
-<span class="fc" id="L50">        return userRepository.save(user);</span>
+<span class="fc" id="L50">        User user = new User();</span>
+<span class="fc" id="L51">        user.setLogin(login);</span>
+<span class="fc" id="L52">        user.setEmail(email);</span>
+<span class="fc" id="L53">        user.setPassword(passwordEncoder.encode(rawPassword));</span>
+<span class="fc" id="L54">        user.setFirstName(firstName);</span>
+<span class="fc" id="L55">        user.setLastName(lastName);</span>
+<span class="fc" id="L56">        user.setRole(User.Role.USER);</span>
+<span class="fc" id="L57">        return userRepository.save(user);</span>
     }
 
     // Сохранение изменений в профиле (редактирование)
     public User save(User user) {
-<span class="fc" id="L55">        return userRepository.save(user);</span>
+<span class="fc" id="L62">        return userRepository.save(user);</span>
+    }
+
+    public Optional&lt;User&gt; findById(Long id) {
+<span class="nc" id="L66">        return userRepository.findById(id);</span>
     }
 
     // Загрузка пользователя для Spring Security
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {
-<span class="fc" id="L61">        User user = userRepository.findByLogin(login)</span>
-<span class="fc" id="L62">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;Пользователь не найден: &quot; + login));</span>
+<span class="fc" id="L72">        User user = userRepository.findByLogin(login)</span>
+<span class="fc" id="L73">                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;Пользователь не найден: &quot; + login));</span>
 
-<span class="fc" id="L64">        return new org.springframework.security.core.userdetails.User(</span>
-<span class="fc" id="L65">                user.getLogin(),</span>
-<span class="fc" id="L66">                user.getPassword(),</span>
-<span class="fc" id="L67">                Collections.singletonList(new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name()))</span>
+<span class="fc" id="L75">        return new org.springframework.security.core.userdetails.User(</span>
+<span class="fc" id="L76">                user.getLogin(),</span>
+<span class="fc" id="L77">                user.getPassword(),</span>
+<span class="fc" id="L78">                Collections.singletonList(new SimpleGrantedAuthority(&quot;ROLE_&quot; + user.getRole().name()))</span>
         );
     }
 }

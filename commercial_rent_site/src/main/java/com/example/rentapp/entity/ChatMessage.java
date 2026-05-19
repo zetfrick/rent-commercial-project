@@ -21,15 +21,27 @@ public class ChatMessage {
     private Long senderId;
     private Long receiverId;
 
-    private String senderLogin;   // для удобства отображения
+    private String senderLogin;
+
+    @Column(length = 10000)  // Увеличиваем длину для текста сообщения
     private String text;
 
     private LocalDateTime sentAt = LocalDateTime.now();
 
     private boolean read = false;
 
-    // НОВОЕ ПОЛЕ: ID объявления, к которому относится сообщение
     private Long premiseId;
+
+    @Column(length = 1000)
+    private String fileName;
+
+    @Column(length = 1000)
+    private String fileUrl;
+
+    @Column(length = 500)
+    private String fileType;
+
+    private Long fileSize;
 
     public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text) {
         this.senderId = senderId;
@@ -44,5 +56,18 @@ public class ChatMessage {
         this.senderLogin = senderLogin;
         this.text = text;
         this.premiseId = premiseId;
+    }
+
+    public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text, Long premiseId,
+                       String fileName, String fileUrl, String fileType, Long fileSize) {
+        this.senderId = senderId;
+        this.receiverId = receiverId;
+        this.senderLogin = senderLogin;
+        this.text = text;
+        this.premiseId = premiseId;
+        this.fileName = fileName;
+        this.fileUrl = fileUrl;
+        this.fileType = fileType;
+        this.fileSize = fileSize;
     }
 }

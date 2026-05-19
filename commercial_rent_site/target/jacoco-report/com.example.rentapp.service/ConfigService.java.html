@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.service</a> &gt; <span class="el_source">ConfigService.java</span></div><h1>ConfigService.java</h1><pre class="source lang-java linenums">package com.example.rentapp.service;
+
+import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.PremiseDto;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="nc" id="L13">public class ConfigService {</span>
+
+    @Autowired
+    private CatalogClient catalogClient;
+
+    // Кэшируем конфигурацию
+<span class="nc" id="L19">    private List&lt;String&gt; types = List.of();</span>
+<span class="nc" id="L20">    private Map&lt;String, String&gt; typeRussian = Map.of();</span>
+<span class="nc" id="L21">    private List&lt;String&gt; amenities = List.of();</span>
+<span class="nc" id="L22">    private Map&lt;String, String&gt; amenityRussian = Map.of();</span>
+
+    @PostConstruct
+    public void loadConfig() {
+<span class="nc" id="L26">        refreshConfig();</span>
+<span class="nc" id="L27">    }</span>
+
+    public void refreshConfig() {
+        try {
+<span class="nc" id="L31">            Map&lt;String, Object&gt; config = catalogClient.getAllConfig();</span>
+<span class="nc" id="L32">            this.types = (List&lt;String&gt;) config.get(&quot;types&quot;);</span>
+<span class="nc" id="L33">            this.typeRussian = (Map&lt;String, String&gt;) config.get(&quot;typeRussian&quot;);</span>
+<span class="nc" id="L34">            this.amenities = (List&lt;String&gt;) config.get(&quot;amenities&quot;);</span>
+<span class="nc" id="L35">            this.amenityRussian = (Map&lt;String, String&gt;) config.get(&quot;amenityRussian&quot;);</span>
+
+            // ВАЖНО: передаём переводы в PremiseDto
+<span class="nc" id="L38">            PremiseDto.initTranslations(this.typeRussian, this.amenityRussian);</span>
+
+<span class="nc" id="L40">            System.out.println(&quot;Config loaded successfully from catalog-service&quot;);</span>
+<span class="nc" id="L41">            System.out.println(&quot;Types: &quot; + this.types);</span>
+<span class="nc" id="L42">            System.out.println(&quot;TypeRussian: &quot; + this.typeRussian);</span>
+<span class="nc" id="L43">            System.out.println(&quot;Amenities: &quot; + this.amenities);</span>
+<span class="nc" id="L44">            System.out.println(&quot;AmenityRussian: &quot; + this.amenityRussian);</span>
+<span class="nc" id="L45">        } catch (Exception e) {</span>
+            // Fallback на случай недоступности catalog-service
+<span class="nc" id="L47">            System.err.println(&quot;Failed to load config from catalog-service, using defaults: &quot; + e.getMessage());</span>
+<span class="nc" id="L48">            this.types = List.of(&quot;OFFICE&quot;, &quot;TRADING&quot;, &quot;WAREHOUSE&quot;, &quot;PRODUCTION&quot;, &quot;HOSPITALITY&quot;, &quot;UNIVERSAL&quot;);</span>
+<span class="nc" id="L49">            this.typeRussian = Map.of(</span>
+                    &quot;OFFICE&quot;, &quot;Офисное&quot;,
+                    &quot;TRADING&quot;, &quot;Торговое&quot;,
+                    &quot;WAREHOUSE&quot;, &quot;Складское&quot;,
+                    &quot;PRODUCTION&quot;, &quot;Производственное&quot;,
+                    &quot;HOSPITALITY&quot;, &quot;Гостиничное&quot;,
+                    &quot;UNIVERSAL&quot;, &quot;Универсальное&quot;
+            );
+<span class="nc" id="L57">            this.amenities = List.of(&quot;CONDITIONER&quot;, &quot;WI_FI&quot;, &quot;FURNITURE&quot;, &quot;PARKING&quot;, &quot;SECURITY&quot;, &quot;ELEVATOR&quot;, &quot;KITCHEN&quot;, &quot;CONFERENCE&quot;);</span>
+<span class="nc" id="L58">            this.amenityRussian = Map.of(</span>
+                    &quot;CONDITIONER&quot;, &quot;Кондиционер&quot;,
+                    &quot;WI_FI&quot;, &quot;Wi-Fi&quot;,
+                    &quot;FURNITURE&quot;, &quot;Мебель&quot;,
+                    &quot;PARKING&quot;, &quot;Парковка&quot;,
+                    &quot;SECURITY&quot;, &quot;Охрана&quot;,
+                    &quot;ELEVATOR&quot;, &quot;Лифт&quot;,
+                    &quot;KITCHEN&quot;, &quot;Кухня&quot;,
+                    &quot;CONFERENCE&quot;, &quot;Конференц-зал&quot;
+            );
+
+            // ВАЖНО: даже при fallback передаём переводы в PremiseDto
+<span class="nc" id="L70">            PremiseDto.initTranslations(this.typeRussian, this.amenityRussian);</span>
+<span class="nc" id="L71">        }</span>
+<span class="nc" id="L72">    }</span>
+
+<span class="nc" id="L74">    public List&lt;String&gt; getTypes() { return types; }</span>
+<span class="nc" id="L75">    public Map&lt;String, String&gt; getTypeRussian() { return typeRussian; }</span>
+<span class="nc" id="L76">    public List&lt;String&gt; getAmenities() { return amenities; }</span>
+<span class="nc" id="L77">    public Map&lt;String, String&gt; getAmenityRussian() { return amenityRussian; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

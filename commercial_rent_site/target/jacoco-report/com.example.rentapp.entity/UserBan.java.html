@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserBan.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.entity</a> &gt; <span class="el_source">UserBan.java</span></div><h1>UserBan.java</h1><pre class="source lang-java linenums">package com.example.rentapp.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;user_bans&quot;)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserBan {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long userId;
+
+    @Column(nullable = false)
+    private Long adminId;
+
+    @Column(nullable = false, length = 500)
+    private String reason;
+
+    @Column(nullable = false)
+    private LocalDateTime bannedUntil;
+
+<span class="nc" id="L33">    @Column(nullable = false)</span>
+<span class="nc" id="L34">    private LocalDateTime bannedAt = LocalDateTime.now();</span>
+
+<span class="nc" id="L36">    private boolean active = true;</span>
+
+<span class="nc" id="L38">    public UserBan(Long userId, Long adminId, String reason, LocalDateTime bannedUntil) {</span>
+<span class="nc" id="L39">        this.userId = userId;</span>
+<span class="nc" id="L40">        this.adminId = adminId;</span>
+<span class="nc" id="L41">        this.reason = reason;</span>
+<span class="nc" id="L42">        this.bannedUntil = bannedUntil;</span>
+<span class="nc" id="L43">        this.bannedAt = LocalDateTime.now();</span>
+<span class="nc" id="L44">        this.active = true;</span>
+<span class="nc" id="L45">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

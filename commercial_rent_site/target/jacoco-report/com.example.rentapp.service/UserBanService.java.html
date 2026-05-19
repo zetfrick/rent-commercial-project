@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserBanService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.service</a> &gt; <span class="el_source">UserBanService.java</span></div><h1>UserBanService.java</h1><pre class="source lang-java linenums">package com.example.rentapp.service;
+
+import com.example.rentapp.dto.BanRequestDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.entity.UserBan;
+import com.example.rentapp.repository.UserBanRepository;
+import com.example.rentapp.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+<span class="nc" id="L17">public class UserBanService {</span>
+
+    @Autowired
+    private UserBanRepository userBanRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Transactional
+    public boolean banUser(Long adminId, BanRequestDto banRequest) {
+<span class="nc" id="L30">        Optional&lt;User&gt; userOpt = userRepository.findById(banRequest.getUserId());</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        if (userOpt.isEmpty()) return false;</span>
+
+<span class="nc" id="L33">        User user = userOpt.get();</span>
+<span class="nc" id="L34">        User admin = userRepository.findById(adminId).orElse(null);</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (admin == null) return false;</span>
+
+        // Нельзя заблокировать администратора
+<span class="nc bnc" id="L38" title="All 4 branches missed.">        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.SUPER_ADMIN) {</span>
+<span class="nc" id="L39">            return false;</span>
+        }
+
+        // Деактивируем текущую активную блокировку, если есть
+<span class="nc" id="L43">        userBanRepository.deactivateActiveBan(banRequest.getUserId());</span>
+
+<span class="nc" id="L45">        LocalDateTime bannedUntil = calculateBanUntil(banRequest.getDuration(), banRequest.getCustomDate());</span>
+
+<span class="nc" id="L47">        UserBan ban = new UserBan(</span>
+<span class="nc" id="L48">                banRequest.getUserId(),</span>
+                adminId,
+<span class="nc" id="L50">                banRequest.getReason(),</span>
+                bannedUntil
+        );
+
+<span class="nc" id="L54">        userBanRepository.save(ban);</span>
+
+        // Отправляем уведомление пользователю о блокировке
+<span class="nc" id="L57">        String banMessage = String.format(</span>
+                &quot;⛔ Ваш аккаунт был заблокирован администратором %s.\nПричина: %s\nБлокировка действует до %s&quot;,
+<span class="nc" id="L59">                admin.getLogin(),</span>
+<span class="nc" id="L60">                banRequest.getReason(),</span>
+<span class="nc" id="L61">                formatDateTime(bannedUntil)</span>
+        );
+
+<span class="nc" id="L64">        notificationService.createNotification(</span>
+<span class="nc" id="L65">                banRequest.getUserId(),</span>
+                &quot;USER_BANNED&quot;,
+                null,
+                adminId,
+<span class="nc" id="L69">                admin.getLogin(),</span>
+                banMessage,
+                &quot;/profile&quot;
+        );
+
+<span class="nc" id="L74">        return true;</span>
+    }
+
+    private LocalDateTime calculateBanUntil(String duration, LocalDateTime customDate) {
+<span class="nc" id="L78">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="nc bnc" id="L79" title="All 6 branches missed.">        switch (duration) {</span>
+            case &quot;1_DAY&quot;:
+<span class="nc" id="L81">                return now.plusDays(1);</span>
+            case &quot;1_WEEK&quot;:
+<span class="nc" id="L83">                return now.plusWeeks(1);</span>
+            case &quot;1_MONTH&quot;:
+<span class="nc" id="L85">                return now.plusMonths(1);</span>
+            case &quot;1_YEAR&quot;:
+<span class="nc" id="L87">                return now.plusYears(1);</span>
+            case &quot;CUSTOM&quot;:
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                return customDate != null ? customDate : now.plusDays(1);</span>
+            default:
+<span class="nc" id="L91">                return now.plusDays(1);</span>
+        }
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+<span class="nc" id="L96">        return dateTime.format(java.time.format.DateTimeFormatter.ofPattern(&quot;dd.MM.yyyy HH:mm&quot;));</span>
+    }
+
+    @Transactional
+    public boolean unbanUser(Long userId, Long adminId) {
+<span class="nc" id="L101">        Optional&lt;UserBan&gt; banOpt = userBanRepository.findByUserIdAndActiveTrue(userId);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if (banOpt.isEmpty()) return false;</span>
+
+<span class="nc" id="L104">        User admin = userRepository.findById(adminId).orElse(null);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (admin == null) return false;</span>
+
+<span class="nc" id="L107">        userBanRepository.deactivateActiveBan(userId);</span>
+
+<span class="nc" id="L109">        User user = userRepository.findById(userId).orElse(null);</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (user != null) {</span>
+<span class="nc" id="L111">            notificationService.createNotification(</span>
+                    userId,
+                    &quot;USER_UNBANNED&quot;,
+                    null,
+                    adminId,
+<span class="nc" id="L116">                    admin.getLogin(),</span>
+<span class="nc" id="L117">                    &quot;✅ Ваш аккаунт был разблокирован администратором &quot; + admin.getLogin(),</span>
+                    &quot;/profile&quot;
+            );
+        }
+
+<span class="nc" id="L122">        return true;</span>
+    }
+
+    public boolean isUserBanned(Long userId) {
+<span class="nc" id="L126">        Optional&lt;UserBan&gt; banOpt = userBanRepository.findByUserIdAndActiveTrue(userId);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (banOpt.isEmpty()) return false;</span>
+
+<span class="nc" id="L129">        UserBan ban = banOpt.get();</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (ban.getBannedUntil().isBefore(LocalDateTime.now())) {</span>
+            // Блокировка истекла, деактивируем
+<span class="nc" id="L132">            userBanRepository.deactivateActiveBan(userId);</span>
+<span class="nc" id="L133">            return false;</span>
+        }
+<span class="nc" id="L135">        return true;</span>
+    }
+
+    public Optional&lt;UserBan&gt; getActiveBan(Long userId) {
+<span class="nc" id="L139">        return userBanRepository.findByUserIdAndActiveTrue(userId);</span>
+    }
+
+    // Автоматическое удаление истекших блокировок (каждый час)
+    @Scheduled(cron = &quot;0 0 * * * *&quot;)
+    @Transactional
+    public void cleanExpiredBans() {
+<span class="nc" id="L146">        int deleted = userBanRepository.deleteExpiredBans(LocalDateTime.now());</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (deleted &gt; 0) {</span>
+<span class="nc" id="L148">            System.out.println(&quot;Удалено просроченных блокировок: &quot; + deleted);</span>
+        }
+<span class="nc" id="L150">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

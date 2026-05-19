@@ -175,7 +175,6 @@
             overflow-y: auto;
         }
 
-        /* Предупреждения в правой панели - перемещены вверх */
         .warning-card {
             background: white;
             border-radius: 20px;
@@ -588,17 +587,165 @@
             padding: 60px 20px;
         }
 
+        /* Стили для выбранных файлов */
+        .selected-files-preview {
+            background: #f5f5f5;
+            border-radius: 12px;
+            margin: 0 16px 8px 16px;
+            padding: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .file-preview-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .file-preview-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-preview-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ff572210;
+            border-radius: 6px;
+        }
+
+        .file-preview-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-preview-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-preview-size {
+            font-size: 10px;
+            color: #999;
+        }
+
+        .file-preview-remove {
+            background: none;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .file-preview-remove:hover {
+            background: #ffebee;
+        }
+
+        /* Стили для сообщений с файлами */
+        .message .file-attachment {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-top: 6px;
+            transition: all 0.2s;
+        }
+
+        .my-message .file-attachment {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .message .file-icon {
+            flex-shrink: 0;
+        }
+
+        .message .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message .file-name {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message .file-size {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .message .file-download-btn {
+            color: currentColor;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .message .file-download-btn:hover {
+            opacity: 1;
+        }
+
+        .file-preview-image {
+            margin-top: 8px;
+        }
+
+        .file-preview-image img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .my-message .file-preview-image img {
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
         .input-area {
             display: flex;
-            gap: 12px;
-            padding: 16px;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
             background: white;
             border-top: 1px solid #eee;
             flex-shrink: 0;
         }
 
-        .input-area input {
+        .input-area .message-input-wrapper {
             flex: 1;
+            position: relative;
+        }
+
+        .input-area input[type="text"] {
+            width: 100%;
             padding: 12px 16px;
             border: 1px solid #e0e0e0;
             border-radius: 30px;
@@ -606,11 +753,11 @@
             outline: none;
         }
 
-        .input-area input:focus {
+        .input-area input[type="text"]:focus {
             border-color: #ff5722;
         }
 
-        .input-area input:disabled {
+        .input-area input[type="text"]:disabled {
             background: #f5f5f5;
             cursor: not-allowed;
         }
@@ -627,6 +774,25 @@
 
         .input-area button:disabled {
             background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        .file-attach-btn {
+            background: none;
+            border: none;
+            padding: 0 12px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #ff5722;
+            transition: transform 0.2s;
+        }
+
+        .file-attach-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .file-attach-btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
@@ -879,6 +1045,25 @@
             border-radius: 12px;
         }
 
+        .file-upload-progress {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1002;
+            font-size: 14px;
+        }
+
+        .file-upload-progress i {
+            color: #ff5722;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-30px); }
             to { opacity: 1; transform: translateY(0); }
@@ -919,9 +1104,16 @@
 
 <div class="chat-wrapper">
     <div class="chat-container">
+        <div class="selected-files-preview" id="selectedFilesPreview"></div>
         <div class="messages" id="messages"></div>
         <div class="input-area" id="inputArea">
-            <input type="text" id="messageInput" placeholder="Напишите сообщение..." autocomplete="off">
+            <button class="file-attach-btn" id="fileAttachBtn" title="Прикрепить файл">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <input type="file" id="fileInput" multiple style="display: none;">
+            <div class="message-input-wrapper">
+                <input type="text" id="messageInput" placeholder="Напишите сообщение..." autocomplete="off">
+            </div>
             <button id="sendBtn"><i class="fas fa-paper-plane"></i> Отправить</button>
         </div>
         <div id="typingIndicator" class="typing-indicator">
@@ -930,9 +1122,7 @@
     </div>
 
     <div class="right-panel">
-        <!-- Предупреждения в отдельной карточке сверху с отступами -->
         <div th:if="${otherUserBanned or (not isOwner and premise != null and not premise.active)}" class="warning-card">
-            <!-- Предупреждение о блокировке пользователя -->
             <div th:if="${otherUserBanned}" class="user-banned-warning">
                 <i class="fas fa-ban"></i>
                 <p>
@@ -941,8 +1131,6 @@
                     <span th:if="${otherUserBanInfo != null}">Причина: <span th:text="${otherUserBanInfo.reason}"></span></span>
                 </p>
             </div>
-
-            <!-- Предупреждение о снятом с публикации объявлении с отступом сверху -->
             <div th:if="${not isOwner and premise != null and not premise.active}" class="premise-inactive-warning" style="margin-top: 8px;">
                 <i class="fas fa-eye-slash"></i>
                 <p>
@@ -953,7 +1141,6 @@
         </div>
 
         <div th:if="${premise != null and premise.id != null}" class="premise-card">
-            <!-- Бейдж статуса объявления -->
             <div th:if="${not premise.active}" class="status-badge-overlay">
                 <i class="fas fa-ban"></i> СНЯТО С ПУБЛИКАЦИИ
             </div>
@@ -1092,6 +1279,8 @@
     let pendingRanges = [];
     let currentAvailability = false;
 
+    let selectedFiles = [];
+
     const premiseData = {
         id: /*[[${premise != null ? premise.id : null}]]*/ null,
         typeInRussian: /*[[${premise != null ? premise.getTypeInRussian() : null}]]*/ null,
@@ -1178,7 +1367,6 @@
     }
 
     function sendMessageViaWebSocket(text) {
-        // Убираем проверку на блокировку, просто отправляем всегда
         if (!stompClient || !isWebSocketConnected) {
             return false;
         }
@@ -1198,7 +1386,6 @@
     }
 
     function sendTypingIndicator() {
-        // Убираем проверку на блокировку
         if (!stompClient || !isWebSocketConnected) return;
 
         const typingData = {
@@ -1230,6 +1417,7 @@
         const messagesContainer = document.getElementById('messages');
         const isCurrentUser = message.senderId == currentUserId;
         const isSystem = message.type === 'SYSTEM';
+        const isFileMessage = message.type === 'FILE' || (message.text && (message.text.includes('file-attachment') || message.text.includes('file-preview-image')));
 
         const div = document.createElement('div');
         div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')}`;
@@ -1240,6 +1428,14 @@
         if (isSystem) {
             div.innerHTML = `
                 <div class="message-text">${escapeHtml(message.text)}</div>
+                <div class="message-time">${formattedTime}</div>
+            `;
+        } else if (isFileMessage) {
+            div.innerHTML = `
+                <div class="message-header">
+                    <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(message.senderLogin)}')" class="message-author-link">${escapeHtml(message.senderLogin)}</a>
+                </div>
+                <div class="message-text">${message.text}</div>
                 <div class="message-time">${formattedTime}</div>
             `;
         } else {
@@ -1409,15 +1605,25 @@
 
             const isSystem = msg.senderLogin === 'Система';
             const isCurrentUser = msg.senderId == currentUserId;
+            const isFileMessage = msg.text && (msg.text.includes('file-attachment') || msg.text.includes('file-preview-image'));
 
             const div = document.createElement('div');
             div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')}`;
+            div.setAttribute('data-message-id', msg.id);
 
             const formattedTime = formatDateTime(msg.sentAt);
 
             if (isSystem) {
                 div.innerHTML = `
                     <div class="message-text">${escapeHtml(msg.text)}</div>
+                    <div class="message-time">${formattedTime}</div>
+                `;
+            } else if (isFileMessage) {
+                div.innerHTML = `
+                    <div class="message-header">
+                        <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>
+                    </div>
+                    <div class="message-text">${msg.text}</div>
                     <div class="message-time">${formattedTime}</div>
                 `;
             } else {
@@ -1447,9 +1653,194 @@
         } catch(e) { console.error(e); }
     }
 
-        function sendMessage() {
+    function updateFilePreview() {
+        const container = document.getElementById('selectedFilesPreview');
+        if (!container) return;
+
+        if (selectedFiles.length === 0) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        container.style.display = 'block';
+        container.innerHTML = selectedFiles.map((file, index) => {
+            const size = formatFileSize(file.size);
+            let iconClass = 'fa-file';
+            if (file.type.startsWith('image/')) iconClass = 'fa-file-image';
+            else if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
+            else if (file.type.includes('word')) iconClass = 'fa-file-word';
+            else if (file.type.includes('excel')) iconClass = 'fa-file-excel';
+            else if (file.type.includes('video')) iconClass = 'fa-file-video';
+            else if (file.type.includes('audio')) iconClass = 'fa-file-audio';
+            else if (file.type.includes('zip') || file.type.includes('rar')) iconClass = 'fa-file-archive';
+
+            let previewHtml = '';
+            if (file.type.startsWith('image/')) {
+                const previewUrl = URL.createObjectURL(file);
+                previewHtml = `<div style="width: 40px; height: 40px; border-radius: 6px; overflow: hidden;">
+                    <img src="${previewUrl}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>`;
+            }
+
+            return `
+                <div class="file-preview-item" data-index="${index}">
+                    <div class="file-preview-info">
+                        ${previewHtml || `<div class="file-preview-icon"><i class="fas ${iconClass}" style="font-size: 18px; color: #ff5722;"></i></div>`}
+                        <div class="file-preview-details">
+                            <div class="file-preview-name" title="${escapeHtml(file.name)}">${truncateFileName(file.name, 35)}</div>
+                            <div class="file-preview-size">${size}</div>
+                        </div>
+                    </div>
+                    <button class="file-preview-remove" onclick="removeSelectedFile(${index})"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function removeSelectedFile(index) {
+        selectedFiles.splice(index, 1);
+        updateFilePreview();
+        updateFileInput();
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        document.getElementById('fileInput').files = dataTransfer.files;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function truncateFileName(name, maxLen) {
+        if (name.length <= maxLen) return name;
+        const ext = name.lastIndexOf('.');
+        if (ext > 0) {
+            const extPart = name.substring(ext);
+            const namePart = name.substring(0, ext);
+            if (namePart.length > maxLen - extPart.length - 3) {
+                return namePart.substring(0, maxLen - extPart.length - 3) + '...' + extPart;
+            }
+        }
+        return name.substring(0, maxLen - 3) + '...';
+    }
+
+    async function sendFiles() {
+        if (selectedFiles.length === 0) return false;
+
+        const messageInput = document.getElementById('messageInput');
+        const text = messageInput.value.trim();
+        const btn = document.getElementById('sendBtn');
+        const fileAttachBtn = document.getElementById('fileAttachBtn');
+
+        btn.disabled = true;
+        fileAttachBtn.disabled = true;
+
+        showUploadProgress(selectedFiles.length);
+
+        let successCount = 0;
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const formData = new FormData();
+            formData.append('receiverId', receiverId);
+            if (premiseId) formData.append('premiseId', premiseId);
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/chats/send-file', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    successCount++;
+                    if (stompClient && isWebSocketConnected) {
+                        const wsMessage = {
+                            id: data.messageId,
+                            senderId: currentUserId,
+                            receiverId: receiverId,
+                            senderLogin: currentUsername,
+                            text: data.fileHtml,
+                            sentAt: new Date().toISOString(),
+                            premiseId: premiseId || null,
+                            type: 'FILE'
+                        };
+                        addNewMessageToChat(wsMessage);
+                    }
+                } else {
+                    showNotification(data.message || 'Ошибка отправки файла', true);
+                }
+            } catch(e) {
+                showNotification('Ошибка отправки файла: ' + file.name, true);
+            }
+
+            updateUploadProgress(i + 1);
+        }
+
+        hideUploadProgress();
+
+        if (successCount > 0 && text.trim()) {
+            sendMessage();
+            messageInput.value = '';
+        } else if (successCount > 0) {
+            messageInput.value = '';
+            showNotification(`Отправлено файлов: ${successCount}`);
+        } else if (text.trim()) {
+            sendMessage();
+        }
+
+        selectedFiles = [];
+        updateFilePreview();
+        document.getElementById('fileInput').value = '';
+
+        btn.disabled = false;
+        fileAttachBtn.disabled = false;
+
+        return successCount > 0;
+    }
+
+    function showUploadProgress(total) {
+        let progressDiv = document.getElementById('uploadProgress');
+        if (!progressDiv) {
+            progressDiv = document.createElement('div');
+            progressDiv.id = 'uploadProgress';
+            progressDiv.className = 'file-upload-progress';
+            document.body.appendChild(progressDiv);
+        }
+        progressDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> Загрузка файлов... 0/${total}`;
+        progressDiv.style.display = 'flex';
+    }
+
+    function updateUploadProgress(current) {
+        const progressDiv = document.getElementById('uploadProgress');
+        if (progressDiv) {
+            const total = selectedFiles.length;
+            progressDiv.innerHTML = `<i class="fas fa-spinner fa-pulse"></i> Загрузка файлов... ${current}/${total}`;
+        }
+    }
+
+    function hideUploadProgress() {
+        const progressDiv = document.getElementById('uploadProgress');
+        if (progressDiv) {
+            progressDiv.style.display = 'none';
+        }
+    }
+
+    function sendMessage() {
         const input = document.getElementById('messageInput');
         const text = input.value.trim();
+
+        if (selectedFiles.length > 0) {
+            sendFiles();
+            return;
+        }
+
         if (!text) return;
 
         const btn = document.getElementById('sendBtn');
@@ -1811,7 +2202,14 @@
         document.body.style.overflow = 'auto';
     }
 
-    // Инициализация событий
+    window.goToProfile = goToProfile;
+    window.openFullscreen = openFullscreen;
+    window.sendMessage = sendMessage;
+    window.processRequest = processRequest;
+    window.submitBooking = submitBooking;
+    window.closeModal = closeModal;
+    window.removeSelectedFile = removeSelectedFile;
+
     const messageInput = document.getElementById('messageInput');
     if (messageInput) {
         messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
@@ -1821,6 +2219,22 @@
     document.getElementById('showOwnerModalBtn')?.addEventListener('click', showModal);
     document.getElementById('showRenterModalBtn')?.addEventListener('click', showModal);
     document.getElementById('sendBtn')?.addEventListener('click', sendMessage);
+    document.getElementById('fileAttachBtn')?.addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+    });
+    document.getElementById('fileInput')?.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        const maxSize = 10 * 1024 * 1024;
+        const validFiles = files.filter(f => f.size <= maxSize);
+
+        if (validFiles.length !== files.length) {
+            showNotification('Некоторые файлы превышают 10 МБ и не были добавлены', true);
+        }
+
+        selectedFiles.push(...validFiles);
+        updateFilePreview();
+        updateFileInput();
+    });
 
     document.getElementById('startDate')?.addEventListener('change', () => {
         const endInput = document.getElementById('endDate');
@@ -1846,17 +2260,9 @@
         syncDates();
     });
 
-    window.goToProfile = goToProfile;
-    window.openFullscreen = openFullscreen;
-    window.sendMessage = sendMessage;
-    window.processRequest = processRequest;
-    window.submitBooking = submitBooking;
-    window.closeModal = closeModal;
-
     document.addEventListener('DOMContentLoaded', async () => {
         renderMessages(initialMessages);
         updateInputAreaWarning();
-        // Убираем проверку otherUserBanned - всегда фокусируемся, если поле не disabled
         if (messageInput && premiseActive) {
             messageInput.focus();
         }

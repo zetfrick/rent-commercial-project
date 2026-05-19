@@ -1,61 +1,187 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">// src/main/java/com/example/rentapp/config/SecurityConfig.java
-package com.example.rentapp.config;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.example.rentapp.config;
 
+import com.example.rentapp.service.CustomUserDetailsService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
-<span class="nc" id="L18">public class SecurityConfig {</span>
+<span class="nc" id="L31">public class SecurityConfig {</span>
 
     @Autowired @Lazy private UserService userService;
+    @Autowired private CustomUserDetailsService customUserDetailsService;
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+<span class="nc" id="L38">        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();</span>
+<span class="nc" id="L39">        provider.setUserDetailsService(customUserDetailsService);</span>
+<span class="nc" id="L40">        provider.setPasswordEncoder(passwordEncoder());</span>
+<span class="nc" id="L41">        return provider;</span>
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+<span class="nc" id="L46">        return config.getAuthenticationManager();</span>
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+<span class="nc" id="L51">        return new AuthenticationSuccessHandler() {</span>
+            @Override
+            public void onAuthenticationSuccess(HttpServletRequest request,
+                                                HttpServletResponse response,
+                                                Authentication authentication) throws IOException, ServletException {
+
+<span class="nc" id="L57">                String redirectUrl = &quot;/main/landing-logged&quot;;</span>
+
+<span class="nc" id="L59">                HttpSession session = request.getSession(false);</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">                if (session != null) {</span>
+<span class="nc" id="L61">                    String savedUrl = (String) session.getAttribute(&quot;redirectAfterLogin&quot;);</span>
+
+                    // Проверяем, не является ли сохранённый URL страницей восстановления/смены пароля
+<span class="nc bnc" id="L64" title="All 4 branches missed.">                    if (savedUrl != null &amp;&amp; !savedUrl.isEmpty()) {</span>
+                        // Список URL, которые нужно игнорировать (страницы восстановления пароля)
+<span class="nc bnc" id="L66" title="All 2 branches missed.">                        boolean isPasswordResetUrl = savedUrl.contains(&quot;/auth/reset-password&quot;) ||</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">                                savedUrl.contains(&quot;/auth/verify-code&quot;) ||</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                                savedUrl.contains(&quot;/auth/forgot-password&quot;) ||</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">                                savedUrl.contains(&quot;code=&quot;) ||</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">                                savedUrl.contains(&quot;reset=success&quot;);</span>
+
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                        if (isPasswordResetUrl) {</span>
+                            // Игнорируем URL восстановления пароля
+<span class="nc" id="L74">                            session.removeAttribute(&quot;redirectAfterLogin&quot;);</span>
+<span class="nc" id="L75">                            System.out.println(&quot;=== LOGIN SUCCESS ===&quot;);</span>
+<span class="nc" id="L76">                            System.out.println(&quot;Ignoring password reset URL: &quot; + savedUrl);</span>
+<span class="nc" id="L77">                            System.out.println(&quot;Redirecting to default: &quot; + redirectUrl);</span>
+                        } else {
+<span class="nc" id="L79">                            redirectUrl = savedUrl;</span>
+<span class="nc" id="L80">                            session.removeAttribute(&quot;redirectAfterLogin&quot;);</span>
+<span class="nc" id="L81">                            System.out.println(&quot;=== LOGIN SUCCESS ===&quot;);</span>
+<span class="nc" id="L82">                            System.out.println(&quot;Redirecting to saved URL: &quot; + redirectUrl);</span>
+                        }
+<span class="nc" id="L84">                    } else {</span>
+<span class="nc" id="L85">                        System.out.println(&quot;=== LOGIN SUCCESS ===&quot;);</span>
+<span class="nc" id="L86">                        System.out.println(&quot;No saved URL, redirecting to default: &quot; + redirectUrl);</span>
+                    }
+<span class="nc" id="L88">                } else {</span>
+<span class="nc" id="L89">                    System.out.println(&quot;=== LOGIN SUCCESS ===&quot;);</span>
+<span class="nc" id="L90">                    System.out.println(&quot;No session, redirecting to default: &quot; + redirectUrl);</span>
+                }
+
+<span class="nc" id="L93">                response.sendRedirect(redirectUrl);</span>
+<span class="nc" id="L94">            }</span>
+        };
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-<span class="nc" id="L24">        http</span>
-                // Отключаем CSRF только для API
-<span class="nc" id="L26">                .csrf(csrf -&gt; csrf</span>
-<span class="nc" id="L27">                        .ignoringRequestMatchers(&quot;/api/**&quot;)  // ← ВОТ ЭТА СТРОКА РЕШАЕТ ВСЁ</span>
+<span class="nc" id="L100">        http</span>
+<span class="nc" id="L101">                .csrf(csrf -&gt; csrf</span>
+<span class="nc" id="L102">                        .ignoringRequestMatchers(</span>
+                                &quot;/api/**&quot;,
+                                &quot;/chats/**&quot;,
+                                &quot;/admin/**&quot;,
+                                &quot;/notifications/api/**&quot;,
+                                &quot;/auth/api/**&quot;,
+                                &quot;/ws-chat/**&quot;  // WebSocket endpoints
+                        )
                 )
-<span class="nc" id="L29">                .authorizeHttpRequests(authz -&gt; authz</span>
-<span class="nc" id="L30">                        .requestMatchers(&quot;/&quot;, &quot;/auth/**&quot;, &quot;/catalog&quot;, &quot;/catalog/**&quot;, &quot;/about&quot;, &quot;/contacts&quot;,</span>
+<span class="nc" id="L111">                .authorizeHttpRequests(authz -&gt; authz</span>
+                        // Публичные страницы - доступны всем
+<span class="nc" id="L113">                        .requestMatchers(&quot;/&quot;, &quot;/auth/**&quot;, &quot;/catalog&quot;, &quot;/catalog/**&quot;, &quot;/about&quot;, &quot;/contacts&quot;,</span>
                                 &quot;/main/**&quot;, &quot;/catalog/preview&quot;, &quot;/uploads/**&quot;,
                                 &quot;/v3/api-docs/**&quot;, &quot;/swagger-ui/**&quot;, &quot;/swagger-ui.html&quot;,
-                                &quot;/api/auth/register&quot;, &quot;/api/auth/login&quot;)  // ← явно разрешаем регистрацию
-<span class="nc" id="L34">                        .permitAll()</span>
-<span class="nc" id="L35">                        .requestMatchers(&quot;/profile&quot;, &quot;/profile/**&quot;, &quot;/premise/**&quot;, &quot;/api/premise/**&quot;)</span>
-<span class="nc" id="L36">                        .authenticated()</span>
-<span class="nc" id="L37">                        .anyRequest().permitAll()</span>
-                )
-<span class="nc" id="L39">                .formLogin(form -&gt; form</span>
-<span class="nc" id="L40">                        .loginPage(&quot;/auth/login&quot;)</span>
-<span class="nc" id="L41">                        .loginProcessingUrl(&quot;/login&quot;)</span>
-<span class="nc" id="L42">                        .defaultSuccessUrl(&quot;/main/landing-logged&quot;, true)</span>
-<span class="nc" id="L43">                        .failureUrl(&quot;/auth/login?error&quot;)</span>
-<span class="nc" id="L44">                        .permitAll()</span>
-                )
-<span class="nc" id="L46">                .logout(logout -&gt; logout</span>
-<span class="nc" id="L47">                        .logoutRequestMatcher(new AntPathRequestMatcher(&quot;/logout&quot;))</span>
-<span class="nc" id="L48">                        .logoutSuccessUrl(&quot;/&quot;)</span>
-<span class="nc" id="L49">                        .permitAll()</span>
-                )
-<span class="nc" id="L51">                .userDetailsService(userService);</span>
+                                &quot;/api/auth/register&quot;, &quot;/api/auth/login&quot;,
+                                &quot;/auth/check&quot;,
+                                &quot;/premise/**&quot;)
+<span class="nc" id="L119">                        .permitAll()</span>
 
-<span class="nc" id="L53">        return http.build();</span>
+                        // API для восстановления пароля
+<span class="nc" id="L122">                        .requestMatchers(&quot;/auth/api/forgot-password&quot;, &quot;/auth/api/verify-code&quot;,</span>
+                                &quot;/auth/api/reset-password&quot;, &quot;/auth/api/change-password-request&quot;,
+                                &quot;/auth/api/change-password&quot;)
+<span class="nc" id="L125">                        .permitAll()</span>
+
+                        // Разрешаем доступ к API уведомлений без авторизации
+<span class="nc" id="L128">                        .requestMatchers(&quot;/notifications/api/create&quot;).permitAll()</span>
+<span class="nc" id="L129">                        .requestMatchers(&quot;/notifications/api/**&quot;).permitAll()</span>
+
+                        // ========== WEBSOCKET ENDPOINTS ==========
+                        // Разрешаем WebSocket соединения без авторизации (авторизация внутри)
+<span class="nc" id="L133">                        .requestMatchers(&quot;/ws-chat&quot;, &quot;/ws-chat/**&quot;, &quot;/ws-chat/info/**&quot;, &quot;/ws-chat/info&quot;)</span>
+<span class="nc" id="L134">                        .permitAll()</span>
+
+                        // Защищённые страницы - только для авторизованных
+<span class="nc" id="L137">                        .requestMatchers(&quot;/profile&quot;, &quot;/profile/**&quot;, &quot;/api/premise/**&quot;,</span>
+                                &quot;/chats/**&quot;, &quot;/notifications&quot;)
+<span class="nc" id="L139">                        .authenticated()</span>
+
+                        // Добавление и редактирование помещений - только для авторизованных
+<span class="nc" id="L142">                        .requestMatchers(&quot;/premise/add&quot;, &quot;/premise/*/edit&quot;)</span>
+<span class="nc" id="L143">                        .authenticated()</span>
+
+                        // Админ-панель - только для ADMIN и SUPER_ADMIN
+<span class="nc" id="L146">                        .requestMatchers(&quot;/admin/**&quot;).hasAnyRole(&quot;ADMIN&quot;, &quot;SUPER_ADMIN&quot;)</span>
+
+<span class="nc" id="L148">                        .anyRequest().permitAll()</span>
+                )
+<span class="nc" id="L150">                .formLogin(form -&gt; form</span>
+<span class="nc" id="L151">                        .loginPage(&quot;/auth/login&quot;)</span>
+<span class="nc" id="L152">                        .loginProcessingUrl(&quot;/login&quot;)</span>
+<span class="nc" id="L153">                        .successHandler(authenticationSuccessHandler())</span>
+<span class="nc" id="L154">                        .failureUrl(&quot;/auth/login?error&quot;)</span>
+<span class="nc" id="L155">                        .permitAll()</span>
+                )
+<span class="nc" id="L157">                .logout(logout -&gt; logout</span>
+<span class="nc" id="L158">                        .logoutRequestMatcher(new AntPathRequestMatcher(&quot;/logout&quot;))</span>
+<span class="nc" id="L159">                        .logoutSuccessUrl(&quot;/&quot;)</span>
+<span class="nc" id="L160">                        .permitAll()</span>
+                )
+<span class="nc" id="L162">                .sessionManagement(session -&gt; session</span>
+<span class="nc" id="L163">                        .maximumSessions(1)</span>
+<span class="nc" id="L164">                        .sessionRegistry(sessionRegistry())</span>
+                )
+<span class="nc" id="L166">                .authenticationProvider(authenticationProvider())</span>
+<span class="nc" id="L167">                .userDetailsService(customUserDetailsService);</span>
+
+<span class="nc" id="L169">        return http.build();</span>
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+<span class="nc" id="L174">        return new SessionRegistryImpl();</span>
+    }
+
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+<span class="nc" id="L179">        return new HttpSessionEventPublisher();</span>
     }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
-<span class="nc" id="L58">        return new BCryptPasswordEncoder();</span>
+<span class="nc" id="L184">        return new BCryptPasswordEncoder();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

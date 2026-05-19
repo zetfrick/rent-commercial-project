@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebSocketChatController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">WebSocketChatController.java</span></div><h1>WebSocketChatController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.dto.WebSocketMessageDto;
+import com.example.rentapp.entity.ChatMessage;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.ChatService;
+import com.example.rentapp.service.FileStorageService;
+import com.example.rentapp.service.NotificationService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Controller
+<span class="nc" id="L27">public class WebSocketChatController {</span>
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private ChatService chatService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @MessageMapping(&quot;/chat.send&quot;)
+    public void sendMessage(@Payload WebSocketMessageDto message, Principal principal) {
+        try {
+<span class="nc" id="L47">            System.out.println(&quot;========================================&quot;);</span>
+<span class="nc" id="L48">            System.out.println(&quot;=== WebSocket收到消息 ===&quot;);</span>
+<span class="nc" id="L49">            System.out.println(&quot;Отправитель ID: &quot; + message.getSenderId());</span>
+<span class="nc" id="L50">            System.out.println(&quot;Получатель ID: &quot; + message.getReceiverId());</span>
+<span class="nc" id="L51">            System.out.println(&quot;Текст: &quot; + message.getText());</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            System.out.println(&quot;Principal: &quot; + (principal != null ? principal.getName() : &quot;null&quot;));</span>
+
+<span class="nc" id="L54">            User sender = userService.findById(message.getSenderId()).orElse(null);</span>
+<span class="nc" id="L55">            User receiver = userService.findById(message.getReceiverId()).orElse(null);</span>
+
+<span class="nc bnc" id="L57" title="All 4 branches missed.">            if (sender == null || receiver == null) {</span>
+<span class="nc" id="L58">                System.err.println(&quot;❌ Пользователь не найден! sender=&quot; + sender + &quot;, receiver=&quot; + receiver);</span>
+<span class="nc" id="L59">                return;</span>
+            }
+
+<span class="nc" id="L62">            String senderUsername = sender.getLogin();</span>
+<span class="nc" id="L63">            String receiverUsername = receiver.getLogin();</span>
+
+<span class="nc" id="L65">            System.out.println(&quot;Отправитель (логин): &quot; + senderUsername);</span>
+<span class="nc" id="L66">            System.out.println(&quot;Получатель (логин): &quot; + receiverUsername);</span>
+
+            ChatMessage savedMessage;
+<span class="nc bnc" id="L69" title="All 4 branches missed.">            if (message.getPremiseId() != null &amp;&amp; message.getPremiseId() &gt; 0) {</span>
+<span class="nc" id="L70">                savedMessage = chatService.sendMessageWithPremise(</span>
+<span class="nc" id="L71">                        message.getSenderId(),</span>
+<span class="nc" id="L72">                        message.getReceiverId(),</span>
+<span class="nc" id="L73">                        message.getText(),</span>
+<span class="nc" id="L74">                        message.getPremiseId()</span>
+                );
+            } else {
+<span class="nc" id="L77">                savedMessage = chatService.sendMessage(</span>
+<span class="nc" id="L78">                        message.getSenderId(),</span>
+<span class="nc" id="L79">                        message.getReceiverId(),</span>
+<span class="nc" id="L80">                        message.getText()</span>
+                );
+            }
+
+<span class="nc" id="L84">            WebSocketMessageDto response = new WebSocketMessageDto(</span>
+<span class="nc" id="L85">                    savedMessage.getId(),</span>
+<span class="nc" id="L86">                    savedMessage.getSenderId(),</span>
+<span class="nc" id="L87">                    savedMessage.getReceiverId(),</span>
+<span class="nc" id="L88">                    savedMessage.getSenderLogin(),</span>
+<span class="nc" id="L89">                    savedMessage.getText(),</span>
+<span class="nc" id="L90">                    savedMessage.getSentAt(),</span>
+<span class="nc" id="L91">                    savedMessage.getPremiseId(),</span>
+                    &quot;MESSAGE&quot;
+            );
+
+<span class="nc" id="L95">            System.out.println(&quot;📤 Отправка получателю (логин): &quot; + receiverUsername);</span>
+<span class="nc" id="L96">            System.out.println(&quot;📤 Destination: /user/&quot; + receiverUsername + &quot;/queue/messages&quot;);</span>
+<span class="nc" id="L97">            messagingTemplate.convertAndSendToUser(</span>
+                    receiverUsername,
+                    &quot;/queue/messages&quot;,
+                    response
+            );
+<span class="nc" id="L102">            System.out.println(&quot;✅ convertAndSendToUser вызван для: &quot; + receiverUsername);</span>
+
+<span class="nc" id="L104">            messagingTemplate.convertAndSendToUser(</span>
+                    senderUsername,
+                    &quot;/queue/messages&quot;,
+                    response
+            );
+<span class="nc" id="L109">            System.out.println(&quot;✅ convertAndSendToUser вызван для отправителя: &quot; + senderUsername);</span>
+<span class="nc" id="L110">            System.out.println(&quot;========================================&quot;);</span>
+
+<span class="nc" id="L112">        } catch (Exception e) {</span>
+<span class="nc" id="L113">            System.err.println(&quot;❌ WebSocket error: &quot; + e.getMessage());</span>
+<span class="nc" id="L114">            e.printStackTrace();</span>
+<span class="nc" id="L115">        }</span>
+<span class="nc" id="L116">    }</span>
+
+    @MessageMapping(&quot;/chat.typing&quot;)
+    public void typing(@Payload WebSocketMessageDto message) {
+        try {
+<span class="nc" id="L121">            User receiver = userService.findById(message.getReceiverId()).orElse(null);</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            if (receiver != null) {</span>
+<span class="nc" id="L123">                messagingTemplate.convertAndSendToUser(</span>
+<span class="nc" id="L124">                        receiver.getLogin(),</span>
+                        &quot;/queue/typing&quot;,
+                        message
+                );
+            }
+<span class="nc" id="L129">        } catch (Exception e) {</span>
+<span class="nc" id="L130">            System.err.println(&quot;Typing error: &quot; + e.getMessage());</span>
+<span class="nc" id="L131">        }</span>
+<span class="nc" id="L132">    }</span>
+
+    @MessageMapping(&quot;/chat.read&quot;)
+    public void markAsRead(@Payload WebSocketMessageDto message) {
+        try {
+<span class="nc bnc" id="L137" title="All 4 branches missed.">            if (message.getPremiseId() != null &amp;&amp; message.getPremiseId() &gt; 0) {</span>
+<span class="nc" id="L138">                chatService.markMessagesAsReadByPremise(</span>
+<span class="nc" id="L139">                        message.getReceiverId(),</span>
+<span class="nc" id="L140">                        message.getSenderId(),</span>
+<span class="nc" id="L141">                        message.getPremiseId()</span>
+                );
+            } else {
+<span class="nc" id="L144">                chatService.markMessagesAsRead(</span>
+<span class="nc" id="L145">                        message.getReceiverId(),</span>
+<span class="nc" id="L146">                        message.getSenderId()</span>
+                );
+            }
+
+<span class="nc" id="L150">            User sender = userService.findById(message.getSenderId()).orElse(null);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            if (sender != null) {</span>
+<span class="nc" id="L152">                messagingTemplate.convertAndSendToUser(</span>
+<span class="nc" id="L153">                        sender.getLogin(),</span>
+                        &quot;/queue/read&quot;,
+                        message
+                );
+            }
+<span class="nc" id="L158">        } catch (Exception e) {</span>
+<span class="nc" id="L159">            System.err.println(&quot;Error marking messages as read: &quot; + e.getMessage());</span>
+<span class="nc" id="L160">        }</span>
+<span class="nc" id="L161">    }</span>
+
+    @PostMapping(&quot;/chats/send-file&quot;)
+    @ResponseBody
+    public Map&lt;String, Object&gt; sendFile(
+            @RequestParam Long receiverId,
+            @RequestParam(required = false) Long premiseId,
+            @RequestParam(&quot;file&quot;) MultipartFile file,
+            Principal principal) throws Exception {
+
+<span class="nc" id="L171">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (principal == null) {</span>
+<span class="nc" id="L174">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L175">            response.put(&quot;message&quot;, &quot;Не авторизован&quot;);</span>
+<span class="nc" id="L176">            return response;</span>
+        }
+
+<span class="nc" id="L179">        User sender = userService.findByLogin(principal.getName()).orElse(null);</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (sender == null) {</span>
+<span class="nc" id="L181">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L182">            response.put(&quot;message&quot;, &quot;Отправитель не найден&quot;);</span>
+<span class="nc" id="L183">            return response;</span>
+        }
+
+<span class="nc bnc" id="L186" title="All 4 branches missed.">        if (file == null || file.isEmpty()) {</span>
+<span class="nc" id="L187">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L188">            response.put(&quot;message&quot;, &quot;Файл не выбран&quot;);</span>
+<span class="nc" id="L189">            return response;</span>
+        }
+
+        // Ограничение размера файла (10 MB)
+<span class="nc" id="L193">        long maxSize = 10 * 1024 * 1024;</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (file.getSize() &gt; maxSize) {</span>
+<span class="nc" id="L195">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L196">            response.put(&quot;message&quot;, &quot;Файл слишком большой (макс. 10 МБ)&quot;);</span>
+<span class="nc" id="L197">            return response;</span>
+        }
+
+        // Сохраняем файл
+<span class="nc" id="L201">        String fileName = fileStorageService.saveChatFile(file);</span>
+<span class="nc" id="L202">        String fileUrl = &quot;/chat-uploads/&quot; + fileName;</span>
+
+        // Определяем тип файла и создаём HTML для отображения
+<span class="nc" id="L205">        String fileHtml = generateFileHtml(fileName, fileUrl, file.getContentType(), file.getSize());</span>
+
+        // Сохраняем сообщение с файлом в БД (текст содержит HTML для отображения файла)
+        ChatMessage savedMessage;
+<span class="nc bnc" id="L209" title="All 4 branches missed.">        if (premiseId != null &amp;&amp; premiseId &gt; 0) {</span>
+<span class="nc" id="L210">            savedMessage = chatService.sendMessageWithPremise(</span>
+<span class="nc" id="L211">                    sender.getId(),</span>
+                    receiverId,
+                    fileHtml,
+                    premiseId
+            );
+        } else {
+<span class="nc" id="L217">            savedMessage = chatService.sendMessage(</span>
+<span class="nc" id="L218">                    sender.getId(),</span>
+                    receiverId,
+                    fileHtml
+            );
+        }
+
+        // Отправляем через WebSocket, если соединение активно
+        try {
+<span class="nc" id="L226">            User receiver = userService.findById(receiverId).orElse(null);</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">            if (receiver != null) {</span>
+<span class="nc" id="L228">                WebSocketMessageDto wsMessage = new WebSocketMessageDto(</span>
+<span class="nc" id="L229">                        savedMessage.getId(),</span>
+<span class="nc" id="L230">                        savedMessage.getSenderId(),</span>
+<span class="nc" id="L231">                        savedMessage.getReceiverId(),</span>
+<span class="nc" id="L232">                        savedMessage.getSenderLogin(),</span>
+<span class="nc" id="L233">                        savedMessage.getText(),</span>
+<span class="nc" id="L234">                        savedMessage.getSentAt(),</span>
+<span class="nc" id="L235">                        savedMessage.getPremiseId(),</span>
+                        &quot;FILE&quot;
+                );
+<span class="nc" id="L238">                messagingTemplate.convertAndSendToUser(</span>
+<span class="nc" id="L239">                        receiver.getLogin(),</span>
+                        &quot;/queue/messages&quot;,
+                        wsMessage
+                );
+<span class="nc" id="L243">                messagingTemplate.convertAndSendToUser(</span>
+<span class="nc" id="L244">                        sender.getLogin(),</span>
+                        &quot;/queue/messages&quot;,
+                        wsMessage
+                );
+            }
+<span class="nc" id="L249">        } catch (Exception e) {</span>
+<span class="nc" id="L250">            System.err.println(&quot;WebSocket send error: &quot; + e.getMessage());</span>
+<span class="nc" id="L251">        }</span>
+
+<span class="nc" id="L253">        response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L254">        response.put(&quot;messageId&quot;, savedMessage.getId());</span>
+<span class="nc" id="L255">        response.put(&quot;fileHtml&quot;, fileHtml);</span>
+<span class="nc" id="L256">        response.put(&quot;fileName&quot;, fileName);</span>
+<span class="nc" id="L257">        response.put(&quot;fileUrl&quot;, fileUrl);</span>
+<span class="nc" id="L258">        return response;</span>
+    }
+
+    private String generateFileHtml(String fileName, String fileUrl, String contentType, long fileSize) {
+<span class="nc" id="L262">        String sizeStr = formatFileSize(fileSize);</span>
+<span class="nc" id="L263">        String fileExtension = getFileExtension(fileName).toLowerCase();</span>
+
+        // Иконка в зависимости от типа файла
+        String iconHtml;
+<span class="nc" id="L267">        String previewHtml = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L269" title="All 4 branches missed.">        if (contentType != null &amp;&amp; contentType.startsWith(&quot;image/&quot;)) {</span>
+            // Для изображений показываем миниатюру
+<span class="nc" id="L271">            iconHtml = &quot;&lt;i class='fas fa-image' style='font-size: 24px; color: #ff5722;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc" id="L272">            previewHtml = &quot;&lt;div class='file-preview-image'&gt;&lt;img src='&quot; + fileUrl + &quot;' alt='preview' onclick='openFullscreen(\&quot;&quot; + fileUrl + &quot;\&quot;)'&gt;&lt;/div&gt;&quot;;</span>
+<span class="nc bnc" id="L273" title="All 4 branches missed.">        } else if (contentType != null &amp;&amp; contentType.equals(&quot;application/pdf&quot;)) {</span>
+<span class="nc" id="L274">            iconHtml = &quot;&lt;i class='fas fa-file-pdf' style='font-size: 24px; color: #e74c3c;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc bnc" id="L275" title="All 4 branches missed.">        } else if (fileExtension.equals(&quot;doc&quot;) || fileExtension.equals(&quot;docx&quot;)) {</span>
+<span class="nc" id="L276">            iconHtml = &quot;&lt;i class='fas fa-file-word' style='font-size: 24px; color: #2b5797;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc bnc" id="L277" title="All 4 branches missed.">        } else if (fileExtension.equals(&quot;xls&quot;) || fileExtension.equals(&quot;xlsx&quot;)) {</span>
+<span class="nc" id="L278">            iconHtml = &quot;&lt;i class='fas fa-file-excel' style='font-size: 24px; color: #217346;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc bnc" id="L279" title="All 4 branches missed.">        } else if (fileExtension.equals(&quot;ppt&quot;) || fileExtension.equals(&quot;pptx&quot;)) {</span>
+<span class="nc" id="L280">            iconHtml = &quot;&lt;i class='fas fa-file-powerpoint' style='font-size: 24px; color: #d35230;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc bnc" id="L281" title="All 6 branches missed.">        } else if (fileExtension.equals(&quot;zip&quot;) || fileExtension.equals(&quot;rar&quot;) || fileExtension.equals(&quot;7z&quot;)) {</span>
+<span class="nc" id="L282">            iconHtml = &quot;&lt;i class='fas fa-file-archive' style='font-size: 24px; color: #f39c12;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc bnc" id="L283" title="All 6 branches missed.">        } else if (fileExtension.equals(&quot;mp3&quot;) || fileExtension.equals(&quot;wav&quot;) || fileExtension.equals(&quot;ogg&quot;)) {</span>
+<span class="nc" id="L284">            iconHtml = &quot;&lt;i class='fas fa-file-audio' style='font-size: 24px; color: #3498db;'&gt;&lt;/i&gt;&quot;;</span>
+<span class="nc bnc" id="L285" title="All 6 branches missed.">        } else if (fileExtension.equals(&quot;mp4&quot;) || fileExtension.equals(&quot;avi&quot;) || fileExtension.equals(&quot;mov&quot;)) {</span>
+<span class="nc" id="L286">            iconHtml = &quot;&lt;i class='fas fa-file-video' style='font-size: 24px; color: #9b59b6;'&gt;&lt;/i&gt;&quot;;</span>
+        } else {
+<span class="nc" id="L288">            iconHtml = &quot;&lt;i class='fas fa-file' style='font-size: 24px; color: #7f8c8d;'&gt;&lt;/i&gt;&quot;;</span>
+        }
+
+<span class="nc" id="L291">        return &quot;&lt;div class='file-attachment' data-file-url='&quot; + fileUrl + &quot;' data-file-name='&quot; + escapeHtml(fileName) + &quot;'&gt;&quot; +</span>
+                &quot;&lt;div class='file-icon'&gt;&quot; + iconHtml + &quot;&lt;/div&gt;&quot; +
+                &quot;&lt;div class='file-info'&gt;&quot; +
+<span class="nc" id="L294">                &quot;&lt;div class='file-name' title='&quot; + escapeHtml(fileName) + &quot;'&gt;&quot; + truncateFileName(fileName, 30) + &quot;&lt;/div&gt;&quot; +</span>
+                &quot;&lt;div class='file-size'&gt;&quot; + sizeStr + &quot;&lt;/div&gt;&quot; +
+                &quot;&lt;/div&gt;&quot; +
+                &quot;&lt;a href='&quot; + fileUrl + &quot;' download class='file-download-btn'&gt;&lt;i class='fas fa-download'&gt;&lt;/i&gt;&lt;/a&gt;&quot; +
+<span class="nc bnc" id="L298" title="All 2 branches missed.">                (previewHtml.isEmpty() ? &quot;&quot; : previewHtml) +</span>
+                &quot;&lt;/div&gt;&quot;;
+    }
+
+    private String escapeHtml(String text) {
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        if (text == null) return &quot;&quot;;</span>
+<span class="nc" id="L304">        return text.replace(&quot;&amp;&quot;, &quot;&amp;amp;&quot;)</span>
+<span class="nc" id="L305">                .replace(&quot;&lt;&quot;, &quot;&amp;lt;&quot;)</span>
+<span class="nc" id="L306">                .replace(&quot;&gt;&quot;, &quot;&amp;gt;&quot;)</span>
+<span class="nc" id="L307">                .replace(&quot;\&quot;&quot;, &quot;&amp;quot;&quot;)</span>
+<span class="nc" id="L308">                .replace(&quot;'&quot;, &quot;&amp;#39;&quot;);</span>
+    }
+
+    private String formatFileSize(long size) {
+<span class="nc bnc" id="L312" title="All 2 branches missed.">        if (size &lt; 1024) return size + &quot; B&quot;;</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">        if (size &lt; 1024 * 1024) return String.format(&quot;%.1f KB&quot;, size / 1024.0);</span>
+<span class="nc" id="L314">        return String.format(&quot;%.1f MB&quot;, size / (1024.0 * 1024.0));</span>
+    }
+
+    private String getFileExtension(String fileName) {
+<span class="nc" id="L318">        int lastDot = fileName.lastIndexOf('.');</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        if (lastDot &gt; 0) {</span>
+<span class="nc" id="L320">            return fileName.substring(lastDot + 1);</span>
+        }
+<span class="nc" id="L322">        return &quot;&quot;;</span>
+    }
+
+    private String truncateFileName(String fileName, int maxLength) {
+<span class="nc bnc" id="L326" title="All 2 branches missed.">        if (fileName.length() &lt;= maxLength) return fileName;</span>
+<span class="nc" id="L327">        int lastDot = fileName.lastIndexOf('.');</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">        if (lastDot &gt; 0) {</span>
+<span class="nc" id="L329">            String name = fileName.substring(0, lastDot);</span>
+<span class="nc" id="L330">            String ext = fileName.substring(lastDot);</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">            if (name.length() &gt; maxLength - ext.length() - 3) {</span>
+<span class="nc" id="L332">                name = name.substring(0, maxLength - ext.length() - 3) + &quot;...&quot;;</span>
+            }
+<span class="nc" id="L334">            return name + ext;</span>
+        }
+<span class="nc" id="L336">        return fileName.substring(0, maxLength - 3) + &quot;...&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

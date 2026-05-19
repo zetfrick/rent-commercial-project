@@ -36,7 +36,6 @@ public class ChatService {
 
         ChatMessage saved = chatMessageRepository.save(message);
 
-        // Ссылка на чат с отправителем (тем, кто написал сообщение)
         String chatLink = "/chats/with/" + sender.getLogin();
 
         if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, null)) {
@@ -73,7 +72,6 @@ public class ChatService {
 
         ChatMessage saved = chatMessageRepository.save(message);
 
-        // ИСПРАВЛЕННАЯ ССЫЛКА - на чат с отправителем (кто написал сообщение)
         String chatLink = "/chats/with/" + sender.getLogin() + "/premise/" + premiseId;
 
         if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, premiseId)) {
@@ -94,7 +92,47 @@ public class ChatService {
         return saved;
     }
 
-    // НОВЫЙ МЕТОД: отправка системного сообщения
+    // НОВЫЙ МЕТОД: отправка сообщения с файлом
+    public ChatMessage sendMessageWithFile(Long senderId, Long receiverId, String text, Long premiseId,
+                                           String fileName, String fileUrl, String fileType, Long fileSize) {
+        User sender = userService.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("Отправитель не найден"));
+        User receiver = userService.findById(receiverId)
+                .orElseThrow(() -> new RuntimeException("Получатель не найден"));
+
+        ChatMessage message = new ChatMessage(
+                senderId,
+                receiverId,
+                sender.getLogin(),
+                text,
+                premiseId,
+                fileName,
+                fileUrl,
+                fileType,
+                fileSize
+        );
+
+        ChatMessage saved = chatMessageRepository.save(message);
+
+        String chatLink = (premiseId != null)
+                ? "/chats/with/" + sender.getLogin() + "/premise/" + premiseId
+                : "/chats/with/" + sender.getLogin();
+
+        if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, premiseId)) {
+            notificationService.createNotification(
+                    receiverId,
+                    "MESSAGE",
+                    premiseId,
+                    senderId,
+                    sender.getLogin(),
+                    null,
+                    chatLink
+            );
+        }
+
+        return saved;
+    }
+
     public ChatMessage sendSystemMessage(Long senderId, Long receiverId, String text) {
         ChatMessage message = new ChatMessage(
                 senderId,
@@ -105,7 +143,6 @@ public class ChatService {
         return chatMessageRepository.save(message);
     }
 
-    // НОВЫЙ МЕТОД: отправка системного сообщения с привязкой к помещению
     public ChatMessage sendSystemMessageWithPremise(Long senderId, Long receiverId, String text, Long premiseId) {
         ChatMessage message = new ChatMessage(
                 senderId,

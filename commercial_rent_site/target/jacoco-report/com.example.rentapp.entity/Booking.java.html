@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Booking.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.entity</a> &gt; <span class="el_source">Booking.java</span></div><h1>Booking.java</h1><pre class="source lang-java linenums">package com.example.rentapp.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;bookings&quot;)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Booking {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long premiseId;
+
+    @Column(nullable = false)
+    private Long renterId;      // ID арендатора (кто снимает)
+
+    @Column(nullable = false)
+    private Long ownerId;       // ID владельца помещения
+
+    @Column(nullable = false)
+    private LocalDate startDate;
+
+    @Column(nullable = false)
+    private LocalDate endDate;
+
+    @Column(nullable = false)
+    private String renterName;   // логин арендатора
+
+    @Column(nullable = false)
+    private String ownerName;    // логин владельца
+
+<span class="nc" id="L43">    @Column(nullable = false)</span>
+<span class="nc" id="L44">    private LocalDateTime createdAt = LocalDateTime.now();</span>
+
+    // Статусы: PENDING (ожидает), APPROVED (одобрена), REJECTED (отказано), CANCELLED (отменено)
+<span class="nc" id="L47">    private String status = &quot;PENDING&quot;;</span>
+
+    // Конструктор для создания запроса на аренду
+    public Booking(Long premiseId, Long renterId, Long ownerId, LocalDate startDate, LocalDate endDate,
+<span class="nc" id="L51">                   String renterName, String ownerName) {</span>
+<span class="nc" id="L52">        this.premiseId = premiseId;</span>
+<span class="nc" id="L53">        this.renterId = renterId;</span>
+<span class="nc" id="L54">        this.ownerId = ownerId;</span>
+<span class="nc" id="L55">        this.startDate = startDate;</span>
+<span class="nc" id="L56">        this.endDate = endDate;</span>
+<span class="nc" id="L57">        this.renterName = renterName;</span>
+<span class="nc" id="L58">        this.ownerName = ownerName;</span>
+<span class="nc" id="L59">        this.createdAt = LocalDateTime.now();</span>
+<span class="nc" id="L60">        this.status = &quot;PENDING&quot;;</span>
+<span class="nc" id="L61">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

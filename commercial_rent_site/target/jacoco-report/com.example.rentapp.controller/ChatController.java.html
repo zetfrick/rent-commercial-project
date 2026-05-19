@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChatController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">ChatController.java</span></div><h1>ChatController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
+import com.example.rentapp.dto.ChatMessageDto;
+import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.ChatMessage;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.entity.UserBan;
+import com.example.rentapp.service.BookingService;
+import com.example.rentapp.service.ChatService;
+import com.example.rentapp.service.UserBanService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping(&quot;/chats&quot;)
+<span class="nc" id="L27">public class ChatController {</span>
+
+    @Autowired
+    private ChatService chatService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CatalogClient catalogClient;
+
+    @Autowired
+    private BookingService bookingService;
+
+    @Autowired
+    private UserBanService userBanService;
+
+    @GetMapping
+    public String chatsPage(@AuthenticationPrincipal UserDetails userDetails,
+                            @RequestParam(required = false) String city,
+                            jakarta.servlet.http.HttpServletRequest request,
+                            Model model) {
+<span class="nc" id="L49">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L52">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+
+<span class="nc" id="L54">        List&lt;ChatMessage&gt; allMessages = chatService.getAllUserMessages(currentUser.getId());</span>
+
+<span class="nc" id="L56">        Map&lt;String, ChatInfo&gt; chatMap = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        for (ChatMessage msg : allMessages) {</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            Long otherUserId = msg.getSenderId().equals(currentUser.getId()) ? msg.getReceiverId() : msg.getSenderId();</span>
+<span class="nc" id="L60">            Long premiseIdObj = msg.getPremiseId();</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">            String key = otherUserId + &quot;_&quot; + (premiseIdObj != null ? premiseIdObj : 0);</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">            if (!chatMap.containsKey(key)) {</span>
+<span class="nc" id="L64">                User otherUser = userService.findById(otherUserId).orElse(null);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                if (otherUser != null) {</span>
+<span class="nc" id="L66">                    ChatInfo info = new ChatInfo();</span>
+<span class="nc" id="L67">                    info.user = otherUser;</span>
+<span class="nc" id="L68">                    info.premiseId = premiseIdObj;</span>
+<span class="nc" id="L69">                    info.lastMessage = msg.getText();</span>
+<span class="nc" id="L70">                    info.lastMessageTime = msg.getSentAt();</span>
+<span class="nc bnc" id="L71" title="All 4 branches missed.">                    info.unreadCount = (msg.getReceiverId().equals(currentUser.getId()) &amp;&amp; !msg.isRead()) ? 1 : 0;</span>
+
+<span class="nc bnc" id="L73" title="All 2 branches missed.">                    if (premiseIdObj != null) {</span>
+                        try {
+<span class="nc" id="L75">                            info.premise = catalogClient.getPremiseById(premiseIdObj);</span>
+<span class="nc" id="L76">                        } catch (Exception e) {</span>
+<span class="nc" id="L77">                            System.err.println(&quot;Error loading premise: &quot; + e.getMessage());</span>
+<span class="nc" id="L78">                        }</span>
+                        // ТОЛЬКО для чатов с привязкой к помещению проверяем наличие запроса
+<span class="nc" id="L80">                        info.pendingBookingRequest = bookingService.hasPendingRequestForChat(premiseIdObj, currentUser.getId(), otherUserId);</span>
+                    } else {
+                        // Для чатов без привязки к помещению - запросов быть не может
+<span class="nc" id="L83">                        info.pendingBookingRequest = false;</span>
+                    }
+
+<span class="nc" id="L86">                    chatMap.put(key, info);</span>
+                }
+<span class="nc" id="L88">            } else {</span>
+<span class="nc" id="L89">                ChatInfo info = chatMap.get(key);</span>
+<span class="nc bnc" id="L90" title="All 4 branches missed.">                if (msg.getReceiverId().equals(currentUser.getId()) &amp;&amp; !msg.isRead()) {</span>
+<span class="nc" id="L91">                    info.unreadCount++;</span>
+                }
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                if (msg.getSentAt().isAfter(info.lastMessageTime)) {</span>
+<span class="nc" id="L94">                    info.lastMessage = msg.getText();</span>
+<span class="nc" id="L95">                    info.lastMessageTime = msg.getSentAt();</span>
+                }
+            }
+<span class="nc" id="L98">        }</span>
+
+<span class="nc" id="L100">        List&lt;ChatInfo&gt; chats = new ArrayList&lt;&gt;(chatMap.values());</span>
+<span class="nc" id="L101">        chats.sort((a, b) -&gt; b.lastMessageTime.compareTo(a.lastMessageTime));</span>
+
+<span class="nc" id="L103">        model.addAttribute(&quot;currentUser&quot;, currentUser);</span>
+<span class="nc" id="L104">        model.addAttribute(&quot;chats&quot;, chats);</span>
+
+<span class="nc" id="L106">        return &quot;future/chats&quot;;</span>
+    }
+
+    @GetMapping(&quot;/with/{username}&quot;)
+    public String chatWithUser(@PathVariable String username,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               Model model) {
+
+<span class="nc" id="L114">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc" id="L115">        User otherUser = userService.findByLogin(username).orElseThrow();</span>
+
+<span class="nc" id="L117">        chatService.markMessagesAsRead(currentUser.getId(), otherUser.getId());</span>
+
+<span class="nc" id="L119">        List&lt;ChatMessage&gt; messages = chatService.getChatBetween(currentUser.getId(), otherUser.getId());</span>
+
+        // Проверяем, заблокирован ли другой пользователь
+<span class="nc" id="L122">        boolean otherUserBanned = userBanService.isUserBanned(otherUser.getId());</span>
+<span class="nc" id="L123">        UserBan otherUserBanInfo = userBanService.getActiveBan(otherUser.getId()).orElse(null);</span>
+
+<span class="nc" id="L125">        model.addAttribute(&quot;currentUser&quot;, currentUser);</span>
+<span class="nc" id="L126">        model.addAttribute(&quot;otherUser&quot;, otherUser);</span>
+<span class="nc" id="L127">        model.addAttribute(&quot;messages&quot;, messages);</span>
+<span class="nc" id="L128">        model.addAttribute(&quot;otherUsername&quot;, username);</span>
+<span class="nc" id="L129">        model.addAttribute(&quot;premiseId&quot;, null);</span>
+<span class="nc" id="L130">        model.addAttribute(&quot;premise&quot;, null);</span>
+<span class="nc" id="L131">        model.addAttribute(&quot;isOwner&quot;, false);</span>
+<span class="nc" id="L132">        model.addAttribute(&quot;pendingBookingRequest&quot;, false);</span>
+<span class="nc" id="L133">        model.addAttribute(&quot;otherUserBanned&quot;, otherUserBanned);</span>
+<span class="nc" id="L134">        model.addAttribute(&quot;otherUserBanInfo&quot;, otherUserBanInfo);</span>
+
+<span class="nc" id="L136">        return &quot;future/chat-window&quot;;</span>
+    }
+
+    @GetMapping(&quot;/with/{username}/premise/{premiseId}&quot;)
+    public String chatWithUserByPremise(@PathVariable String username,
+                                        @PathVariable Long premiseId,
+                                        @AuthenticationPrincipal UserDetails userDetails,
+                                        Model model) {
+
+<span class="nc" id="L145">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc" id="L146">        User otherUser = userService.findByLogin(username).orElseThrow();</span>
+
+<span class="nc" id="L148">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+
+<span class="nc" id="L150">        chatService.markMessagesAsReadByPremise(currentUser.getId(), otherUser.getId(), premiseId);</span>
+
+<span class="nc" id="L152">        List&lt;ChatMessage&gt; messages = chatService.getChatBetweenByPremise(currentUser.getId(), otherUser.getId(), premiseId);</span>
+
+        // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
+<span class="nc" id="L155">        boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), otherUser.getId());</span>
+
+        // Проверяем, заблокирован ли другой пользователь
+<span class="nc" id="L158">        boolean otherUserBanned = userBanService.isUserBanned(otherUser.getId());</span>
+<span class="nc" id="L159">        UserBan otherUserBanInfo = userBanService.getActiveBan(otherUser.getId()).orElse(null);</span>
+
+<span class="nc" id="L161">        model.addAttribute(&quot;currentUser&quot;, currentUser);</span>
+<span class="nc" id="L162">        model.addAttribute(&quot;otherUser&quot;, otherUser);</span>
+<span class="nc" id="L163">        model.addAttribute(&quot;messages&quot;, messages);</span>
+<span class="nc" id="L164">        model.addAttribute(&quot;otherUsername&quot;, username);</span>
+<span class="nc" id="L165">        model.addAttribute(&quot;premiseId&quot;, premiseId);</span>
+<span class="nc" id="L166">        model.addAttribute(&quot;premise&quot;, premise);</span>
+<span class="nc" id="L167">        model.addAttribute(&quot;isOwner&quot;, currentUser.getId().equals(premise.getOwnerId()));</span>
+<span class="nc" id="L168">        model.addAttribute(&quot;pendingBookingRequest&quot;, hasPendingRequest);</span>
+<span class="nc" id="L169">        model.addAttribute(&quot;otherUserBanned&quot;, otherUserBanned);</span>
+<span class="nc" id="L170">        model.addAttribute(&quot;otherUserBanInfo&quot;, otherUserBanInfo);</span>
+
+<span class="nc" id="L172">        return &quot;future/chat-window&quot;;</span>
+    }
+
+    @GetMapping(&quot;/premise/{premiseId}&quot;)
+    public String chatWithPremiseOwner(@PathVariable Long premiseId,
+                                       @AuthenticationPrincipal UserDetails userDetails,
+                                       Model model) {
+
+<span class="nc" id="L180">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc" id="L181">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L184">            return &quot;redirect:/catalog?error=premise_not_found&quot;;</span>
+        }
+
+<span class="nc" id="L187">        User owner = userService.findById(premise.getOwnerId())</span>
+<span class="nc" id="L188">                .orElseThrow(() -&gt; new RuntimeException(&quot;Владелец помещения не найден&quot;));</span>
+
+<span class="nc" id="L190">        chatService.markMessagesAsReadByPremise(currentUser.getId(), owner.getId(), premiseId);</span>
+
+<span class="nc" id="L192">        List&lt;ChatMessage&gt; messages = chatService.getChatBetweenByPremise(currentUser.getId(), owner.getId(), premiseId);</span>
+
+        // Проверяем наличие PENDING запроса ТОЛЬКО для этого помещения
+<span class="nc" id="L195">        boolean hasPendingRequest = bookingService.hasPendingRequestForChat(premiseId, currentUser.getId(), owner.getId());</span>
+
+        // Проверяем, заблокирован ли владелец
+<span class="nc" id="L198">        boolean otherUserBanned = userBanService.isUserBanned(owner.getId());</span>
+<span class="nc" id="L199">        UserBan otherUserBanInfo = userBanService.getActiveBan(owner.getId()).orElse(null);</span>
+
+<span class="nc" id="L201">        model.addAttribute(&quot;currentUser&quot;, currentUser);</span>
+<span class="nc" id="L202">        model.addAttribute(&quot;otherUser&quot;, owner);</span>
+<span class="nc" id="L203">        model.addAttribute(&quot;messages&quot;, messages);</span>
+<span class="nc" id="L204">        model.addAttribute(&quot;otherUsername&quot;, owner.getLogin());</span>
+<span class="nc" id="L205">        model.addAttribute(&quot;premiseId&quot;, premiseId);</span>
+<span class="nc" id="L206">        model.addAttribute(&quot;premiseTitle&quot;, premise.getTypeInRussian() + &quot; в &quot; + premise.getCity());</span>
+<span class="nc" id="L207">        model.addAttribute(&quot;premise&quot;, premise);</span>
+<span class="nc" id="L208">        model.addAttribute(&quot;isOwner&quot;, currentUser.getId().equals(premise.getOwnerId()));</span>
+<span class="nc" id="L209">        model.addAttribute(&quot;pendingBookingRequest&quot;, hasPendingRequest);</span>
+<span class="nc" id="L210">        model.addAttribute(&quot;otherUserBanned&quot;, otherUserBanned);</span>
+<span class="nc" id="L211">        model.addAttribute(&quot;otherUserBanInfo&quot;, otherUserBanInfo);</span>
+
+<span class="nc" id="L213">        return &quot;future/chat-window&quot;;</span>
+    }
+
+    @PostMapping(&quot;/send&quot;)
+    @ResponseBody
+    public String sendMessage(@RequestParam Long receiverId,
+                              @RequestParam String text,
+                              @RequestParam(required = false) Long premiseId,
+                              @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L223">        User sender = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+
+<span class="nc" id="L225">        System.out.println(&quot;=== SEND MESSAGE ===&quot;);</span>
+<span class="nc" id="L226">        System.out.println(&quot;Sender: &quot; + sender.getLogin() + &quot; (ID: &quot; + sender.getId() + &quot;)&quot;);</span>
+<span class="nc" id="L227">        System.out.println(&quot;Receiver ID: &quot; + receiverId);</span>
+<span class="nc" id="L228">        System.out.println(&quot;Text: &quot; + text);</span>
+<span class="nc" id="L229">        System.out.println(&quot;Premise ID: &quot; + premiseId);</span>
+
+        ChatMessage message;
+<span class="nc bnc" id="L232" title="All 2 branches missed.">        if (premiseId != null) {</span>
+<span class="nc" id="L233">            message = chatService.sendMessageWithPremise(sender.getId(), receiverId, text, premiseId);</span>
+        } else {
+<span class="nc" id="L235">            message = chatService.sendMessage(sender.getId(), receiverId, text);</span>
+        }
+
+<span class="nc" id="L238">        System.out.println(&quot;Message saved with ID: &quot; + message.getId() + &quot;, premiseId: &quot; + message.getPremiseId());</span>
+
+<span class="nc" id="L240">        return &quot;ok&quot;;</span>
+    }
+
+    @PostMapping(&quot;/send-system-message&quot;)
+    @ResponseBody
+    public String sendSystemMessage(@RequestParam Long receiverId,
+                                    @RequestParam String messageType,
+                                    @RequestParam(required = false) Long premiseId,
+                                    @RequestParam(required = false) String startDate,
+                                    @RequestParam(required = false) String endDate,
+                                    @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L252">        User sender = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+
+        String text;
+<span class="nc bnc" id="L255" title="All 2 branches missed.">        if (&quot;booking_request&quot;.equals(messageType)) {</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">            String formattedStart = startDate != null ? startDate.replace('-', '.') : &quot;&quot;;</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">            String formattedEnd = endDate != null ? endDate.replace('-', '.') : &quot;&quot;;</span>
+<span class="nc" id="L258">            text = String.format(&quot;📅 &lt;strong&gt;Запрос на аренду&lt;/strong&gt;&lt;br&gt;Пользователь &lt;strong&gt;%s&lt;/strong&gt; предлагает арендовать помещение с &lt;strong&gt;%s&lt;/strong&gt; по &lt;strong&gt;%s&lt;/strong&gt;. Проверьте запрос в разделе \&quot;Запросы на аренду\&quot; справа.&quot;,</span>
+<span class="nc" id="L259">                    sender.getLogin(), formattedStart, formattedEnd);</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        } else if (&quot;booking_approved&quot;.equals(messageType)) {</span>
+<span class="nc" id="L261">            text = String.format(&quot;✅ &lt;strong&gt;Аренда подтверждена!&lt;/strong&gt;&lt;br&gt;Владелец &lt;strong&gt;%s&lt;/strong&gt; подтвердил аренду помещения на выбранные даты.&quot;, sender.getLogin());</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">        } else if (&quot;booking_rejected&quot;.equals(messageType)) {</span>
+<span class="nc" id="L263">            text = String.format(&quot;❌ &lt;strong&gt;Запрос на аренду отклонён&lt;/strong&gt;&lt;br&gt;Владелец &lt;strong&gt;%s&lt;/strong&gt; отклонил ваш запрос на аренду.&quot;, sender.getLogin());</span>
+        } else {
+<span class="nc" id="L265">            text = &quot;Системное сообщение&quot;;</span>
+        }
+
+        ChatMessage message;
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (premiseId != null) {</span>
+<span class="nc" id="L270">            message = chatService.sendSystemMessageWithPremise(sender.getId(), receiverId, text, premiseId);</span>
+        } else {
+<span class="nc" id="L272">            message = chatService.sendSystemMessage(sender.getId(), receiverId, text);</span>
+        }
+
+<span class="nc" id="L275">        return &quot;ok&quot;;</span>
+    }
+
+    @GetMapping(&quot;/api/messages&quot;)
+    @ResponseBody
+    public List&lt;ChatMessageDto&gt; getMessages(@RequestParam Long with,
+                                            @RequestParam(required = false) Long premiseId,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L283">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+
+        List&lt;ChatMessage&gt; messages;
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        if (premiseId != null) {</span>
+<span class="nc" id="L287">            messages = chatService.getChatBetweenByPremise(currentUser.getId(), with, premiseId);</span>
+        } else {
+<span class="nc" id="L289">            messages = chatService.getChatBetween(currentUser.getId(), with);</span>
+        }
+
+<span class="nc" id="L292">        return messages.stream().map(msg -&gt; new ChatMessageDto(</span>
+<span class="nc" id="L293">                msg.getId(),</span>
+<span class="nc" id="L294">                msg.getSenderId(),</span>
+<span class="nc" id="L295">                msg.getReceiverId(),</span>
+<span class="nc" id="L296">                msg.getSenderLogin(),</span>
+<span class="nc" id="L297">                msg.getText(),</span>
+<span class="nc" id="L298">                msg.getSentAt(),</span>
+<span class="nc" id="L299">                msg.isRead()</span>
+<span class="nc" id="L300">        )).collect(Collectors.toList());</span>
+    }
+
+    @PostMapping(&quot;/api/messages/mark-read&quot;)
+    @ResponseBody
+    public String markMessagesAsRead(@RequestParam Long with,
+                                     @RequestParam(required = false) Long premiseId,
+                                     @AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L308">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+
+<span class="nc" id="L310">        System.out.println(&quot;=== MARK MESSAGES AS READ ===&quot;);</span>
+<span class="nc" id="L311">        System.out.println(&quot;Current user: &quot; + currentUser.getLogin() + &quot; (ID: &quot; + currentUser.getId() + &quot;)&quot;);</span>
+<span class="nc" id="L312">        System.out.println(&quot;Other user ID: &quot; + with);</span>
+<span class="nc" id="L313">        System.out.println(&quot;Premise ID: &quot; + premiseId);</span>
+
+<span class="nc bnc" id="L315" title="All 2 branches missed.">        if (premiseId != null) {</span>
+<span class="nc" id="L316">            chatService.markMessagesAsReadByPremise(currentUser.getId(), with, premiseId);</span>
+        } else {
+<span class="nc" id="L318">            chatService.markMessagesAsRead(currentUser.getId(), with);</span>
+        }
+
+<span class="nc" id="L321">        return &quot;ok&quot;;</span>
+    }
+
+    @GetMapping(&quot;/api/chats&quot;)
+    @ResponseBody
+    public List&lt;ChatInfo&gt; getChatsApi(@AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L327">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+
+<span class="nc" id="L329">        List&lt;ChatMessage&gt; allMessages = chatService.getAllUserMessages(currentUser.getId());</span>
+
+<span class="nc" id="L331">        Map&lt;String, ChatInfo&gt; chatMap = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L333" title="All 2 branches missed.">        for (ChatMessage msg : allMessages) {</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">            Long otherUserId = msg.getSenderId().equals(currentUser.getId()) ? msg.getReceiverId() : msg.getSenderId();</span>
+<span class="nc" id="L335">            Long premiseIdObj = msg.getPremiseId();</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">            String key = otherUserId + &quot;_&quot; + (premiseIdObj != null ? premiseIdObj : 0);</span>
+
+<span class="nc bnc" id="L338" title="All 2 branches missed.">            if (!chatMap.containsKey(key)) {</span>
+<span class="nc" id="L339">                User otherUser = userService.findById(otherUserId).orElse(null);</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">                if (otherUser != null) {</span>
+<span class="nc" id="L341">                    ChatInfo info = new ChatInfo();</span>
+<span class="nc" id="L342">                    info.user = otherUser;</span>
+<span class="nc" id="L343">                    info.premiseId = premiseIdObj;</span>
+<span class="nc" id="L344">                    info.lastMessage = msg.getText();</span>
+<span class="nc" id="L345">                    info.lastMessageTime = msg.getSentAt();</span>
+<span class="nc bnc" id="L346" title="All 4 branches missed.">                    info.unreadCount = (msg.getReceiverId().equals(currentUser.getId()) &amp;&amp; !msg.isRead()) ? 1 : 0;</span>
+
+<span class="nc bnc" id="L348" title="All 2 branches missed.">                    if (premiseIdObj != null) {</span>
+                        try {
+<span class="nc" id="L350">                            info.premise = catalogClient.getPremiseById(premiseIdObj);</span>
+<span class="nc" id="L351">                        } catch (Exception e) {</span>
+<span class="nc" id="L352">                            System.err.println(&quot;Error loading premise: &quot; + e.getMessage());</span>
+<span class="nc" id="L353">                        }</span>
+                        // ТОЛЬКО для чатов с привязкой к помещению проверяем наличие запроса
+<span class="nc" id="L355">                        info.pendingBookingRequest = bookingService.hasPendingRequestForChat(premiseIdObj, currentUser.getId(), otherUserId);</span>
+                    } else {
+<span class="nc" id="L357">                        info.pendingBookingRequest = false;</span>
+                    }
+<span class="nc" id="L359">                    chatMap.put(key, info);</span>
+                }
+<span class="nc" id="L361">            } else {</span>
+<span class="nc" id="L362">                ChatInfo info = chatMap.get(key);</span>
+<span class="nc bnc" id="L363" title="All 4 branches missed.">                if (msg.getReceiverId().equals(currentUser.getId()) &amp;&amp; !msg.isRead()) {</span>
+<span class="nc" id="L364">                    info.unreadCount++;</span>
+                }
+<span class="nc bnc" id="L366" title="All 2 branches missed.">                if (msg.getSentAt().isAfter(info.lastMessageTime)) {</span>
+<span class="nc" id="L367">                    info.lastMessage = msg.getText();</span>
+<span class="nc" id="L368">                    info.lastMessageTime = msg.getSentAt();</span>
+                }
+            }
+<span class="nc" id="L371">        }</span>
+
+<span class="nc" id="L373">        List&lt;ChatInfo&gt; chats = new ArrayList&lt;&gt;(chatMap.values());</span>
+<span class="nc" id="L374">        chats.sort((a, b) -&gt; b.lastMessageTime.compareTo(a.lastMessageTime));</span>
+
+<span class="nc" id="L376">        return chats;</span>
+    }
+
+    @GetMapping(&quot;/api/requests/pending&quot;)
+    @ResponseBody
+    public List&lt;BookingDto&gt; getPendingRequests(@AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L382">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();</span>
+<span class="nc" id="L383">        return bookingService.getPendingRequestsForOwner(currentUser.getId());</span>
+    }
+
+<span class="nc" id="L386">    public static class ChatInfo {</span>
+        public User user;
+        public Long premiseId;
+        public PremiseDto premise;
+        public String lastMessage;
+        public LocalDateTime lastMessageTime;
+        public int unreadCount;
+        public boolean pendingBookingRequest;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

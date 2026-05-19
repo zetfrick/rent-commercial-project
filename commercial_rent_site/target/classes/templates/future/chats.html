@@ -345,6 +345,49 @@
         return temp.textContent || temp.innerText || '';
     }
 
+    /**
+     * Форматирует текст превью сообщения
+     * Для файловых сообщений показывает иконку и имя файла
+     */
+    function formatPreviewText(chat) {
+        let previewText = chat.lastMessage || '';
+
+        // Проверяем, является ли сообщение файловым
+        if (previewText && (previewText.includes('file-attachment') || previewText.includes('file-preview-image'))) {
+            // Определяем иконку по типу файла
+            let icon = '📎';
+            if (previewText.includes('fa-file-image')) icon = '🖼️';
+            else if (previewText.includes('fa-file-pdf')) icon = '📄';
+            else if (previewText.includes('fa-file-word')) icon = '📝';
+            else if (previewText.includes('fa-file-excel')) icon = '📊';
+            else if (previewText.includes('fa-file-video')) icon = '🎬';
+            else if (previewText.includes('fa-file-audio')) icon = '🎵';
+            else if (previewText.includes('fa-file-archive')) icon = '🗜️';
+            else if (previewText.includes('fa-image')) icon = '🖼️';
+
+            // Извлекаем имя файла из HTML
+            const fileMatch = previewText.match(/file-name[^>]*>([^<]+)</);
+            if (fileMatch) {
+                return `${icon} ${fileMatch[1]}`;
+            }
+            return `${icon} Файл`;
+        }
+
+        // Для системных сообщений с HTML-тегами
+        if (previewText.includes('<strong>') || previewText.includes('<br>')) {
+            previewText = stripHtml(previewText);
+        } else {
+            previewText = escapeHtml(previewText);
+        }
+
+        // Ограничиваем длину
+        if (previewText.length > 60) {
+            previewText = previewText.substring(0, 57) + '...';
+        }
+
+        return previewText;
+    }
+
     function sortChats(chats) {
         const pinnedSet = loadPinnedChats();
         return [...chats].sort((a, b) => {
@@ -430,16 +473,8 @@
             : `/chats/with/${encodeURIComponent(chat.user.login)}`;
         const chatKey = getChatKey(chat);
 
-        let previewText = chat.lastMessage || '';
-        if (previewText.includes('<strong>') || previewText.includes('<br>')) {
-            previewText = stripHtml(previewText);
-        } else {
-            previewText = escapeHtml(previewText);
-        }
-
-        if (previewText.length > 60) {
-            previewText = previewText.substring(0, 57) + '...';
-        }
+        // Используем новую функцию форматирования превью
+        const previewText = formatPreviewText(chat);
 
         return `
             <a href="${chatUrl}" class="chat-item ${isPinned ? 'pinned' : ''}" data-chat-id="${chatKey}" style="text-decoration: none; display: flex; align-items: center;">

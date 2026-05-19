@@ -2,34 +2,79 @@
 package com.example.rentapp.controller.api;
 
 import com.example.rentapp.dto.RegisterRequest;
+import com.example.rentapp.entity.User;
 import com.example.rentapp.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping(&quot;/api/auth&quot;)
-<span class="nc" id="L16">public class ApiAuthController {</span>
+<span class="nc" id="L19">public class ApiAuthController {</span>
 
     @Autowired private UserService userService;
 
     @PostMapping(&quot;/register&quot;)
     public ResponseEntity&lt;?&gt; register(@Valid @RequestBody RegisterRequest request) {
-<span class="nc bnc" id="L22" title="All 2 branches missed.">        if (userService.existsByLogin(request.getLogin())) {</span>
-<span class="nc" id="L23">            return ResponseEntity.badRequest().body(&quot;Логин занят&quot;);</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        if (userService.existsByLogin(request.getLogin())) {</span>
+<span class="nc" id="L26">            return ResponseEntity.badRequest().body(&quot;Логин занят&quot;);</span>
         }
-<span class="nc bnc" id="L25" title="All 2 branches missed.">        if (userService.existsByEmail(request.getEmail())) {</span>
-<span class="nc" id="L26">            return ResponseEntity.badRequest().body(&quot;Email занят&quot;);</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        if (userService.existsByEmail(request.getEmail())) {</span>
+<span class="nc" id="L29">            return ResponseEntity.badRequest().body(&quot;Email занят&quot;);</span>
         }
-<span class="nc" id="L28">        userService.registerUser(</span>
-<span class="nc" id="L29">                request.getLogin(), request.getEmail(), request.getPassword(),</span>
-<span class="nc" id="L30">                request.getFirstName(), request.getLastName()</span>
+<span class="nc" id="L31">        userService.registerUser(</span>
+<span class="nc" id="L32">                request.getLogin(), request.getEmail(), request.getPassword(),</span>
+<span class="nc" id="L33">                request.getFirstName(), request.getLastName()</span>
         );
-<span class="nc" id="L32">        return ResponseEntity.ok(&quot;Регистрация успешна&quot;);</span>
+<span class="nc" id="L35">        return ResponseEntity.ok(&quot;Регистрация успешна&quot;);</span>
+    }
+
+    /**
+     * Получение информации о текущем авторизованном пользователе
+     * Используется для WebSocket подключения
+     */
+    @GetMapping(&quot;/current-user&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L44">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (userDetails != null) {</span>
+<span class="nc" id="L47">            User user = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (user != null) {</span>
+<span class="nc" id="L49">                response.put(&quot;id&quot;, user.getId());</span>
+<span class="nc" id="L50">                response.put(&quot;login&quot;, user.getLogin());</span>
+<span class="nc" id="L51">                response.put(&quot;email&quot;, user.getEmail());</span>
+<span class="nc" id="L52">                response.put(&quot;firstName&quot;, user.getFirstName());</span>
+<span class="nc" id="L53">                response.put(&quot;lastName&quot;, user.getLastName());</span>
+<span class="nc" id="L54">                response.put(&quot;role&quot;, user.getRole().name());</span>
+<span class="nc" id="L55">                return ResponseEntity.ok(response);</span>
+            }
+        }
+
+<span class="nc" id="L59">        response.put(&quot;authenticated&quot;, false);</span>
+<span class="nc" id="L60">        return ResponseEntity.ok(response);</span>
+    }
+
+    /**
+     * Проверка авторизации для AJAX-запросов
+     */
+    @GetMapping(&quot;/check&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; checkAuth(@AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L68">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (userDetails != null) {</span>
+<span class="nc" id="L71">            response.put(&quot;authenticated&quot;, true);</span>
+<span class="nc" id="L72">            response.put(&quot;username&quot;, userDetails.getUsername());</span>
+<span class="nc" id="L73">            return ResponseEntity.ok(response);</span>
+        } else {
+<span class="nc" id="L75">            response.put(&quot;authenticated&quot;, false);</span>
+<span class="nc" id="L76">            return ResponseEntity.status(401).body(response);</span>
+        }
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

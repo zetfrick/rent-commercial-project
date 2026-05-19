@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ComplaintController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">ComplaintController.java</span></div><h1>ComplaintController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.dto.ComplaintDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.ComplaintService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping(&quot;/admin&quot;)
+<span class="nc" id="L21">public class ComplaintController {</span>
+
+    @Autowired
+    private ComplaintService complaintService;
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping(&quot;/complaints&quot;)
+    public String complaintsPage(Model model) {
+<span class="nc" id="L31">        return &quot;admin/complaints&quot;;</span>
+    }
+
+    @GetMapping(&quot;/api/complaints&quot;)
+    @ResponseBody
+    public List&lt;ComplaintDto&gt; getAllComplaints(@RequestParam(required = false) String status,
+                                               @RequestParam(required = false) Long adminId,
+                                               @RequestParam(required = false) String adminFilter,
+                                               @RequestParam(required = false) String username) {
+        List&lt;ComplaintDto&gt; complaints;
+
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (&quot;active&quot;.equals(status)) {</span>
+<span class="nc" id="L43">            complaints = complaintService.getActiveComplaints();</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        } else if (&quot;in_work&quot;.equals(status)) {</span>
+<span class="nc" id="L45">            complaints = complaintService.getInWorkComplaints();</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        } else if (&quot;resolved&quot;.equals(status)) {</span>
+<span class="nc" id="L47">            complaints = complaintService.getResolvedComplaints();</span>
+        } else {
+<span class="nc" id="L49">            complaints = complaintService.getAllComplaints();</span>
+        }
+
+        // Фильтрация по логину жалобщика
+<span class="nc bnc" id="L53" title="All 4 branches missed.">        if (username != null &amp;&amp; !username.isEmpty()) {</span>
+<span class="nc" id="L54">            complaints = complaints.stream()</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">                    .filter(c -&gt; c.getComplainantName() != null &amp;&amp;</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">                            c.getComplainantName().toLowerCase().contains(username.toLowerCase()))</span>
+<span class="nc" id="L57">                    .collect(Collectors.toList());</span>
+        }
+
+        // Фильтрация по администратору
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (adminId != null) {</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            if (&quot;resolved&quot;.equals(adminFilter)) {</span>
+<span class="nc" id="L63">                complaints = complaints.stream()</span>
+<span class="nc bnc" id="L64" title="All 4 branches missed.">                        .filter(c -&gt; c.getResolvedBy() != null &amp;&amp; c.getResolvedBy().equals(adminId))</span>
+<span class="nc" id="L65">                        .collect(Collectors.toList());</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">            } else if (&quot;rejected&quot;.equals(adminFilter)) {</span>
+<span class="nc" id="L67">                complaints = complaints.stream()</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                        .filter(c -&gt; c.getRejectedBy() != null &amp;&amp;</span>
+<span class="nc bnc" id="L69" title="All 6 branches missed.">                                c.getRejectedBy().stream().anyMatch(r -&gt; r.getAdminId() != null &amp;&amp; r.getAdminId().equals(adminId)))</span>
+<span class="nc" id="L70">                        .collect(Collectors.toList());</span>
+            } else {
+                // Все жалобы, связанные с админом (решённые или отклонённые)
+<span class="nc" id="L73">                complaints = complaints.stream()</span>
+<span class="nc bnc" id="L74" title="All 4 branches missed.">                        .filter(c -&gt; (c.getResolvedBy() != null &amp;&amp; c.getResolvedBy().equals(adminId)) ||</span>
+<span class="nc bnc" id="L75" title="All 8 branches missed.">                                (c.getRejectedBy() != null &amp;&amp; c.getRejectedBy().stream().anyMatch(r -&gt; r.getAdminId() != null &amp;&amp; r.getAdminId().equals(adminId))))</span>
+<span class="nc" id="L76">                        .collect(Collectors.toList());</span>
+            }
+        }
+
+<span class="nc" id="L80">        return complaints;</span>
+    }
+
+    @GetMapping(&quot;/api/complaints/{id}&quot;)
+    @ResponseBody
+    public ComplaintDto getComplaint(@PathVariable Long id) {
+<span class="nc" id="L86">        return complaintService.getComplaintById(id);</span>
+    }
+
+    // НОВЫЙ МЕТОД: статистика администратора
+    @GetMapping(&quot;/api/complaints/stats/{adminId}&quot;)
+    @ResponseBody
+    public Map&lt;String, Object&gt; getAdminStats(@PathVariable Long adminId) {
+<span class="nc" id="L93">        Map&lt;String, Object&gt; stats = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L95">        List&lt;ComplaintDto&gt; allComplaints = complaintService.getAllComplaints();</span>
+
+        // Все жалобы, решённые админом
+<span class="nc" id="L98">        long resolved = allComplaints.stream()</span>
+<span class="nc bnc" id="L99" title="All 6 branches missed.">                .filter(c -&gt; c.isResolved() &amp;&amp; c.getResolvedBy() != null &amp;&amp; c.getResolvedBy().equals(adminId))</span>
+<span class="nc" id="L100">                .count();</span>
+
+        // Все жалобы, от которых админ отказался
+<span class="nc" id="L103">        long rejected = allComplaints.stream()</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                .filter(c -&gt; c.getRejectedBy() != null &amp;&amp;</span>
+<span class="nc bnc" id="L105" title="All 6 branches missed.">                        c.getRejectedBy().stream().anyMatch(r -&gt; r.getAdminId() != null &amp;&amp; r.getAdminId().equals(adminId)))</span>
+<span class="nc" id="L106">                .count();</span>
+
+        // Жалобы, которые были решены после того, как от них отказывались (этот админ отказался, потом кто-то решил)
+<span class="nc" id="L109">        long resolvedAfterRejection = allComplaints.stream()</span>
+<span class="nc bnc" id="L110" title="All 4 branches missed.">                .filter(c -&gt; c.isResolved() &amp;&amp; c.getRejectedBy() != null &amp;&amp;</span>
+<span class="nc bnc" id="L111" title="All 6 branches missed.">                        c.getRejectedBy().stream().anyMatch(r -&gt; r.getAdminId() != null &amp;&amp; r.getAdminId().equals(adminId)))</span>
+<span class="nc" id="L112">                .count();</span>
+
+        // Жалобы, которые сейчас в работе у этого админа
+<span class="nc" id="L115">        long inWork = allComplaints.stream()</span>
+<span class="nc bnc" id="L116" title="All 4 branches missed.">                .filter(c -&gt; &quot;IN_WORK&quot;.equals(c.getStatus()) &amp;&amp; !c.isResolved())</span>
+<span class="nc" id="L117">                .count();</span>
+
+<span class="nc" id="L119">        stats.put(&quot;resolved&quot;, resolved);</span>
+<span class="nc" id="L120">        stats.put(&quot;rejected&quot;, rejected);</span>
+<span class="nc" id="L121">        stats.put(&quot;resolvedAfterRejection&quot;, resolvedAfterRejection);</span>
+<span class="nc" id="L122">        stats.put(&quot;inWork&quot;, inWork);</span>
+
+<span class="nc" id="L124">        return stats;</span>
+    }
+
+    @PostMapping(&quot;/api/complaints/{id}/take-work&quot;)
+    @ResponseBody
+    public Map&lt;String, Object&gt; takeWorkComplaint(@PathVariable Long id) {
+<span class="nc" id="L130">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+        try {
+<span class="nc" id="L132">            complaintService.takeWorkComplaint(id);</span>
+<span class="nc" id="L133">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L134">        } catch (Exception e) {</span>
+<span class="nc" id="L135">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L136">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L137">        }</span>
+<span class="nc" id="L138">        return response;</span>
+    }
+
+    @PostMapping(&quot;/api/complaints/{id}/reject&quot;)
+    @ResponseBody
+    public Map&lt;String, Object&gt; rejectComplaint(@PathVariable Long id,
+                                               @AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L145">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L148">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L149">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L150">            return response;</span>
+        }
+
+<span class="nc" id="L153">        User admin = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L154" title="All 6 branches missed.">        if (admin == null || (admin.getRole() != User.Role.ADMIN &amp;&amp; admin.getRole() != User.Role.SUPER_ADMIN)) {</span>
+<span class="nc" id="L155">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L156">            response.put(&quot;message&quot;, &quot;Недостаточно прав&quot;);</span>
+<span class="nc" id="L157">            return response;</span>
+        }
+
+        try {
+<span class="nc" id="L161">            complaintService.rejectComplaint(id, admin.getId(), admin.getLogin());</span>
+<span class="nc" id="L162">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L163">        } catch (Exception e) {</span>
+<span class="nc" id="L164">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L165">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L166">        }</span>
+<span class="nc" id="L167">        return response;</span>
+    }
+
+    @PostMapping(&quot;/api/complaints/{id}/resolve&quot;)
+    @ResponseBody
+    public Map&lt;String, Object&gt; resolveComplaint(@PathVariable Long id,
+                                                @AuthenticationPrincipal UserDetails userDetails) {
+<span class="nc" id="L174">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L177">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L178">            response.put(&quot;message&quot;, &quot;Необходимо авторизоваться&quot;);</span>
+<span class="nc" id="L179">            return response;</span>
+        }
+
+<span class="nc" id="L182">        User admin = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L183" title="All 6 branches missed.">        if (admin == null || (admin.getRole() != User.Role.ADMIN &amp;&amp; admin.getRole() != User.Role.SUPER_ADMIN)) {</span>
+<span class="nc" id="L184">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L185">            response.put(&quot;message&quot;, &quot;Недостаточно прав&quot;);</span>
+<span class="nc" id="L186">            return response;</span>
+        }
+
+        try {
+<span class="nc" id="L190">            complaintService.resolveComplaint(id, admin.getId(), admin.getLogin());</span>
+<span class="nc" id="L191">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L192">        } catch (Exception e) {</span>
+<span class="nc" id="L193">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L194">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L195">        }</span>
+<span class="nc" id="L196">        return response;</span>
+    }
+
+    @PostMapping(&quot;/api/complaints/cleanup&quot;)
+    @ResponseBody
+    public Map&lt;String, Object&gt; cleanupOldComplaints() {
+<span class="nc" id="L202">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+        try {
+<span class="nc" id="L204">            int deletedCount = complaintService.deleteOldResolvedComplaints(90);</span>
+<span class="nc" id="L205">            response.put(&quot;success&quot;, true);</span>
+<span class="nc" id="L206">            response.put(&quot;deletedCount&quot;, deletedCount);</span>
+<span class="nc" id="L207">        } catch (Exception e) {</span>
+<span class="nc" id="L208">            response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L209">            response.put(&quot;message&quot;, e.getMessage());</span>
+<span class="nc" id="L210">        }</span>
+<span class="nc" id="L211">        return response;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

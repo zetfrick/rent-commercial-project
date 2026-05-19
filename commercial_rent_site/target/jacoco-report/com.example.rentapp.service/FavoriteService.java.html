@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FavoriteService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.service</a> &gt; <span class="el_source">FavoriteService.java</span></div><h1>FavoriteService.java</h1><pre class="source lang-java linenums">package com.example.rentapp.service;
+
+import com.example.rentapp.dto.FavoriteDto;
+import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.Favorite;
+import com.example.rentapp.repository.FavoriteRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class FavoriteService {
+
+    private final FavoriteRepository favoriteRepository;
+
+    @Transactional
+    public boolean toggleFavorite(Long userId, Long premiseId) {
+<span class="nc" id="L23">        Optional&lt;Favorite&gt; existing = favoriteRepository.findByUserIdAndPremiseId(userId, premiseId);</span>
+
+<span class="nc bnc" id="L25" title="All 2 branches missed.">        if (existing.isPresent()) {</span>
+<span class="nc" id="L26">            favoriteRepository.deleteByUserIdAndPremiseId(userId, premiseId);</span>
+<span class="nc" id="L27">            return false; // удалено</span>
+        } else {
+<span class="nc" id="L29">            Favorite favorite = new Favorite(userId, premiseId);</span>
+<span class="nc" id="L30">            favoriteRepository.save(favorite);</span>
+<span class="nc" id="L31">            return true; // добавлено</span>
+        }
+    }
+
+    public boolean isFavorite(Long userId, Long premiseId) {
+<span class="nc" id="L36">        return favoriteRepository.existsByUserIdAndPremiseId(userId, premiseId);</span>
+    }
+
+    public List&lt;Long&gt; getFavoritePremiseIds(Long userId) {
+<span class="nc" id="L40">        return favoriteRepository.findByUserIdOrderByCreatedAtDesc(userId)</span>
+<span class="nc" id="L41">                .stream()</span>
+<span class="nc" id="L42">                .map(Favorite::getPremiseId)</span>
+<span class="nc" id="L43">                .collect(Collectors.toList());</span>
+    }
+
+    public List&lt;FavoriteDto&gt; getUserFavorites(Long userId) {
+<span class="nc" id="L47">        return favoriteRepository.findByUserIdOrderByCreatedAtDesc(userId)</span>
+<span class="nc" id="L48">                .stream()</span>
+<span class="nc" id="L49">                .map(f -&gt; new FavoriteDto(f.getId(), f.getUserId(), f.getPremiseId(), f.getCreatedAt()))</span>
+<span class="nc" id="L50">                .collect(Collectors.toList());</span>
+    }
+
+    @Transactional
+    public void removeFavorite(Long userId, Long premiseId) {
+<span class="nc" id="L55">        favoriteRepository.deleteByUserIdAndPremiseId(userId, premiseId);</span>
+<span class="nc" id="L56">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

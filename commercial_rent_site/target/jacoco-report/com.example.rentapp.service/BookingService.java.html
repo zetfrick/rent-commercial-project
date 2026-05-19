@@ -1,0 +1,722 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.service</a> &gt; <span class="el_source">BookingService.java</span></div><h1>BookingService.java</h1><pre class="source lang-java linenums">package com.example.rentapp.service;
+
+import com.example.rentapp.client.CatalogClient;
+import com.example.rentapp.dto.BookingDto;
+import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.Booking;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.repository.BookingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+<span class="nc" id="L26">public class BookingService {</span>
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CatalogClient catalogClient;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private ChatService chatService;  // ДОБАВЛЕНО
+
+<span class="nc" id="L43">    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(&quot;dd.MM.yyyy&quot;);</span>
+
+    // ==================== ЗАПУСК ПРИ СТАРТЕ ПРИЛОЖЕНИЯ ====================
+
+    // Выполняется после полного запуска приложения
+    @EventListener(ApplicationReadyEvent.class)
+    public void init() {
+<span class="nc" id="L50">        System.out.println(&quot;=== ApplicationReadyEvent: Проверка приближающихся аренд при старте ===&quot;);</span>
+        // Задержка в 5 секунд, чтобы все сервисы успели запуститься
+<span class="nc" id="L52">        new Thread(() -&gt; {</span>
+            try {
+<span class="nc" id="L54">                Thread.sleep(5000);</span>
+<span class="nc" id="L55">                sendAllBookingReminders();</span>
+<span class="nc" id="L56">                System.out.println(&quot;=== Первоначальная проверка аренд завершена ===&quot;);</span>
+<span class="nc" id="L57">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L58">                System.err.println(&quot;Initial booking check interrupted: &quot; + e.getMessage());</span>
+<span class="nc" id="L59">            }</span>
+<span class="nc" id="L60">        }).start();</span>
+<span class="nc" id="L61">    }</span>
+
+    // Общий метод для проверки всех типов уведомлений
+    private void sendAllBookingReminders() {
+<span class="nc" id="L65">        sendUpcomingRentNotifications();</span>
+<span class="nc" id="L66">        sendEndingRentNotifications();</span>
+<span class="nc" id="L67">    }</span>
+
+    // ==================== УВЕДОМЛЕНИЯ О ПРИБЛИЖАЮЩЕЙСЯ АРЕНДЕ ====================
+
+    // Запускается каждый день в 00:00
+    @Scheduled(cron = &quot;0 0 0 * * *&quot;)
+    public void sendUpcomingRentNotifications() {
+<span class="nc" id="L74">        System.out.println(&quot;=== [SCHEDULED] Проверка приближающихся аренд в 00:00 ===&quot;);</span>
+<span class="nc" id="L75">        LocalDate today = LocalDate.now();</span>
+<span class="nc" id="L76">        LocalDate in3Days = today.plusDays(3);</span>
+<span class="nc" id="L77">        LocalDate in1Day = today.plusDays(1);</span>
+
+        // Находим все APPROVED бронирования, которые начинаются через 3 дня, 1 день или сегодня
+<span class="nc" id="L80">        List&lt;Booking&gt; upcomingBookings = bookingRepository.findUpcomingApprovedBookings(in3Days, in1Day, today);</span>
+
+<span class="nc" id="L82">        System.out.println(&quot;Найдено приближающихся аренд: &quot; + upcomingBookings.size());</span>
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        for (Booking booking : upcomingBookings) {</span>
+<span class="nc" id="L85">            sendBookingReminder(booking);</span>
+<span class="nc" id="L86">        }</span>
+
+<span class="nc" id="L88">        System.out.println(&quot;=== [SCHEDULED] Проверка приближающихся аренд завершена ===&quot;);</span>
+<span class="nc" id="L89">    }</span>
+
+    // Запускается каждый день в 00:00 (для окончания аренды)
+    @Scheduled(cron = &quot;0 0 0 * * *&quot;)
+    public void sendEndingRentNotifications() {
+<span class="nc" id="L94">        System.out.println(&quot;=== [SCHEDULED] Проверка заканчивающихся аренд в 00:00 ===&quot;);</span>
+<span class="nc" id="L95">        LocalDate today = LocalDate.now();</span>
+<span class="nc" id="L96">        LocalDate in3Days = today.plusDays(3);</span>
+<span class="nc" id="L97">        LocalDate in1Day = today.plusDays(1);</span>
+
+        // Находим все APPROVED бронирования, которые заканчиваются через 3 дня, 1 день или сегодня
+<span class="nc" id="L100">        List&lt;Booking&gt; endingBookings = bookingRepository.findEndingApprovedBookings(in3Days, in1Day, today);</span>
+
+<span class="nc" id="L102">        System.out.println(&quot;Найдено заканчивающихся аренд: &quot; + endingBookings.size());</span>
+
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        for (Booking booking : endingBookings) {</span>
+<span class="nc" id="L105">            sendBookingEndingReminder(booking);</span>
+<span class="nc" id="L106">        }</span>
+
+<span class="nc" id="L108">        System.out.println(&quot;=== [SCHEDULED] Проверка заканчивающихся аренд завершена ===&quot;);</span>
+<span class="nc" id="L109">    }</span>
+
+    // Добавляем также проверку каждый час для гарантии (опционально)
+    // Запускается каждый час
+    @Scheduled(cron = &quot;0 0 * * * *&quot;)
+    public void sendHourlyReminders() {
+        // Проверяем, не пропустили ли мы какие-то уведомления
+        // Можно закомментировать, если не нужно
+<span class="nc" id="L117">        sendUpcomingRentNotifications();</span>
+<span class="nc" id="L118">        sendEndingRentNotifications();</span>
+<span class="nc" id="L119">    }</span>
+
+    private void sendBookingReminder(Booking booking) {
+<span class="nc" id="L122">        LocalDate today = LocalDate.now();</span>
+<span class="nc" id="L123">        LocalDate startDate = booking.getStartDate();</span>
+<span class="nc" id="L124">        long daysUntilStart = java.time.temporal.ChronoUnit.DAYS.between(today, startDate);</span>
+
+        String daysText;
+        String notificationType;
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (daysUntilStart == 3) {</span>
+<span class="nc" id="L130">            daysText = &quot;через 3 дня&quot;;</span>
+<span class="nc" id="L131">            notificationType = &quot;BOOKING_STARTS_IN_3_DAYS&quot;;</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        } else if (daysUntilStart == 1) {</span>
+<span class="nc" id="L133">            daysText = &quot;завтра&quot;;</span>
+<span class="nc" id="L134">            notificationType = &quot;BOOKING_STARTS_IN_1_DAY&quot;;</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        } else if (daysUntilStart == 0) {</span>
+<span class="nc" id="L136">            daysText = &quot;сегодня&quot;;</span>
+<span class="nc" id="L137">            notificationType = &quot;BOOKING_STARTS_TODAY&quot;;</span>
+        } else {
+<span class="nc" id="L139">            return;</span>
+        }
+
+<span class="nc" id="L142">        PremiseDto premise = catalogClient.getPremiseById(booking.getPremiseId());</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        if (premise == null) return;</span>
+
+<span class="nc" id="L145">        String premiseLink = &quot;/premise/&quot; + booking.getPremiseId();</span>
+<span class="nc" id="L146">        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + &quot; - &quot; + booking.getEndDate().format(DATE_FORMATTER);</span>
+
+        // Создаем HTML-ссылку на владельца для арендатора
+<span class="nc" id="L149">        String ownerProfileLink = &quot;&lt;a href='/profile?username=&quot; + booking.getOwnerName() + &quot;'&gt;&quot; + escapeHtml(booking.getOwnerName()) + &quot;&lt;/a&gt;&quot;;</span>
+
+        // Уведомление арендатору - с HTML-ссылкой на владельца
+<span class="nc" id="L152">        String renterContent = &quot;Ваша аренда у &quot; + ownerProfileLink + &quot; помещения \&quot;&quot; + premise.getTypeInRussian() +</span>
+<span class="nc" id="L153">                &quot;\&quot; в &quot; + premise.getCity() + &quot; начинается &quot; + daysText + &quot;. Период: &quot; + dateRange;</span>
+<span class="nc" id="L154">        notificationService.createNotification(</span>
+<span class="nc" id="L155">                booking.getRenterId(),</span>
+                notificationType,
+<span class="nc" id="L157">                booking.getId(),</span>
+<span class="nc" id="L158">                booking.getOwnerId(),</span>
+<span class="nc" id="L159">                booking.getOwnerName(),</span>
+                renterContent,
+                premiseLink
+        );
+
+        // Создаем HTML-ссылку на арендатора для владельца
+<span class="nc" id="L165">        String renterProfileLink = &quot;&lt;a href='/profile?username=&quot; + booking.getRenterName() + &quot;'&gt;&quot; + escapeHtml(booking.getRenterName()) + &quot;&lt;/a&gt;&quot;;</span>
+
+        // Уведомление арендодателю - с HTML-ссылкой на арендатора
+<span class="nc" id="L168">        String ownerContent = &quot;Аренда помещения \&quot;&quot; + premise.getTypeInRussian() + &quot;\&quot; в &quot; + premise.getCity() +</span>
+                &quot; для арендатора &quot; + renterProfileLink + &quot; начинается &quot; + daysText +
+                &quot;. Период: &quot; + dateRange;
+<span class="nc" id="L171">        notificationService.createNotification(</span>
+<span class="nc" id="L172">                booking.getOwnerId(),</span>
+                notificationType,
+<span class="nc" id="L174">                booking.getId(),</span>
+<span class="nc" id="L175">                booking.getRenterId(),</span>
+<span class="nc" id="L176">                booking.getRenterName(),</span>
+                ownerContent,
+                premiseLink
+        );
+
+<span class="nc" id="L181">        System.out.println(&quot;✓ Отправлено уведомление о начале аренды #&quot; + booking.getId() + &quot; (&quot; + daysText + &quot;)&quot;);</span>
+<span class="nc" id="L182">    }</span>
+
+    private void sendBookingEndingReminder(Booking booking) {
+<span class="nc" id="L185">        LocalDate today = LocalDate.now();</span>
+<span class="nc" id="L186">        LocalDate endDate = booking.getEndDate();</span>
+<span class="nc" id="L187">        long daysUntilEnd = java.time.temporal.ChronoUnit.DAYS.between(today, endDate);</span>
+
+        String daysText;
+        String notificationType;
+
+<span class="nc bnc" id="L192" title="All 2 branches missed.">        if (daysUntilEnd == 3) {</span>
+<span class="nc" id="L193">            daysText = &quot;через 3 дня&quot;;</span>
+<span class="nc" id="L194">            notificationType = &quot;BOOKING_ENDS_IN_3_DAYS&quot;;</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        } else if (daysUntilEnd == 1) {</span>
+<span class="nc" id="L196">            daysText = &quot;завтра&quot;;</span>
+<span class="nc" id="L197">            notificationType = &quot;BOOKING_ENDS_IN_1_DAY&quot;;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        } else if (daysUntilEnd == 0) {</span>
+<span class="nc" id="L199">            daysText = &quot;сегодня&quot;;</span>
+<span class="nc" id="L200">            notificationType = &quot;BOOKING_ENDS_TODAY&quot;;</span>
+        } else {
+<span class="nc" id="L202">            return;</span>
+        }
+
+<span class="nc" id="L205">        PremiseDto premise = catalogClient.getPremiseById(booking.getPremiseId());</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (premise == null) return;</span>
+
+<span class="nc" id="L208">        String premiseLink = &quot;/premise/&quot; + booking.getPremiseId();</span>
+<span class="nc" id="L209">        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + &quot; - &quot; + booking.getEndDate().format(DATE_FORMATTER);</span>
+
+        // Создаем HTML-ссылку на владельца для арендатора
+<span class="nc" id="L212">        String ownerProfileLink = &quot;&lt;a href='/profile?username=&quot; + booking.getOwnerName() + &quot;'&gt;&quot; + escapeHtml(booking.getOwnerName()) + &quot;&lt;/a&gt;&quot;;</span>
+
+        // Уведомление арендатору - с HTML-ссылкой на владельца
+<span class="nc" id="L215">        String renterContent = &quot;Ваша аренда у &quot; + ownerProfileLink + &quot; помещения \&quot;&quot; + premise.getTypeInRussian() +</span>
+<span class="nc" id="L216">                &quot;\&quot; в &quot; + premise.getCity() + &quot; заканчивается &quot; + daysText + &quot;. Период: &quot; + dateRange;</span>
+<span class="nc" id="L217">        notificationService.createNotification(</span>
+<span class="nc" id="L218">                booking.getRenterId(),</span>
+                notificationType,
+<span class="nc" id="L220">                booking.getId(),</span>
+<span class="nc" id="L221">                booking.getOwnerId(),</span>
+<span class="nc" id="L222">                booking.getOwnerName(),</span>
+                renterContent,
+                premiseLink
+        );
+
+        // Создаем HTML-ссылку на арендатора для владельца
+<span class="nc" id="L228">        String renterProfileLink = &quot;&lt;a href='/profile?username=&quot; + booking.getRenterName() + &quot;'&gt;&quot; + escapeHtml(booking.getRenterName()) + &quot;&lt;/a&gt;&quot;;</span>
+
+        // Уведомление арендодателю - с HTML-ссылкой на арендатора
+<span class="nc" id="L231">        String ownerContent = &quot;Аренда помещения \&quot;&quot; + premise.getTypeInRussian() + &quot;\&quot; в &quot; + premise.getCity() +</span>
+                &quot; для арендатора &quot; + renterProfileLink + &quot; заканчивается &quot; + daysText +
+                &quot;. Период: &quot; + dateRange;
+<span class="nc" id="L234">        notificationService.createNotification(</span>
+<span class="nc" id="L235">                booking.getOwnerId(),</span>
+                notificationType,
+<span class="nc" id="L237">                booking.getId(),</span>
+<span class="nc" id="L238">                booking.getRenterId(),</span>
+<span class="nc" id="L239">                booking.getRenterName(),</span>
+                ownerContent,
+                premiseLink
+        );
+
+<span class="nc" id="L244">        System.out.println(&quot;✓ Отправлено уведомление об окончании аренды #&quot; + booking.getId() + &quot; (&quot; + daysText + &quot;)&quot;);</span>
+<span class="nc" id="L245">    }</span>
+
+    // Вспомогательный метод для экранирования HTML
+    private String escapeHtml(String text) {
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        if (text == null) return &quot;&quot;;</span>
+<span class="nc" id="L250">        return text.replace(&quot;&amp;&quot;, &quot;&amp;amp;&quot;)</span>
+<span class="nc" id="L251">                .replace(&quot;&lt;&quot;, &quot;&amp;lt;&quot;)</span>
+<span class="nc" id="L252">                .replace(&quot;&gt;&quot;, &quot;&amp;gt;&quot;)</span>
+<span class="nc" id="L253">                .replace(&quot;\&quot;&quot;, &quot;&amp;quot;&quot;)</span>
+<span class="nc" id="L254">                .replace(&quot;'&quot;, &quot;&amp;#39;&quot;);</span>
+    }
+
+    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ ====================
+
+    // Получить занятые даты для помещения (только APPROVED) - для проверки доступности
+    public List&lt;LocalDate&gt; getBookedDates(Long premiseId) {
+<span class="nc" id="L261">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of(&quot;APPROVED&quot;));</span>
+<span class="nc" id="L262">        List&lt;LocalDate&gt; bookedDates = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L264" title="All 2 branches missed.">        for (Booking booking : bookings) {</span>
+<span class="nc" id="L265">            LocalDate current = booking.getStartDate();</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">            while (!current.isAfter(booking.getEndDate())) {</span>
+<span class="nc" id="L267">                bookedDates.add(current);</span>
+<span class="nc" id="L268">                current = current.plusDays(1);</span>
+            }
+<span class="nc" id="L270">        }</span>
+<span class="nc" id="L271">        return bookedDates;</span>
+    }
+
+    // Получить занятые диапазоны дат для помещения (только APPROVED) - для отображения пользователям
+    public List&lt;Map&lt;String, Object&gt;&gt; getBookedDateRanges(Long premiseId) {
+<span class="nc" id="L276">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of(&quot;APPROVED&quot;));</span>
+<span class="nc" id="L277">        List&lt;Map&lt;String, Object&gt;&gt; ranges = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L279" title="All 2 branches missed.">        for (Booking booking : bookings) {</span>
+<span class="nc" id="L280">            Map&lt;String, Object&gt; range = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L281">            range.put(&quot;start&quot;, booking.getStartDate());</span>
+<span class="nc" id="L282">            range.put(&quot;end&quot;, booking.getEndDate());</span>
+<span class="nc" id="L283">            ranges.add(range);</span>
+<span class="nc" id="L284">        }</span>
+<span class="nc" id="L285">        return ranges;</span>
+    }
+
+    // НОВЫЙ МЕТОД: получить диапазоны ожидающих дат (только PENDING) - для отображения владельцу
+    public List&lt;Map&lt;String, Object&gt;&gt; getPendingDateRanges(Long premiseId) {
+<span class="nc" id="L290">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of(&quot;PENDING&quot;));</span>
+<span class="nc" id="L291">        List&lt;Map&lt;String, Object&gt;&gt; ranges = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        for (Booking booking : bookings) {</span>
+<span class="nc" id="L294">            Map&lt;String, Object&gt; range = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L295">            range.put(&quot;start&quot;, booking.getStartDate());</span>
+<span class="nc" id="L296">            range.put(&quot;end&quot;, booking.getEndDate());</span>
+<span class="nc" id="L297">            ranges.add(range);</span>
+<span class="nc" id="L298">        }</span>
+<span class="nc" id="L299">        return ranges;</span>
+    }
+
+    // НОВЫЙ МЕТОД: получить ожидающие запросы с деталями (для отображения в карточке помещения)
+    public List&lt;Map&lt;String, Object&gt;&gt; getPendingRequestsWithDetails(Long premiseId) {
+<span class="nc" id="L304">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of(&quot;PENDING&quot;));</span>
+<span class="nc" id="L305">        List&lt;Map&lt;String, Object&gt;&gt; result = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L307" title="All 2 branches missed.">        for (Booking booking : bookings) {</span>
+<span class="nc" id="L308">            Map&lt;String, Object&gt; item = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L309">            item.put(&quot;start&quot;, booking.getStartDate());</span>
+<span class="nc" id="L310">            item.put(&quot;end&quot;, booking.getEndDate());</span>
+<span class="nc" id="L311">            item.put(&quot;renterId&quot;, booking.getRenterId());</span>
+<span class="nc" id="L312">            item.put(&quot;renterName&quot;, booking.getRenterName());</span>
+<span class="nc" id="L313">            item.put(&quot;bookingId&quot;, booking.getId());</span>
+<span class="nc" id="L314">            result.add(item);</span>
+<span class="nc" id="L315">        }</span>
+<span class="nc" id="L316">        return result;</span>
+    }
+
+    // Проверить, что даты находятся в пределах доступного периода помещения
+    public boolean areDatesWithinAvailablePeriod(Long premiseId, LocalDate startDate, LocalDate endDate) {
+<span class="nc" id="L321">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L323">            return false;</span>
+        }
+<span class="nc bnc" id="L325" title="All 4 branches missed.">        return !startDate.isBefore(premise.getAvailableFrom()) &amp;&amp; !endDate.isAfter(premise.getAvailableTo());</span>
+    }
+
+    // Получить все одобренные бронирования для помещения с деталями
+    public List&lt;BookingDto&gt; getApprovedBookingsWithDetails(Long premiseId) {
+<span class="nc" id="L330">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of(&quot;APPROVED&quot;));</span>
+<span class="nc" id="L331">        return bookings.stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // Получить все PENDING запросы для владельца
+    public List&lt;BookingDto&gt; getPendingRequestsForOwner(Long ownerId) {
+<span class="nc" id="L336">        List&lt;Booking&gt; bookings = bookingRepository.findByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, &quot;PENDING&quot;);</span>
+<span class="nc" id="L337">        return bookings.stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // НОВЫЙ МЕТОД: получить PENDING запросы для владельца по конкретному помещению
+    public List&lt;BookingDto&gt; getPendingRequestsForOwnerByPremise(Long ownerId, Long premiseId) {
+<span class="nc" id="L342">        List&lt;Booking&gt; bookings = bookingRepository.findByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, &quot;PENDING&quot;);</span>
+<span class="nc" id="L343">        return bookings.stream()</span>
+<span class="nc" id="L344">                .filter(b -&gt; b.getPremiseId().equals(premiseId))</span>
+<span class="nc" id="L345">                .map(this::convertToDto)</span>
+<span class="nc" id="L346">                .collect(Collectors.toList());</span>
+    }
+
+    // Получить все запросы арендатора
+    public List&lt;BookingDto&gt; getRequestsForRenter(Long renterId) {
+<span class="nc" id="L351">        return bookingRepository.findByRenterIdOrderByCreatedAtDesc(renterId)</span>
+<span class="nc" id="L352">                .stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // Получить все бронирования (разные статусы) для помещения - для владельца
+    public List&lt;BookingDto&gt; getBookingsWithDetails(Long premiseId) {
+<span class="nc" id="L357">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseId(premiseId);</span>
+<span class="nc" id="L358">        return bookings.stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // Получить все активные бронирования (без CANCELLED) для помещения
+    public List&lt;BookingDto&gt; getActiveBookingsWithDetails(Long premiseId) {
+<span class="nc" id="L363">        List&lt;Booking&gt; bookings = bookingRepository.findByPremiseId(premiseId).stream()</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">                .filter(b -&gt; !&quot;CANCELLED&quot;.equals(b.getStatus()))</span>
+<span class="nc" id="L365">                .collect(Collectors.toList());</span>
+<span class="nc" id="L366">        return bookings.stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // Получить все бронирования пользователя (как владельца) - без CANCELLED
+    public List&lt;BookingDto&gt; getActiveBookingsByOwner(Long ownerId) {
+<span class="nc" id="L371">        return bookingRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId).stream()</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">                .filter(b -&gt; !&quot;CANCELLED&quot;.equals(b.getStatus()))</span>
+<span class="nc" id="L373">                .map(this::convertToDto)</span>
+<span class="nc" id="L374">                .collect(Collectors.toList());</span>
+    }
+
+    // Получить все бронирования пользователя (как арендатора) - без CANCELLED
+    public List&lt;BookingDto&gt; getActiveBookingsByRenter(Long renterId) {
+<span class="nc" id="L379">        return bookingRepository.findByRenterIdOrderByCreatedAtDesc(renterId).stream()</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">                .filter(b -&gt; !&quot;CANCELLED&quot;.equals(b.getStatus()))</span>
+<span class="nc" id="L381">                .map(this::convertToDto)</span>
+<span class="nc" id="L382">                .collect(Collectors.toList());</span>
+    }
+
+    // Получить все бронирования пользователя (как владельца) - ВСЕ (включая CANCELLED)
+    public List&lt;BookingDto&gt; getAllBookingsByOwner(Long ownerId) {
+<span class="nc" id="L387">        return bookingRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId)</span>
+<span class="nc" id="L388">                .stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // Проверить, свободны ли даты (только APPROVED бронирования)
+    public boolean areDatesAvailable(Long premiseId, LocalDate startDate, LocalDate endDate) {
+<span class="nc" id="L393">        List&lt;Booking&gt; overlapping = bookingRepository.findOverlappingApprovedBookings(premiseId, startDate, endDate);</span>
+<span class="nc" id="L394">        return overlapping.isEmpty();</span>
+    }
+
+    // Проверить, есть ли PENDING запрос на даты
+    public boolean hasPendingRequest(Long premiseId, LocalDate startDate, LocalDate endDate) {
+<span class="nc" id="L399">        List&lt;Booking&gt; pendingOverlap = bookingRepository.findByPremiseIdAndStatus(premiseId, &quot;PENDING&quot;);</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">        for (Booking pending : pendingOverlap) {</span>
+<span class="nc bnc" id="L401" title="All 4 branches missed.">            if (!(pending.getEndDate().isBefore(startDate) || pending.getStartDate().isAfter(endDate))) {</span>
+<span class="nc" id="L402">                return true;</span>
+            }
+<span class="nc" id="L404">        }</span>
+<span class="nc" id="L405">        return false;</span>
+    }
+
+    // НОВЫЙ МЕТОД: проверить наличие PENDING запроса для конкретного чата
+    public boolean hasPendingRequestForChat(Long premiseId, Long currentUserId, Long otherUserId) {
+<span class="nc bnc" id="L410" title="All 2 branches missed.">        if (premiseId == null) {</span>
+<span class="nc" id="L411">            return false;</span>
+        }
+
+<span class="nc" id="L414">        List&lt;Booking&gt; pendingRequests = bookingRepository.findByPremiseIdAndStatus(premiseId, &quot;PENDING&quot;);</span>
+
+<span class="nc bnc" id="L416" title="All 2 branches missed.">        for (Booking request : pendingRequests) {</span>
+<span class="nc bnc" id="L417" title="All 4 branches missed.">            if (request.getOwnerId().equals(currentUserId) &amp;&amp; request.getRenterId().equals(otherUserId)) {</span>
+<span class="nc bnc" id="L418" title="All 2 branches missed.">                if (request.getPremiseId().equals(premiseId)) {</span>
+<span class="nc" id="L419">                    return true;</span>
+                }
+            }
+<span class="nc bnc" id="L422" title="All 4 branches missed.">            if (request.getRenterId().equals(currentUserId) &amp;&amp; request.getOwnerId().equals(otherUserId)) {</span>
+<span class="nc bnc" id="L423" title="All 2 branches missed.">                if (request.getPremiseId().equals(premiseId)) {</span>
+<span class="nc" id="L424">                    return true;</span>
+                }
+            }
+<span class="nc" id="L427">        }</span>
+<span class="nc" id="L428">        return false;</span>
+    }
+
+    // Получить все APPROVED бронирования арендатора
+    public List&lt;BookingDto&gt; getApprovedBookingsForRenter(Long renterId) {
+<span class="nc" id="L433">        List&lt;Booking&gt; bookings = bookingRepository.findByRenterIdAndStatus(renterId, &quot;APPROVED&quot;);</span>
+<span class="nc" id="L434">        return bookings.stream().map(this::convertToDto).collect(Collectors.toList());</span>
+    }
+
+    // Создать запрос на аренду (для арендатора)
+    @Transactional
+    public BookingDto createBookingRequest(Long premiseId, Long renterId, Long ownerId,
+                                           LocalDate startDate, LocalDate endDate) {
+<span class="nc" id="L441">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+<span class="nc bnc" id="L442" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L443">            throw new RuntimeException(&quot;Помещение не найдено&quot;);</span>
+        }
+
+<span class="nc bnc" id="L446" title="All 4 branches missed.">        if (startDate.isBefore(premise.getAvailableFrom()) || endDate.isAfter(premise.getAvailableTo())) {</span>
+<span class="nc" id="L447">            throw new RuntimeException(&quot;Выбранные даты выходят за пределы доступного периода аренды&quot;);</span>
+        }
+
+<span class="nc bnc" id="L450" title="All 2 branches missed.">        if (!areDatesAvailable(premiseId, startDate, endDate)) {</span>
+<span class="nc" id="L451">            throw new RuntimeException(&quot;Выбранные даты уже заняты&quot;);</span>
+        }
+
+<span class="nc bnc" id="L454" title="All 2 branches missed.">        if (hasPendingRequest(premiseId, startDate, endDate)) {</span>
+<span class="nc" id="L455">            throw new RuntimeException(&quot;На эти даты уже есть ожидающий запрос&quot;);</span>
+        }
+
+<span class="nc" id="L458">        User renter = userService.findById(renterId)</span>
+<span class="nc" id="L459">                .orElseThrow(() -&gt; new RuntimeException(&quot;Арендатор не найден&quot;));</span>
+<span class="nc" id="L460">        User owner = userService.findById(ownerId)</span>
+<span class="nc" id="L461">                .orElseThrow(() -&gt; new RuntimeException(&quot;Владелец не найден&quot;));</span>
+
+<span class="nc" id="L463">        Booking booking = new Booking(</span>
+                premiseId, renterId, ownerId, startDate, endDate,
+<span class="nc" id="L465">                renter.getLogin(), owner.getLogin()</span>
+        );
+
+<span class="nc" id="L468">        Booking saved = bookingRepository.save(booking);</span>
+
+<span class="nc" id="L470">        String dateRange = startDate.format(DATE_FORMATTER) + &quot; - &quot; + endDate.format(DATE_FORMATTER);</span>
+<span class="nc" id="L471">        String chatLink = &quot;/chats/with/&quot; + renter.getLogin() + &quot;/premise/&quot; + premiseId;</span>
+
+<span class="nc" id="L473">        notificationService.createNotification(</span>
+                ownerId,
+                &quot;BOOKING_REQUEST&quot;,
+<span class="nc" id="L476">                saved.getId(),</span>
+                renterId,
+<span class="nc" id="L478">                renter.getLogin(),</span>
+                &quot;Запрос на аренду с &quot; + dateRange,
+                chatLink
+        );
+
+<span class="nc" id="L483">        return convertToDto(saved);</span>
+    }
+
+    // Создать бронирование напрямую (для владельца) - сразу APPROVED
+    @Transactional
+    public BookingDto createBookingDirect(Long premiseId, Long renterId, Long ownerId,
+                                          LocalDate startDate, LocalDate endDate) {
+<span class="nc" id="L490">        PremiseDto premise = catalogClient.getPremiseById(premiseId);</span>
+<span class="nc bnc" id="L491" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L492">            throw new RuntimeException(&quot;Помещение не найдено&quot;);</span>
+        }
+
+<span class="nc bnc" id="L495" title="All 4 branches missed.">        if (startDate.isBefore(premise.getAvailableFrom()) || endDate.isAfter(premise.getAvailableTo())) {</span>
+<span class="nc" id="L496">            throw new RuntimeException(&quot;Выбранные даты выходят за пределы доступного периода аренды&quot;);</span>
+        }
+
+<span class="nc bnc" id="L499" title="All 2 branches missed.">        if (!areDatesAvailable(premiseId, startDate, endDate)) {</span>
+<span class="nc" id="L500">            throw new RuntimeException(&quot;Выбранные даты уже заняты&quot;);</span>
+        }
+
+<span class="nc bnc" id="L503" title="All 2 branches missed.">        if (hasPendingRequest(premiseId, startDate, endDate)) {</span>
+<span class="nc" id="L504">            throw new RuntimeException(&quot;На эти даты уже есть ожидающий запрос&quot;);</span>
+        }
+
+<span class="nc" id="L507">        User renter = userService.findById(renterId)</span>
+<span class="nc" id="L508">                .orElseThrow(() -&gt; new RuntimeException(&quot;Арендатор не найден&quot;));</span>
+<span class="nc" id="L509">        User owner = userService.findById(ownerId)</span>
+<span class="nc" id="L510">                .orElseThrow(() -&gt; new RuntimeException(&quot;Владелец не найден&quot;));</span>
+
+<span class="nc" id="L512">        Booking booking = new Booking(</span>
+                premiseId, renterId, ownerId, startDate, endDate,
+<span class="nc" id="L514">                renter.getLogin(), owner.getLogin()</span>
+        );
+<span class="nc" id="L516">        booking.setStatus(&quot;APPROVED&quot;);</span>
+
+<span class="nc" id="L518">        Booking saved = bookingRepository.save(booking);</span>
+
+<span class="nc" id="L520">        String dateRange = startDate.format(DATE_FORMATTER) + &quot; - &quot; + endDate.format(DATE_FORMATTER);</span>
+<span class="nc" id="L521">        String chatLink = &quot;/chats/with/&quot; + owner.getLogin() + &quot;/premise/&quot; + premiseId;</span>
+
+<span class="nc" id="L523">        notificationService.createNotification(</span>
+                renterId,
+                &quot;BOOKING_APPROVED&quot;,
+<span class="nc" id="L526">                saved.getId(),</span>
+                ownerId,
+<span class="nc" id="L528">                owner.getLogin(),</span>
+                &quot;Аренда подтверждена на &quot; + dateRange,
+                chatLink
+        );
+
+<span class="nc" id="L533">        return convertToDto(saved);</span>
+    }
+
+    // Одобрить запрос (владелец)
+    @Transactional
+    public void approveBooking(Long bookingId, Long ownerId) {
+<span class="nc" id="L539">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="nc" id="L540">                .orElseThrow(() -&gt; new RuntimeException(&quot;Запрос не найден&quot;));</span>
+
+<span class="nc bnc" id="L542" title="All 2 branches missed.">        if (!booking.getOwnerId().equals(ownerId)) {</span>
+<span class="nc" id="L543">            throw new RuntimeException(&quot;Вы не можете одобрить этот запрос&quot;);</span>
+        }
+
+<span class="nc bnc" id="L546" title="All 2 branches missed.">        if (!&quot;PENDING&quot;.equals(booking.getStatus())) {</span>
+<span class="nc" id="L547">            throw new RuntimeException(&quot;Запрос уже обработан&quot;);</span>
+        }
+
+<span class="nc" id="L550">        PremiseDto premise = catalogClient.getPremiseById(booking.getPremiseId());</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">        if (premise == null) {</span>
+<span class="nc" id="L552">            throw new RuntimeException(&quot;Помещение не найдено&quot;);</span>
+        }
+
+<span class="nc bnc" id="L555" title="All 2 branches missed.">        if (booking.getStartDate().isBefore(premise.getAvailableFrom()) ||</span>
+<span class="nc bnc" id="L556" title="All 2 branches missed.">                booking.getEndDate().isAfter(premise.getAvailableTo())) {</span>
+<span class="nc" id="L557">            throw new RuntimeException(&quot;Даты выходят за пределы доступного периода аренды&quot;);</span>
+        }
+
+<span class="nc bnc" id="L560" title="All 2 branches missed.">        if (!areDatesAvailable(booking.getPremiseId(), booking.getStartDate(), booking.getEndDate())) {</span>
+<span class="nc" id="L561">            throw new RuntimeException(&quot;Даты уже заняты другим бронированием&quot;);</span>
+        }
+
+<span class="nc" id="L564">        bookingRepository.updateStatus(bookingId, &quot;APPROVED&quot;);</span>
+
+<span class="nc" id="L566">        User owner = userService.findById(ownerId).orElse(null);</span>
+<span class="nc" id="L567">        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + &quot; - &quot; + booking.getEndDate().format(DATE_FORMATTER);</span>
+<span class="nc bnc" id="L568" title="All 2 branches missed.">        String chatLink = &quot;/chats/with/&quot; + (owner != null ? owner.getLogin() : &quot;Владелец&quot;) + &quot;/premise/&quot; + booking.getPremiseId();</span>
+
+<span class="nc" id="L570">        notificationService.createNotification(</span>
+<span class="nc" id="L571">                booking.getRenterId(),</span>
+                &quot;BOOKING_APPROVED&quot;,
+                bookingId,
+                ownerId,
+<span class="nc bnc" id="L575" title="All 2 branches missed.">                owner != null ? owner.getLogin() : &quot;Владелец&quot;,</span>
+                &quot;Аренда подтверждена на &quot; + dateRange,
+                chatLink
+        );
+<span class="nc" id="L579">    }</span>
+
+    // Отказать в запросе (владелец)
+    @Transactional
+    public void rejectBooking(Long bookingId, Long ownerId) {
+<span class="nc" id="L584">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="nc" id="L585">                .orElseThrow(() -&gt; new RuntimeException(&quot;Запрос не найден&quot;));</span>
+
+<span class="nc bnc" id="L587" title="All 2 branches missed.">        if (!booking.getOwnerId().equals(ownerId)) {</span>
+<span class="nc" id="L588">            throw new RuntimeException(&quot;Вы не можете отклонить этот запрос&quot;);</span>
+        }
+
+<span class="nc bnc" id="L591" title="All 2 branches missed.">        if (!&quot;PENDING&quot;.equals(booking.getStatus())) {</span>
+<span class="nc" id="L592">            throw new RuntimeException(&quot;Запрос уже обработан&quot;);</span>
+        }
+
+<span class="nc" id="L595">        bookingRepository.updateStatus(bookingId, &quot;REJECTED&quot;);</span>
+
+<span class="nc" id="L597">        User owner = userService.findById(ownerId).orElse(null);</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">        String chatLink = &quot;/chats/with/&quot; + (owner != null ? owner.getLogin() : &quot;Владелец&quot;) + &quot;/premise/&quot; + booking.getPremiseId();</span>
+
+<span class="nc" id="L600">        notificationService.createNotification(</span>
+<span class="nc" id="L601">                booking.getRenterId(),</span>
+                &quot;BOOKING_REJECTED&quot;,
+                bookingId,
+                ownerId,
+<span class="nc bnc" id="L605" title="All 2 branches missed.">                owner != null ? owner.getLogin() : &quot;Владелец&quot;,</span>
+                null,
+                chatLink
+        );
+<span class="nc" id="L609">    }</span>
+
+    // Отменить бронирование (владелец)
+    @Transactional
+    public void cancelBookingByOwner(Long bookingId, Long ownerId) {
+<span class="nc" id="L614">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="nc" id="L615">                .orElseThrow(() -&gt; new RuntimeException(&quot;Бронирование не найдено&quot;));</span>
+
+<span class="nc bnc" id="L617" title="All 2 branches missed.">        if (!booking.getOwnerId().equals(ownerId)) {</span>
+<span class="nc" id="L618">            throw new RuntimeException(&quot;Вы не можете отменить это бронирование&quot;);</span>
+        }
+
+<span class="nc bnc" id="L621" title="All 4 branches missed.">        if (!&quot;PENDING&quot;.equals(booking.getStatus()) &amp;&amp; !&quot;APPROVED&quot;.equals(booking.getStatus())) {</span>
+<span class="nc" id="L622">            throw new RuntimeException(&quot;Можно отменить только ожидающие или подтверждённые бронирования&quot;);</span>
+        }
+
+<span class="nc" id="L625">        bookingRepository.updateStatus(bookingId, &quot;CANCELLED&quot;);</span>
+
+<span class="nc" id="L627">        User owner = userService.findById(ownerId).orElse(null);</span>
+<span class="nc" id="L628">        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + &quot; - &quot; + booking.getEndDate().format(DATE_FORMATTER);</span>
+<span class="nc" id="L629">        String premiseLink = &quot;/premise/&quot; + booking.getPremiseId();</span>
+
+<span class="nc" id="L631">        notificationService.createNotification(</span>
+<span class="nc" id="L632">                booking.getRenterId(),</span>
+                &quot;BOOKING_CANCELLED_BY_OWNER&quot;,
+                bookingId,
+                ownerId,
+<span class="nc bnc" id="L636" title="All 2 branches missed.">                owner != null ? owner.getLogin() : &quot;Владелец&quot;,</span>
+                &quot;Аренда на &quot; + dateRange + &quot; была отменена владельцем&quot;,
+                premiseLink
+        );
+
+        // Отправляем системное сообщение в чат арендатору
+        try {
+            String systemMessageText = &quot;❌ &lt;strong&gt;Аренда отменена&lt;/strong&gt;&lt;br&gt;Владелец &lt;strong&gt;&quot; +
+<span class="nc bnc" id="L644" title="All 2 branches missed.">                    (owner != null ? escapeHtml(owner.getLogin()) : &quot;Владелец&quot;) +</span>
+                    &quot;&lt;/strong&gt; отменил бронирование на период &quot; + dateRange;
+
+<span class="nc" id="L647">            chatService.sendSystemMessageWithPremise(</span>
+                    ownerId,
+<span class="nc" id="L649">                    booking.getRenterId(),</span>
+                    systemMessageText,
+<span class="nc" id="L651">                    booking.getPremiseId()</span>
+            );
+<span class="nc" id="L653">            System.out.println(&quot;✓ Системное сообщение об отмене аренды отправлено в чат арендатору&quot;);</span>
+<span class="nc" id="L654">        } catch (Exception e) {</span>
+<span class="nc" id="L655">            System.err.println(&quot;✗ Ошибка отправки системного сообщения в чат: &quot; + e.getMessage());</span>
+<span class="nc" id="L656">        }</span>
+<span class="nc" id="L657">    }</span>
+
+    // Отменить бронирование (арендатор)
+    @Transactional
+    public void cancelBookingByRenter(Long bookingId, Long renterId) {
+<span class="nc" id="L662">        Booking booking = bookingRepository.findById(bookingId)</span>
+<span class="nc" id="L663">                .orElseThrow(() -&gt; new RuntimeException(&quot;Бронирование не найдено&quot;));</span>
+
+<span class="nc bnc" id="L665" title="All 2 branches missed.">        if (!booking.getRenterId().equals(renterId)) {</span>
+<span class="nc" id="L666">            throw new RuntimeException(&quot;Вы не можете отменить это бронирование&quot;);</span>
+        }
+
+<span class="nc bnc" id="L669" title="All 4 branches missed.">        if (!&quot;PENDING&quot;.equals(booking.getStatus()) &amp;&amp; !&quot;APPROVED&quot;.equals(booking.getStatus())) {</span>
+<span class="nc" id="L670">            throw new RuntimeException(&quot;Можно отменить только ожидающие или подтверждённые бронирования&quot;);</span>
+        }
+
+<span class="nc" id="L673">        bookingRepository.updateStatus(bookingId, &quot;CANCELLED&quot;);</span>
+
+<span class="nc" id="L675">        User renter = userService.findById(renterId).orElse(null);</span>
+<span class="nc" id="L676">        String dateRange = booking.getStartDate().format(DATE_FORMATTER) + &quot; - &quot; + booking.getEndDate().format(DATE_FORMATTER);</span>
+<span class="nc" id="L677">        String premiseLink = &quot;/premise/&quot; + booking.getPremiseId();</span>
+
+<span class="nc" id="L679">        notificationService.createNotification(</span>
+<span class="nc" id="L680">                booking.getOwnerId(),</span>
+                &quot;BOOKING_CANCELLED_BY_RENTER&quot;,
+                bookingId,
+                renterId,
+<span class="nc bnc" id="L684" title="All 2 branches missed.">                renter != null ? renter.getLogin() : &quot;Арендатор&quot;,</span>
+                &quot;Аренда на &quot; + dateRange + &quot; была отменена арендатором&quot;,
+                premiseLink
+        );
+
+        // Отправляем системное сообщение в чат владельцу
+        try {
+            String systemMessageText = &quot;❌ &lt;strong&gt;Аренда отменена&lt;/strong&gt;&lt;br&gt;Арендатор &lt;strong&gt;&quot; +
+<span class="nc bnc" id="L692" title="All 2 branches missed.">                    (renter != null ? escapeHtml(renter.getLogin()) : &quot;Арендатор&quot;) +</span>
+                    &quot;&lt;/strong&gt; отменил бронирование на период &quot; + dateRange;
+
+<span class="nc" id="L695">            chatService.sendSystemMessageWithPremise(</span>
+                    renterId,
+<span class="nc" id="L697">                    booking.getOwnerId(),</span>
+                    systemMessageText,
+<span class="nc" id="L699">                    booking.getPremiseId()</span>
+            );
+<span class="nc" id="L701">            System.out.println(&quot;✓ Системное сообщение об отмене аренды отправлено в чат владельцу&quot;);</span>
+<span class="nc" id="L702">        } catch (Exception e) {</span>
+<span class="nc" id="L703">            System.err.println(&quot;✗ Ошибка отправки системного сообщения в чат: &quot; + e.getMessage());</span>
+<span class="nc" id="L704">        }</span>
+<span class="nc" id="L705">    }</span>
+
+    private BookingDto convertToDto(Booking booking) {
+<span class="nc" id="L708">        BookingDto dto = new BookingDto();</span>
+<span class="nc" id="L709">        dto.setId(booking.getId());</span>
+<span class="nc" id="L710">        dto.setPremiseId(booking.getPremiseId());</span>
+<span class="nc" id="L711">        dto.setRenterId(booking.getRenterId());</span>
+<span class="nc" id="L712">        dto.setOwnerId(booking.getOwnerId());</span>
+<span class="nc" id="L713">        dto.setStartDate(booking.getStartDate());</span>
+<span class="nc" id="L714">        dto.setEndDate(booking.getEndDate());</span>
+<span class="nc" id="L715">        dto.setRenterName(booking.getRenterName());</span>
+<span class="nc" id="L716">        dto.setOwnerName(booking.getOwnerName());</span>
+<span class="nc" id="L717">        dto.setCreatedAt(booking.getCreatedAt());</span>
+<span class="nc" id="L718">        dto.setStatus(booking.getStatus());</span>
+<span class="nc" id="L719">        return dto;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Complaint.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.entity</a> &gt; <span class="el_source">Complaint.java</span></div><h1>Complaint.java</h1><pre class="source lang-java linenums">package com.example.rentapp.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = &quot;complaints&quot;)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Complaint {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String subject;
+
+    @Column(nullable = false, length = 2000)
+    private String reason;
+
+    @Column(nullable = false)
+    private String type;      // &quot;PREMISE&quot;, &quot;USER&quot; или &quot;COMMENT&quot;
+
+    private Long premiseId;
+
+    private Long userId;
+
+    private Long commentId;
+
+    // Сохраняем текст комментария и имя автора для жалоб на комментарии
+    @Column(length = 2000)
+    private String commentText;
+
+    @Column(length = 100)
+    private String commentAuthor;
+
+    @Column(nullable = false)
+    private Long complainantId;
+
+    @Column(nullable = false)
+    private String complainantName;
+
+    @Column(nullable = false, length = 500)
+    private String targetName;
+
+<span class="nc" id="L54">    @Column(nullable = false)</span>
+    private boolean resolved = false;
+
+<span class="nc" id="L57">    @Column(nullable = false, columnDefinition = &quot;VARCHAR(20) DEFAULT 'ACTIVE'&quot;)</span>
+    private String status = &quot;ACTIVE&quot;;
+
+    @PrePersist
+    protected void onCreate() {
+<span class="nc bnc" id="L62" title="All 4 branches missed.">        if (status == null || status.isEmpty()) {</span>
+<span class="nc" id="L63">            status = &quot;ACTIVE&quot;;</span>
+        }
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if (createdAt == null) {</span>
+<span class="nc" id="L66">            createdAt = LocalDateTime.now();</span>
+        }
+<span class="nc" id="L68">    }</span>
+
+    private Long resolvedBy;
+
+    private String resolvedByName;
+
+    private LocalDateTime resolvedAt;
+
+<span class="nc" id="L76">    @ElementCollection</span>
+    private List&lt;RejectedBy&gt; rejectedBy = new ArrayList&lt;&gt;();
+
+<span class="nc" id="L79">    @Column(nullable = false)</span>
+<span class="nc" id="L80">    private LocalDateTime createdAt = LocalDateTime.now();</span>
+
+    @Embeddable
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RejectedBy {
+        private Long adminId;
+        private String adminName;
+        private LocalDateTime rejectedAt;
+    }
+
+    // Конструктор для жалобы на помещение
+<span class="nc" id="L93">    public Complaint(String subject, String reason, Long premiseId, Long complainantId, String complainantName, String targetName) {</span>
+<span class="nc" id="L94">        this.subject = subject;</span>
+<span class="nc" id="L95">        this.reason = reason;</span>
+<span class="nc" id="L96">        this.type = &quot;PREMISE&quot;;</span>
+<span class="nc" id="L97">        this.premiseId = premiseId;</span>
+<span class="nc" id="L98">        this.complainantId = complainantId;</span>
+<span class="nc" id="L99">        this.complainantName = complainantName;</span>
+<span class="nc" id="L100">        this.targetName = targetName;</span>
+<span class="nc" id="L101">        this.status = &quot;ACTIVE&quot;;</span>
+<span class="nc" id="L102">    }</span>
+
+    // Конструктор для жалобы на пользователя
+<span class="nc" id="L105">    public Complaint(String subject, String reason, Long userId, Long complainantId, String complainantName, String targetName, boolean isUser) {</span>
+<span class="nc" id="L106">        this.subject = subject;</span>
+<span class="nc" id="L107">        this.reason = reason;</span>
+<span class="nc" id="L108">        this.type = &quot;USER&quot;;</span>
+<span class="nc" id="L109">        this.userId = userId;</span>
+<span class="nc" id="L110">        this.complainantId = complainantId;</span>
+<span class="nc" id="L111">        this.complainantName = complainantName;</span>
+<span class="nc" id="L112">        this.targetName = targetName;</span>
+<span class="nc" id="L113">        this.status = &quot;ACTIVE&quot;;</span>
+<span class="nc" id="L114">    }</span>
+
+    // Конструктор для жалобы на комментарий
+<span class="nc" id="L117">    public Complaint(String subject, String reason, Long commentId, Long premiseId, Long complainantId, String complainantName, String targetName) {</span>
+<span class="nc" id="L118">        this.subject = subject;</span>
+<span class="nc" id="L119">        this.reason = reason;</span>
+<span class="nc" id="L120">        this.type = &quot;COMMENT&quot;;</span>
+<span class="nc" id="L121">        this.commentId = commentId;</span>
+<span class="nc" id="L122">        this.premiseId = premiseId;</span>
+<span class="nc" id="L123">        this.complainantId = complainantId;</span>
+<span class="nc" id="L124">        this.complainantName = complainantName;</span>
+<span class="nc" id="L125">        this.targetName = targetName;</span>
+<span class="nc" id="L126">        this.status = &quot;ACTIVE&quot;;</span>
+<span class="nc" id="L127">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

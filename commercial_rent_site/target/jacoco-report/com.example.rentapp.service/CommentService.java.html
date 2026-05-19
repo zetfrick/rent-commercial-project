@@ -6,25 +6,41 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
-<span class="nc" id="L11">public class CommentService {</span>
+<span class="nc" id="L12">public class CommentService {</span>
 
     @Autowired
     private CatalogClient catalogClient;
 
+    // Убираем notificationService и userService отсюда - уведомления будут в контроллере
+
     public CommentDto addComment(CommentDto commentDto) {
-<span class="nc bnc" id="L17" title="All 4 branches missed.">        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {</span>
-<span class="nc" id="L18">            throw new IllegalArgumentException(&quot;Текст комментария не может быть пустым&quot;);</span>
+<span class="nc bnc" id="L20" title="All 4 branches missed.">        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {</span>
+<span class="nc" id="L21">            throw new IllegalArgumentException(&quot;Текст комментария не может быть пустым&quot;);</span>
         }
-<span class="nc bnc" id="L20" title="All 2 branches missed.">        if (commentDto.getPremiseId() == null) {</span>
-<span class="nc" id="L21">            throw new IllegalArgumentException(&quot;Не указан ID помещения&quot;);</span>
+<span class="nc bnc" id="L23" title="All 2 branches missed.">        if (commentDto.getPremiseId() == null) {</span>
+<span class="nc" id="L24">            throw new IllegalArgumentException(&quot;Не указан ID помещения&quot;);</span>
         }
-<span class="nc" id="L23">        return catalogClient.addComment(commentDto);</span>
+
+        // Только сохраняем комментарий через catalog-client, без уведомлений
+<span class="nc" id="L28">        return catalogClient.addComment(commentDto);</span>
     }
 
     public List&lt;CommentDto&gt; getCommentsByPremiseId(Long premiseId) {
-<span class="nc" id="L27">        return catalogClient.getCommentsByPremiseId(premiseId);</span>
+<span class="nc" id="L32">        return catalogClient.getCommentsByPremiseId(premiseId);</span>
+    }
+
+    // НОВЫЙ МЕТОД: удаление комментария
+    public boolean deleteComment(Long commentId) {
+        try {
+<span class="nc" id="L38">            Map&lt;String, Object&gt; result = catalogClient.deleteComment(commentId);</span>
+<span class="nc bnc" id="L39" title="All 4 branches missed.">            return result != null &amp;&amp; Boolean.TRUE.equals(result.get(&quot;success&quot;));</span>
+<span class="nc" id="L40">        } catch (Exception e) {</span>
+<span class="nc" id="L41">            System.err.println(&quot;Error deleting comment: &quot; + e.getMessage());</span>
+<span class="nc" id="L42">            return false;</span>
+        }
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

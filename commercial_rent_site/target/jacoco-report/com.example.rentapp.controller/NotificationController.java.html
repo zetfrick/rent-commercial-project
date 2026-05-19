@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.controller</a> &gt; <span class="el_source">NotificationController.java</span></div><h1>NotificationController.java</h1><pre class="source lang-java linenums">package com.example.rentapp.controller;
+
+import com.example.rentapp.dto.NotificationDto;
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.NotificationService;
+import com.example.rentapp.service.UserService;
+import com.example.rentapp.dto.NotificationSettingsDto;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping(&quot;/notifications&quot;)
+@RequiredArgsConstructor
+public class NotificationController {
+
+    private final NotificationService notificationService;
+    private final UserService userService;
+
+    @GetMapping
+    public String notificationsPage(@AuthenticationPrincipal UserDetails userDetails,
+                                    @RequestParam(required = false) String tab,
+                                    @RequestParam(required = false) String city,
+                                    jakarta.servlet.http.HttpServletRequest request,
+                                    Model model) {
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L39">            return &quot;redirect:/auth/login&quot;;</span>
+        }
+
+<span class="nc" id="L42">        User currentUser = userService.findByLogin(userDetails.getUsername())</span>
+<span class="nc" id="L43">                .orElseThrow(() -&gt; new RuntimeException(&quot;Пользователь не найден&quot;));</span>
+
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        model.addAttribute(&quot;currentCity&quot;, city != null ? city : &quot;Нижний Новгород&quot;);</span>
+<span class="nc" id="L46">        model.addAttribute(&quot;currentUri&quot;, request.getRequestURI());</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        model.addAttribute(&quot;currentTab&quot;, tab != null ? tab : &quot;unread&quot;);</span>
+
+<span class="nc" id="L49">        return &quot;future/notifications&quot;;</span>
+    }
+
+    @GetMapping(&quot;/api/list&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getNotifications(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) String type) {
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L59">            return ResponseEntity.status(401).body(Map.of(&quot;error&quot;, &quot;Не авторизован&quot;));</span>
+        }
+
+<span class="nc" id="L62">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L64">            return ResponseEntity.status(404).body(Map.of(&quot;error&quot;, &quot;Пользователь не найден&quot;));</span>
+        }
+
+<span class="nc" id="L67">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (&quot;read&quot;.equals(type)) {</span>
+<span class="nc" id="L70">            response.put(&quot;notifications&quot;, notificationService.getReadNotifications(currentUser.getId()));</span>
+        } else {
+<span class="nc" id="L72">            response.put(&quot;notifications&quot;, notificationService.getUnreadNotifications(currentUser.getId()));</span>
+        }
+
+<span class="nc" id="L75">        response.put(&quot;unreadCount&quot;, notificationService.getUnreadNotificationsCount(currentUser.getId()));</span>
+
+<span class="nc" id="L77">        return ResponseEntity.ok(response);</span>
+    }
+
+    @GetMapping(&quot;/api/create&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; createNotificationGet(
+            @RequestParam Long userId,
+            @RequestParam String type,
+            @RequestParam(required = false) Long relatedId,
+            @RequestParam(required = false) Long fromUserId,
+            @RequestParam(required = false) String fromUserName,
+            @RequestParam(required = false) String content,
+            @RequestParam String link) {
+
+        // ВАЖНО: НЕ декодируем content, так как он может содержать HTML-ссылку!
+        // Только если это необходимо для URL-декодирования без повреждения HTML
+<span class="nc" id="L93">        String processedContent = content;</span>
+<span class="nc bnc" id="L94" title="All 4 branches missed.">        if (content != null &amp;&amp; content.contains(&quot;%&quot;)) {</span>
+            try {
+                // Декодируем URL-кодированные символы, но не трогаем HTML-теги
+<span class="nc" id="L97">                processedContent = URLDecoder.decode(content, StandardCharsets.UTF_8.toString());</span>
+<span class="nc" id="L98">            } catch (Exception e) {</span>
+<span class="nc" id="L99">                System.err.println(&quot;Ошибка декодирования content: &quot; + e.getMessage());</span>
+<span class="nc" id="L100">                processedContent = content;</span>
+<span class="nc" id="L101">            }</span>
+        }
+
+        try {
+<span class="nc" id="L105">            notificationService.createNotification(userId, type, relatedId, fromUserId, fromUserName, processedContent, link);</span>
+<span class="nc" id="L106">            return ResponseEntity.ok(Map.of(&quot;success&quot;, true));</span>
+<span class="nc" id="L107">        } catch (Exception e) {</span>
+<span class="nc" id="L108">            System.err.println(&quot;Ошибка при создании уведомления: &quot; + e.getMessage());</span>
+<span class="nc" id="L109">            return ResponseEntity.status(500).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, e.getMessage()));</span>
+        }
+    }
+
+    @PostMapping(&quot;/api/mark-read&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; markAsRead(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map&lt;String, List&lt;Integer&gt;&gt; request) {
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L120">            return ResponseEntity.status(401).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Не авторизован&quot;));</span>
+        }
+
+<span class="nc" id="L123">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L125">            return ResponseEntity.status(404).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Пользователь не найден&quot;));</span>
+        }
+
+<span class="nc" id="L128">        List&lt;Integer&gt; idsInt = request.get(&quot;ids&quot;);</span>
+<span class="nc bnc" id="L129" title="All 4 branches missed.">        if (idsInt != null &amp;&amp; !idsInt.isEmpty()) {</span>
+<span class="nc" id="L130">            List&lt;Long&gt; ids = idsInt.stream().map(Long::valueOf).collect(Collectors.toList());</span>
+<span class="nc" id="L131">            notificationService.markAsRead(currentUser.getId(), ids);</span>
+        }
+
+<span class="nc" id="L134">        return ResponseEntity.ok(Map.of(&quot;success&quot;, true));</span>
+    }
+
+    @PostMapping(&quot;/api/mark-all-read&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; markAllAsRead(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L143">            return ResponseEntity.status(401).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Не авторизован&quot;));</span>
+        }
+
+<span class="nc" id="L146">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L148">            return ResponseEntity.status(404).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Пользователь не найден&quot;));</span>
+        }
+
+<span class="nc" id="L151">        notificationService.markAllAsRead(currentUser.getId());</span>
+
+<span class="nc" id="L153">        return ResponseEntity.ok(Map.of(&quot;success&quot;, true));</span>
+    }
+
+    @PostMapping(&quot;/api/delete&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; deleteNotifications(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody Map&lt;String, List&lt;Integer&gt;&gt; request) {
+
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L163">            return ResponseEntity.status(401).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Не авторизован&quot;));</span>
+        }
+
+<span class="nc" id="L166">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L168">            return ResponseEntity.status(404).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Пользователь не найден&quot;));</span>
+        }
+
+<span class="nc" id="L171">        List&lt;Integer&gt; idsInt = request.get(&quot;ids&quot;);</span>
+<span class="nc bnc" id="L172" title="All 4 branches missed.">        if (idsInt != null &amp;&amp; !idsInt.isEmpty()) {</span>
+<span class="nc" id="L173">            List&lt;Long&gt; ids = idsInt.stream().map(Long::valueOf).collect(Collectors.toList());</span>
+<span class="nc" id="L174">            notificationService.deleteNotifications(currentUser.getId(), ids);</span>
+        }
+
+<span class="nc" id="L177">        return ResponseEntity.ok(Map.of(&quot;success&quot;, true));</span>
+    }
+
+    @PostMapping(&quot;/api/clear-read&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; clearReadNotifications(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L186">            return ResponseEntity.status(401).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Не авторизован&quot;));</span>
+        }
+
+<span class="nc" id="L189">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L191">            return ResponseEntity.status(404).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, &quot;Пользователь не найден&quot;));</span>
+        }
+
+<span class="nc" id="L194">        notificationService.clearReadNotifications(currentUser.getId());</span>
+
+<span class="nc" id="L196">        return ResponseEntity.ok(Map.of(&quot;success&quot;, true));</span>
+    }
+
+    @PostMapping(&quot;/api/create&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; createNotificationPost(
+            @RequestParam Long userId,
+            @RequestParam String type,
+            @RequestParam(required = false) Long relatedId,
+            @RequestParam(required = false) Long fromUserId,
+            @RequestParam(required = false) String fromUserName,
+            @RequestParam(required = false) String content,
+            @RequestParam String link) {
+
+        try {
+<span class="nc" id="L211">            notificationService.createNotification(userId, type, relatedId, fromUserId, fromUserName, content, link);</span>
+<span class="nc" id="L212">            return ResponseEntity.ok(Map.of(&quot;success&quot;, true));</span>
+<span class="nc" id="L213">        } catch (Exception e) {</span>
+<span class="nc" id="L214">            System.err.println(&quot;Ошибка при создании уведомления: &quot; + e.getMessage());</span>
+<span class="nc" id="L215">            return ResponseEntity.status(500).body(Map.of(&quot;success&quot;, false, &quot;message&quot;, e.getMessage()));</span>
+        }
+    }
+
+    // ==================== НОВЫЕ ЭНДПОИНТЫ ДЛЯ НАСТРОЕК EMAIL-УВЕДОМЛЕНИЙ ====================
+
+    @GetMapping(&quot;/api/settings&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getNotificationSettings(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc bnc" id="L226" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L227">            return ResponseEntity.status(401).body(Map.of(&quot;error&quot;, &quot;Не авторизован&quot;));</span>
+        }
+
+<span class="nc" id="L230">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L232">            return ResponseEntity.status(404).body(Map.of(&quot;error&quot;, &quot;Пользователь не найден&quot;));</span>
+        }
+
+<span class="nc" id="L235">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L236">        response.put(&quot;emailNotificationsEnabled&quot;, notificationService.isEmailNotificationsEnabled(currentUser.getId()));</span>
+
+<span class="nc" id="L238">        return ResponseEntity.ok(response);</span>
+    }
+
+    @PostMapping(&quot;/api/settings/email&quot;)
+    @ResponseBody
+    public ResponseEntity&lt;NotificationSettingsDto&gt; toggleEmailNotifications(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody NotificationSettingsDto settings) {
+
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        if (userDetails == null) {</span>
+<span class="nc" id="L248">            return ResponseEntity.status(401).body(new NotificationSettingsDto(false));</span>
+        }
+
+<span class="nc" id="L251">        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        if (currentUser == null) {</span>
+<span class="nc" id="L253">            return ResponseEntity.status(404).body(new NotificationSettingsDto(false));</span>
+        }
+
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (settings.getEmailNotificationsEnabled() != null) {</span>
+<span class="nc" id="L257">            notificationService.updateEmailNotificationsEnabled(currentUser.getId(), settings.getEmailNotificationsEnabled());</span>
+<span class="nc" id="L258">            return ResponseEntity.ok(new NotificationSettingsDto(settings.getEmailNotificationsEnabled()));</span>
+        }
+
+<span class="nc" id="L261">        return ResponseEntity.badRequest().body(new NotificationSettingsDto(false));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

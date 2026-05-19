@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Notification.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.entity</a> &gt; <span class="el_source">Notification.java</span></div><h1>Notification.java</h1><pre class="source lang-java linenums">package com.example.rentapp.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;notifications&quot;)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Notification {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long userId;  // Кому принадлежит уведомление
+
+    @Column(nullable = false)
+    private String type;  // MESSAGE, PREMISE_EXPIRED, BOOKING_REQUEST, BOOKING_REJECTED, BOOKING_APPROVED, COMMENT
+
+    private Long relatedId;  // ID связанного объекта (чата, помещения, бронирования, комментария)
+
+    private Long fromUserId;  // От кого (если есть)
+
+    private String fromUserName;  // Имя отправителя
+
+    @Column(length = 2000)
+    private String content;  // Текст уведомления
+
+    private String link;  // Ссылка для перехода
+
+<span class="nc" id="L38">    private boolean read = false;  // Прочитано/не прочитано</span>
+
+<span class="nc" id="L40">    @Column(nullable = false)</span>
+<span class="nc" id="L41">    private LocalDateTime createdAt = LocalDateTime.now();</span>
+
+    // Конструктор для быстрого создания
+    public Notification(Long userId, String type, Long relatedId, Long fromUserId,
+<span class="nc" id="L45">                        String fromUserName, String content, String link) {</span>
+<span class="nc" id="L46">        this.userId = userId;</span>
+<span class="nc" id="L47">        this.type = type;</span>
+<span class="nc" id="L48">        this.relatedId = relatedId;</span>
+<span class="nc" id="L49">        this.fromUserId = fromUserId;</span>
+<span class="nc" id="L50">        this.fromUserName = fromUserName;</span>
+<span class="nc" id="L51">        this.content = content;</span>
+<span class="nc" id="L52">        this.link = link;</span>
+<span class="nc" id="L53">        this.createdAt = LocalDateTime.now();</span>
+<span class="nc" id="L54">        this.read = false;</span>
+<span class="nc" id="L55">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebSocketConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.config</a> &gt; <span class="el_source">WebSocketConfig.java</span></div><h1>WebSocketConfig.java</h1><pre class="source lang-java linenums">package com.example.rentapp.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.converter.DefaultContentTypeResolver;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
+import org.springframework.messaging.simp.config.ChannelRegistration;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+
+import java.util.List;
+
+@Configuration
+@EnableWebSocketMessageBroker
+<span class="nc" id="L20">public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {</span>
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        // ВАЖНО: добавили /user в брокер
+<span class="nc" id="L25">        config.enableSimpleBroker(&quot;/queue&quot;, &quot;/topic&quot;, &quot;/user&quot;);</span>
+<span class="nc" id="L26">        config.setApplicationDestinationPrefixes(&quot;/app&quot;);</span>
+<span class="nc" id="L27">        config.setUserDestinationPrefix(&quot;/user&quot;);</span>
+<span class="nc" id="L28">        config.setCacheLimit(2048);</span>
+<span class="nc" id="L29">    }</span>
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+<span class="nc" id="L33">        registry.addEndpoint(&quot;/ws-chat&quot;)</span>
+<span class="nc" id="L34">                .setAllowedOriginPatterns(&quot;*&quot;)</span>
+<span class="nc" id="L35">                .withSockJS();</span>
+<span class="nc" id="L36">    }</span>
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+<span class="nc" id="L40">        registration.taskExecutor().corePoolSize(4).maxPoolSize(8);</span>
+<span class="nc" id="L41">    }</span>
+
+    @Override
+    public boolean configureMessageConverters(List&lt;MessageConverter&gt; messageConverters) {
+<span class="nc" id="L45">        DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();</span>
+<span class="nc" id="L46">        resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);</span>
+
+<span class="nc" id="L48">        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();</span>
+<span class="nc" id="L49">        ObjectMapper objectMapper = new ObjectMapper();</span>
+<span class="nc" id="L50">        objectMapper.registerModule(new JavaTimeModule());</span>
+<span class="nc" id="L51">        converter.setObjectMapper(objectMapper);</span>
+<span class="nc" id="L52">        converter.setContentTypeResolver(resolver);</span>
+
+<span class="nc" id="L54">        messageConverters.add(converter);</span>
+<span class="nc" id="L55">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChatMessage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.entity</a> &gt; <span class="el_source">ChatMessage.java</span></div><h1>ChatMessage.java</h1><pre class="source lang-java linenums">package com.example.rentapp.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;chat_messages&quot;)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ChatMessage {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private Long senderId;
+    private Long receiverId;
+
+    private String senderLogin;
+    private String text;
+
+<span class="nc" id="L27">    private LocalDateTime sentAt = LocalDateTime.now();</span>
+
+<span class="nc" id="L29">    private boolean read = false;</span>
+
+    private Long premiseId;
+
+    // Увеличиваем длину полей для файлов
+    @Column(length = 1000)
+    private String fileName;
+
+    @Column(length = 1000)
+    private String fileUrl;
+
+    @Column(length = 500)
+    private String fileType;
+
+    private Long fileSize;
+
+<span class="nc" id="L45">    public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text) {</span>
+<span class="nc" id="L46">        this.senderId = senderId;</span>
+<span class="nc" id="L47">        this.receiverId = receiverId;</span>
+<span class="nc" id="L48">        this.senderLogin = senderLogin;</span>
+<span class="nc" id="L49">        this.text = text;</span>
+<span class="nc" id="L50">    }</span>
+
+<span class="nc" id="L52">    public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text, Long premiseId) {</span>
+<span class="nc" id="L53">        this.senderId = senderId;</span>
+<span class="nc" id="L54">        this.receiverId = receiverId;</span>
+<span class="nc" id="L55">        this.senderLogin = senderLogin;</span>
+<span class="nc" id="L56">        this.text = text;</span>
+<span class="nc" id="L57">        this.premiseId = premiseId;</span>
+<span class="nc" id="L58">    }</span>
+
+    public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text, Long premiseId,
+<span class="nc" id="L61">                       String fileName, String fileUrl, String fileType, Long fileSize) {</span>
+<span class="nc" id="L62">        this.senderId = senderId;</span>
+<span class="nc" id="L63">        this.receiverId = receiverId;</span>
+<span class="nc" id="L64">        this.senderLogin = senderLogin;</span>
+<span class="nc" id="L65">        this.text = text;</span>
+<span class="nc" id="L66">        this.premiseId = premiseId;</span>
+<span class="nc" id="L67">        this.fileName = fileName;</span>
+<span class="nc" id="L68">        this.fileUrl = fileUrl;</span>
+<span class="nc" id="L69">        this.fileType = fileType;</span>
+<span class="nc" id="L70">        this.fileSize = fileSize;</span>
+<span class="nc" id="L71">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

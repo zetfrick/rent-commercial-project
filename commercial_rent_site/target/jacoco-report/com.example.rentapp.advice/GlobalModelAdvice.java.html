@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalModelAdvice.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rent-commercial-app</a> &gt; <a href="index.source.html" class="el_package">com.example.rentapp.advice</a> &gt; <span class="el_source">GlobalModelAdvice.java</span></div><h1>GlobalModelAdvice.java</h1><pre class="source lang-java linenums">package com.example.rentapp.advice;
+
+import com.example.rentapp.entity.User;
+import com.example.rentapp.service.ConfigService;
+import com.example.rentapp.service.NotificationService;
+import com.example.rentapp.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+@ControllerAdvice
+<span class="nc" id="L14">public class GlobalModelAdvice {</span>
+
+    @Autowired
+    private ConfigService configService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired(required = false)
+    private NotificationService notificationService;
+
+    @ModelAttribute(&quot;types&quot;)
+    public java.util.List&lt;String&gt; getTypes() {
+<span class="nc" id="L27">        return configService.getTypes();</span>
+    }
+
+    @ModelAttribute(&quot;amenities&quot;)
+    public java.util.List&lt;String&gt; getAmenities() {
+<span class="nc" id="L32">        return configService.getAmenities();</span>
+    }
+
+    @ModelAttribute(&quot;typeInRussian&quot;)
+    public java.util.Map&lt;String, String&gt; getTypeRussian() {
+<span class="nc" id="L37">        return configService.getTypeRussian();</span>
+    }
+
+    @ModelAttribute(&quot;amenityInRussian&quot;)
+    public java.util.Map&lt;String, String&gt; getAmenityRussian() {
+<span class="nc" id="L42">        return configService.getAmenityRussian();</span>
+    }
+
+    @ModelAttribute(&quot;unreadNotificationsCount&quot;)
+    public int getUnreadNotificationsCount() {
+<span class="nc" id="L47">        Authentication auth = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="nc bnc" id="L48" title="All 6 branches missed.">        if (auth != null &amp;&amp; auth.isAuthenticated() &amp;&amp; !&quot;anonymousUser&quot;.equals(auth.getPrincipal())) {</span>
+            try {
+<span class="nc" id="L50">                User user = userService.findByLogin(auth.getName()).orElse(null);</span>
+<span class="nc bnc" id="L51" title="All 4 branches missed.">                if (user != null &amp;&amp; notificationService != null) {</span>
+<span class="nc" id="L52">                    return notificationService.getUnreadNotificationsCount(user.getId());</span>
+                }
+<span class="nc" id="L54">            } catch (Exception e) {</span>
+<span class="nc" id="L55">                System.err.println(&quot;Error getting unread notifications count: &quot; + e.getMessage());</span>
+<span class="nc" id="L56">            }</span>
+        }
+<span class="nc" id="L58">        return 0;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
