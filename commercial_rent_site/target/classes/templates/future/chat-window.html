@@ -167,7 +167,7 @@
         }
 
         .right-panel {
-            width: 360px;
+            width: 760px;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
@@ -175,17 +175,23 @@
             overflow-y: auto;
         }
 
-        .warning-card {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        /* Двухколоночный контейнер для карточки и запросов */
+        .right-panel-grid {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding: 8px;
+            gap: 20px;
         }
 
+        .right-panel-grid .premise-card {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .right-panel-grid .requests-card {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Стили для предупреждений */
         .user-banned-warning {
             background: #ffebee;
             padding: 12px 16px;
@@ -194,6 +200,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .user-banned-warning i {
@@ -216,6 +223,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .premise-inactive-warning i {
@@ -230,11 +238,21 @@
             line-height: 1.4;
         }
 
+        /* Карточка помещения */
         .premise-card {
             background: white;
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            max-height: 500px;
+        }
+
+        .premise-card .premise-scroll-content {
+            overflow-y: auto;
+            flex: 1;
         }
 
         .premise-card .photos-slider {
@@ -242,6 +260,7 @@
             height: 200px;
             overflow: hidden;
             background: #f0f0f0;
+            flex-shrink: 0;
         }
 
         .premise-card .photos-container {
@@ -296,6 +315,7 @@
             align-items: center;
             justify-content: center;
             color: #aaa;
+            flex-shrink: 0;
         }
 
         .premise-card .area-badge {
@@ -324,6 +344,7 @@
             z-index: 15;
         }
 
+        /* Стиль для статуса "СНЯТО С ПУБЛИКАЦИИ" поверх фото */
         .premise-card .status-badge-overlay {
             position: absolute;
             top: 10px;
@@ -418,11 +439,15 @@
             background: #e64a19;
         }
 
+        /* Карточка запросов на аренду */
         .requests-card {
             background: white;
             border-radius: 20px;
             padding: 16px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            max-height: 500px;
         }
 
         .requests-card h3 {
@@ -432,14 +457,15 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .requests-list {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            max-height: 350px;
             overflow-y: auto;
+            flex: 1;
         }
 
         .request-item {
@@ -1069,6 +1095,15 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @media (max-width: 1100px) {
+            .right-panel-grid {
+                flex-direction: column;
+            }
+            .right-panel {
+                width: 360px;
+            }
+        }
+
         @media (max-width: 900px) {
             .right-panel { display: none; }
         }
@@ -1122,86 +1157,93 @@
     </div>
 
     <div class="right-panel">
-        <div th:if="${otherUserBanned or (not isOwner and premise != null and not premise.active)}" class="warning-card">
-            <div th:if="${otherUserBanned}" class="user-banned-warning">
-                <i class="fas fa-ban"></i>
-                <p>
-                    <strong>Аккаунт пользователя заблокирован!</strong><br>
-                    Сообщения не будут доставлены получателю.
-                    <span th:if="${otherUserBanInfo != null}">Причина: <span th:text="${otherUserBanInfo.reason}"></span></span>
-                </p>
-            </div>
-            <div th:if="${not isOwner and premise != null and not premise.active}" class="premise-inactive-warning" style="margin-top: 8px;">
-                <i class="fas fa-eye-slash"></i>
-                <p>
-                    <strong>Объявление снято с публикации!</strong><br>
-                    Вы не можете запросить аренду этого помещения, так как объявление более не активно.
-                </p>
-            </div>
+        <!-- Предупреждения -->
+        <div th:if="${otherUserBanned}" class="user-banned-warning">
+            <i class="fas fa-ban"></i>
+            <p>
+                <strong>Аккаунт пользователя заблокирован!</strong><br>
+                Сообщения не будут доставлены получателю.
+                <span th:if="${otherUserBanInfo != null}">Причина: <span th:text="${otherUserBanInfo.reason}"></span></span>
+            </p>
         </div>
 
-        <div th:if="${premise != null and premise.id != null}" class="premise-card">
-            <div th:if="${not premise.active}" class="status-badge-overlay">
-                <i class="fas fa-ban"></i> СНЯТО С ПУБЛИКАЦИИ
-            </div>
-            <div th:if="${!premise.photoPaths.isEmpty()}" class="photos-slider" id="premiseSlider">
-                <div class="photos-container" id="premisePhotosContainer">
-                    <img th:each="photo : ${premise.photoPaths}"
-                         th:src="@{'/uploads/' + ${photo}}"
-                         class="photo-item"
-                         onclick="openFullscreen(this.src)"
-                         onerror="this.src='/images/no-photo.jpg';"
-                         alt="Фото">
-                </div>
-                <div class="slider-arrow arrow-left" id="premiseArrowLeft"><i class="fas fa-chevron-left"></i></div>
-                <div class="slider-arrow arrow-right" id="premiseArrowRight"><i class="fas fa-chevron-right"></i></div>
-                <div class="area-badge" th:text="${premise.area} + ' м²'"></div>
-                <div class="capacity-badge" th:text="${premise.capacity} + ' чел.'"></div>
-            </div>
-            <div th:unless="${!premise.photoPaths.isEmpty()}" class="no-photo">
-                <i class="fas fa-camera-retro"></i> Нет фото
-            </div>
-            <div class="info">
-                <div class="type" th:text="${premise.getTypeInRussian()}"></div>
-                <div class="owner" th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></div>
-                <div class="address" th:text="${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
-                <div class="availability" th:classappend="${!premise.active} ? 'inactive' : ''">
-                    <i th:if="${premise.active}" class="fas fa-calendar-alt"></i>
-                    <i th:unless="${premise.active}" class="fas fa-ban"></i>
-                    <span th:if="${premise.active}">Доступно: </span>
-                    <span th:unless="${premise.active}">Было доступно: </span>
-                    <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')} + ' — ' + ${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
-                </div>
-                <div class="prices">
-                    <div th:if="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
-                        <div class="price-row">
-                            <span class="price-label">Будни:</span>
-                            <span class="price-value" th:text="${premise.priceWeekday} + ' ₽'"></span>
-                        </div>
-                        <div class="price-row" th:if="${premise.priceWeekend != null and premise.priceWeekend > 0}">
-                            <span class="price-label">Выходные:</span>
-                            <span class="price-value highlight" th:text="${premise.priceWeekend} + ' ₽'"></span>
-                        </div>
-                        <div class="price-row" th:if="${premise.priceHoliday != null and premise.priceHoliday > 0}">
-                            <span class="price-label">Праздники:</span>
-                            <span class="price-value highlight" th:text="${premise.priceHoliday} + ' ₽'"></span>
-                        </div>
-                    </div>
-                    <div th:unless="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
-                        <div class="price-row">
-                            <span class="price-label">Цена за сутки:</span>
-                            <span class="price-value highlight" th:text="${premise.priceWeekday} + ' ₽'"></span>
-                        </div>
-                    </div>
-                </div>
-                <a th:href="@{/premise/{id}(id=${premise.id})}" class="detail-link" target="_blank">Подробнее →</a>
-            </div>
+        <div th:if="${not isOwner and premise != null and not premise.active}" class="premise-inactive-warning">
+            <i class="fas fa-eye-slash"></i>
+            <p>
+                <strong>Объявление снято с публикации!</strong><br>
+                Вы не можете запросить аренду этого помещения, так как объявление более не активно.
+            </p>
         </div>
 
-        <div th:if="${isOwner and premise != null and premise.active}" class="requests-card">
-            <h3><i class="fas fa-clock"></i> Запросы на аренду</h3>
-            <div id="pendingRequestsList" class="requests-list">
-                <div class="empty-requests"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
+        <!-- Двухколоночный контейнер для карточки и запросов -->
+        <div class="right-panel-grid" th:if="${premise != null and premise.id != null}">
+            <!-- Карточка помещения -->
+            <div class="premise-card">
+                <div class="premise-scroll-content">
+                    <div th:if="${not premise.active}" class="status-badge-overlay">
+                        <i class="fas fa-ban"></i> СНЯТО С ПУБЛИКАЦИИ
+                    </div>
+                    <div th:if="${!premise.photoPaths.isEmpty()}" class="photos-slider" id="premiseSlider">
+                        <div class="photos-container" id="premisePhotosContainer">
+                            <img th:each="photo : ${premise.photoPaths}"
+                                 th:src="@{'/uploads/' + ${photo}}"
+                                 class="photo-item"
+                                 onclick="openFullscreen(this.src)"
+                                 onerror="this.src='/images/no-photo.jpg';"
+                                 alt="Фото">
+                        </div>
+                        <div class="slider-arrow arrow-left" id="premiseArrowLeft"><i class="fas fa-chevron-left"></i></div>
+                        <div class="slider-arrow arrow-right" id="premiseArrowRight"><i class="fas fa-chevron-right"></i></div>
+                        <div class="area-badge" th:text="${premise.area} + ' м²'"></div>
+                        <div class="capacity-badge" th:text="${premise.capacity} + ' чел.'"></div>
+                    </div>
+                    <div th:unless="${!premise.photoPaths.isEmpty()}" class="no-photo">
+                        <i class="fas fa-camera-retro"></i> Нет фото
+                    </div>
+                    <div class="info">
+                        <div class="type" th:text="${premise.getTypeInRussian()}"></div>
+                        <div class="owner" th:text="${premise.contactFirstName} + ' ' + ${premise.contactLastName}"></div>
+                        <div class="address" th:text="${premise.city} + ', ' + ${premise.street} + ' ' + ${premise.building}"></div>
+                        <div class="availability" th:classappend="${!premise.active} ? 'inactive' : ''">
+                            <i th:if="${premise.active}" class="fas fa-calendar-alt"></i>
+                            <i th:unless="${premise.active}" class="fas fa-ban"></i>
+                            <span th:if="${premise.active}">Доступно: </span>
+                            <span th:unless="${premise.active}">Было доступно: </span>
+                            <span th:text="${#temporals.format(premise.availableFrom, 'dd.MM.yyyy')} + ' — ' + ${#temporals.format(premise.availableTo, 'dd.MM.yyyy')}"></span>
+                        </div>
+                        <div class="prices">
+                            <div th:if="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
+                                <div class="price-row">
+                                    <span class="price-label">Будни:</span>
+                                    <span class="price-value" th:text="${premise.priceWeekday} + ' ₽'"></span>
+                                </div>
+                                <div class="price-row" th:if="${premise.priceWeekend != null and premise.priceWeekend > 0}">
+                                    <span class="price-label">Выходные:</span>
+                                    <span class="price-value highlight" th:text="${premise.priceWeekend} + ' ₽'"></span>
+                                </div>
+                                <div class="price-row" th:if="${premise.priceHoliday != null and premise.priceHoliday > 0}">
+                                    <span class="price-label">Праздники:</span>
+                                    <span class="price-value highlight" th:text="${premise.priceHoliday} + ' ₽'"></span>
+                                </div>
+                            </div>
+                            <div th:unless="${premise.priceWeekend != null and premise.priceWeekend > 0 or premise.priceHoliday != null and premise.priceHoliday > 0}">
+                                <div class="price-row">
+                                    <span class="price-label">Цена за сутки:</span>
+                                    <span class="price-value highlight" th:text="${premise.priceWeekday} + ' ₽'"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <a th:href="@{/premise/{id}(id=${premise.id})}" class="detail-link" target="_blank">Подробнее →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Карточка запросов на аренду (справа от карточки) -->
+            <div th:if="${isOwner and premise != null and premise.active}" class="requests-card">
+                <h3><i class="fas fa-clock"></i> Запросы на аренду</h3>
+                <div id="pendingRequestsList" class="requests-list">
+                    <div class="empty-requests"><i class="fas fa-spinner fa-pulse"></i> Загрузка...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1254,6 +1296,7 @@
 <div id="connectionStatus" class="connection-status">🔄 Инициализация...</div>
 
 <script th:inline="javascript">
+    // Весь JavaScript код остаётся без изменений (как в вашем файле)
     const receiverId = /*[[${otherUser.id}]]*/ null;
     const currentUserId = /*[[${currentUser.id}]]*/ null;
     const currentUsername = /*[[${currentUser.login}]]*/ null;
