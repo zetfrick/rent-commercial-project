@@ -673,6 +673,119 @@
             transform: translateY(-2px);
         }
 
+        /* Модальное окно для подтверждения пароля при смене почты */
+        .verify-password-modal {
+            display: none;
+            position: fixed;
+            z-index: 2130;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        .verify-password-modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            animation: pwreset-modalFadeIn 0.3s ease;
+        }
+        .verify-password-modal-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .verify-password-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .verify-password-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: white;
+        }
+        .verify-password-modal-body {
+            padding: 20px;
+        }
+        .verify-password-wrapper {
+            position: relative;
+            margin: 10px 0;
+        }
+        .verify-password-wrapper input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 45px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .verify-password-wrapper input:focus {
+            outline: none;
+            border-color: #ff5722;
+        }
+        .verify-password-wrapper input::-ms-reveal,
+        .verify-password-wrapper input::-ms-clear {
+            display: none;
+        }
+        .verify-password-wrapper input::-webkit-credentials-auto-fill-button,
+        .verify-password-wrapper input::-webkit-textfield-decoration-container {
+            display: none;
+        }
+        .verify-toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+        }
+        .verify-toggle-password:hover {
+            color: #ff5722;
+        }
+        .verify-password-error {
+            color: #f44336;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .verify-password-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .verify-password-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .verify-password-submit-btn:hover:not(:disabled) {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+
         /* ==================== УНИКАЛЬНЫЕ СТИЛИ ДЛЯ МОДАЛЬНЫХ ОКОН ==================== */
 
         .pwreset-email-modal {
@@ -1109,6 +1222,10 @@
             <i class="fas fa-check-circle"></i>
             <span>Пароль успешно изменён!</span>
         </div>
+        <div th:if="${param.emailChanged}" class="profile-success">
+            <i class="fas fa-check-circle"></i>
+            <span>Email успешно изменён!</span>
+        </div>
 
         <!-- Информация о блокировке (видна всем) -->
         <div id="banInfo" class="ban-info" style="display: none;">
@@ -1156,7 +1273,9 @@
                 </div>
 
                 <div class="profile-body">
-                    <form th:object="${profileUser}" th:action="@{/profile/edit}" method="post" th:if="${editMode}">
+                    <!-- РЕЖИМ РЕДАКТИРОВАНИЯ -->
+                    <form id="profileEditForm" th:object="${profileUser}" th:action="@{/profile/edit}" method="post" th:if="${editMode}">
+                        <input type="hidden" th:field="*{id}">
                         <div class="profile-form-group">
                             <label><i class="fas fa-user"></i> Имя</label>
                             <input type="text" th:field="*{firstName}" placeholder="Ваше имя">
@@ -1175,7 +1294,8 @@
                         </div>
                         <div class="profile-form-group">
                             <label><i class="fas fa-envelope"></i> Электронная почта</label>
-                            <div class="profile-readonly-field" th:text="*{email}"></div>
+                            <input type="email" id="editEmailInput" th:field="*{email}" placeholder="your@email.com">
+                            <button type="button" class="change-password-btn" style="margin-top: 10px; width: auto; padding: 8px 16px;" onclick="openChangeEmailModal()">Изменить почту</button>
                         </div>
                         <div class="profile-form-group">
                             <label><i class="fas fa-at"></i> Логин</label>
@@ -1187,6 +1307,7 @@
                         </div>
                     </form>
 
+                    <!-- РЕЖИМ ПРОСМОТРА -->
                     <div th:unless="${editMode}">
                         <div class="profile-info-row">
                             <span class="profile-label"><i class="fas fa-user"></i> Имя</span>
@@ -1206,19 +1327,26 @@
                         </div>
                         <div class="profile-info-row">
                             <span class="profile-label"><i class="fas fa-envelope"></i> Почта</span>
-                            <span class="profile-value" th:text="${profileUser.email}"></span>
+                            <div class="profile-value">
+                                <span th:text="${profileUser.email}"></span>
+                            </div>
                         </div>
                         <div class="profile-info-row">
                             <span class="profile-label"><i class="fas fa-at"></i> Логин</span>
                             <span class="profile-value" th:text="${profileUser.login}"></span>
                         </div>
                         <div class="profile-button-group">
-                            <button th:if="${isOwnProfile}" class="profile-edit-btn" onclick="window.location.href='/profile/edit'">
+                            <button th:if="${isOwnProfile and not isUserBanned}" class="profile-edit-btn" onclick="window.location.href='/profile/edit'">
                                 <i class="fas fa-pen"></i> Редактировать профиль
                             </button>
-                            <button th:if="${isOwnProfile}" class="change-password-btn" onclick="openChangePasswordModal()">
+                            <button th:if="${isOwnProfile and not isUserBanned}" class="change-password-btn" onclick="openChangePasswordModal()">
                                 <i class="fas fa-key"></i> Изменить пароль
                             </button>
+                        </div>
+                        <!-- Сообщение о блокировке, если пользователь заблокирован -->
+                        <div th:if="${isOwnProfile and isUserBanned}" style="background: #ffebee; padding: 16px; border-radius: 16px; text-align: center; margin-top: 20px;">
+                            <i class="fas fa-ban" style="color: #f44336; font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                            <p style="color: #c62828; margin: 0;">Ваш аккаунт заблокирован. Вы не можете редактировать профиль.</p>
                         </div>
                     </div>
                 </div>
@@ -1306,6 +1434,47 @@
                     <i class="fas fa-chevron-right profile-arrow-icon"></i>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для подтверждения пароля при смене почты -->
+<div id="verifyPasswordModal" class="verify-password-modal">
+    <div class="verify-password-modal-content">
+        <div class="verify-password-modal-header">
+            <h3><i class="fas fa-lock"></i> Подтверждение пароля</h3>
+            <button class="verify-password-modal-close" onclick="closeVerifyPasswordModal()">&times;</button>
+        </div>
+        <div class="verify-password-modal-body">
+            <p style="color: #666; margin-bottom: 15px;">Для изменения email введите ваш текущий пароль</p>
+            <div class="verify-password-wrapper">
+                <input type="password" id="verifyPasswordInput" placeholder="Введите пароль">
+                <i class="fas fa-eye verify-toggle-password" onclick="toggleVerifyPassword(this)"></i>
+            </div>
+            <div id="verifyPasswordError" class="verify-password-error"></div>
+            <button class="verify-password-submit-btn" id="verifyPasswordSubmitBtn" onclick="verifyAndProceed()">
+                <i class="fas fa-check"></i> Подтвердить
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для смены почты -->
+<div id="changeEmailModal" class="pwreset-email-modal" style="z-index: 2140;">
+    <div class="pwreset-email-modal-content">
+        <div class="pwreset-email-modal-header">
+            <h3><i class="fas fa-envelope"></i> Смена email</h3>
+            <button class="pwreset-email-modal-close" onclick="closeChangeEmailModal()">&times;</button>
+        </div>
+        <div class="pwreset-email-modal-body">
+            <div class="pwreset-email-info">
+                <i class="fas fa-envelope"></i> Введите новый email
+            </div>
+            <input type="email" id="newEmailInput" placeholder="new@email.com" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 15px;">
+            <div id="changeEmailError" class="pwreset-email-error"></div>
+            <button class="pwreset-email-submit-btn" id="changeEmailSubmitBtn" onclick="submitEmailChange()">
+                <i class="fas fa-save"></i> Сохранить email
+            </button>
         </div>
     </div>
 </div>
@@ -1439,6 +1608,10 @@
     let resendCooldown = false;
     let resendCooldownInterval = null;
 
+    // Переменные для смены email
+    let pendingNewEmail = '';
+    let isEmailChangeMode = false;
+
     // Переменные для блокировки
     let currentBanProfileUserId = document.getElementById('profileUserId')?.value;
     console.log('Profile user ID from hidden field:', currentBanProfileUserId);
@@ -1473,191 +1646,146 @@
         updateChatButtonBadge();
     });
 
-    // ==================== БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ ====================
-    async function checkUserBanStatus() {
-        if (!currentBanProfileUserId) return;
-
-        try {
-            const response = await fetch(`/api/admin/bans/check/${currentBanProfileUserId}`);
-            const data = await response.json();
-
-            const banInfoDiv = document.getElementById('banInfo');
-            const banBtn = document.getElementById('banUserBtn');
-            const unbanBtn = document.getElementById('unbanUserBtn');
-
-            if (data.banned) {
-                if (banInfoDiv) {
-                    banInfoDiv.style.display = 'block';
-                    document.getElementById('banReason').textContent = data.reason || 'Не указана';
-                    document.getElementById('banUntil').textContent = formatBanDate(data.bannedUntil);
-                }
-                if (banBtn) banBtn.style.display = 'none';
-                if (unbanBtn) unbanBtn.style.display = 'flex';
-            } else {
-                if (banInfoDiv) banInfoDiv.style.display = 'none';
-                if (banBtn) banBtn.style.display = 'flex';
-                if (unbanBtn) unbanBtn.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error checking ban status:', error);
+    // ==================== СМЕНА ПОЧТЫ ====================
+    function openChangeEmailModal() {
+        const isUserBannedGlobally = typeof isUserBanned !== 'undefined' ? isUserBanned : false;
+        if (isUserBannedGlobally) {
+            showNotification('Ваш аккаунт заблокирован. Вы не можете изменить email.', true);
+            return;
         }
-    }
-
-    function formatBanDate(dateStr) {
-        if (!dateStr) return 'не указана';
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    }
-
-    function openBanModal() {
-        const banModal = document.getElementById('banModal');
-        if (!banModal) return;
-
-        // Устанавливаем минимальную дату для кастомной даты - завтра
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const customDateInput = document.getElementById('banCustomDate');
-        if (customDateInput) customDateInput.min = tomorrow.toISOString().split('T')[0];
-
-        const durationSelect = document.getElementById('banDuration');
-        const customDateContainer = document.getElementById('banCustomDateContainer');
-
-        const handleDurationChange = function() {
-            customDateContainer.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
-        };
-
-        durationSelect.removeEventListener('change', handleDurationChange);
-        durationSelect.addEventListener('change', handleDurationChange);
-
-        // Сбрасываем поля
-        document.getElementById('banReasonInput').value = '';
-        document.getElementById('banDuration').value = '1_WEEK';
-        customDateContainer.style.display = 'none';
-
-        banModal.style.display = 'block';
+        document.getElementById('verifyPasswordModal').style.display = 'block';
+        document.getElementById('verifyPasswordInput').value = '';
+        document.getElementById('verifyPasswordError').style.display = 'none';
         document.body.style.overflow = 'hidden';
     }
 
-    function closeBanModal() {
-        const banModal = document.getElementById('banModal');
-        if (banModal) banModal.style.display = 'none';
+    function closeVerifyPasswordModal() {
+        document.getElementById('verifyPasswordModal').style.display = 'none';
         document.body.style.overflow = 'auto';
+        pendingNewEmail = '';
     }
 
-    function getDurationText(duration) {
-        switch(duration) {
-            case '1_DAY': return '1 день';
-            case '1_WEEK': return '1 неделя';
-            case '1_MONTH': return '1 месяц';
-            case '1_YEAR': return '1 год';
-            case 'CUSTOM': return 'своя дата';
-            default: return 'не указано';
+    function toggleVerifyPassword(iconElement) {
+        const input = document.getElementById('verifyPasswordInput');
+        if (input.type === 'password') {
+            input.type = 'text';
+            iconElement.classList.remove('fa-eye');
+            iconElement.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            iconElement.classList.remove('fa-eye-slash');
+            iconElement.classList.add('fa-eye');
         }
     }
 
-    async function submitBan() {
-        const duration = document.getElementById('banDuration').value;
-        const reason = document.getElementById('banReasonInput').value.trim();
-        let customDate = null;
-
-        console.log('=== submitBan ===');
-        console.log('userId:', currentBanProfileUserId);
-        console.log('duration:', duration);
-        console.log('reason:', reason);
-
-        if (!currentBanProfileUserId) {
-            showNotification('ID пользователя не найден', true);
-            return;
-        }
-
-        if (duration === 'CUSTOM') {
-            customDate = document.getElementById('banCustomDate').value;
-            if (!customDate) {
-                showNotification('Выберите дату окончания блокировки', true);
-                return;
-            }
-            const customDateObj = new Date(customDate);
-            customDateObj.setHours(23, 59, 59);
-            customDate = customDateObj.toISOString();
-        }
-
-        if (!reason) {
-            showNotification('Укажите причину блокировки', true);
-            return;
-        }
-
-        if (reason.length > 500) {
-            showNotification('Причина блокировки не должна превышать 500 символов', true);
-            return;
-        }
-
-        if (!confirm(`Вы уверены, что хотите заблокировать пользователя?\nПричина: ${reason}\nСрок: ${getDurationText(duration)}`)) return;
-
-        const submitBtn = document.querySelector('.ban-submit-btn');
+    async function verifyAndProceed() {
+        const password = document.getElementById('verifyPasswordInput').value;
+        const errorDiv = document.getElementById('verifyPasswordError');
+        const submitBtn = document.getElementById('verifyPasswordSubmitBtn');
         const originalText = submitBtn.innerHTML;
+
+        if (!password) {
+            errorDiv.textContent = 'Введите пароль';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Блокировка...';
-
-        const requestBody = {
-            userId: currentBanProfileUserId,
-            reason: reason,
-            duration: duration,
-            customDate: customDate
-        };
-
-        console.log('Отправляем запрос:', requestBody);
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
 
         try {
-            const response = await fetch('/api/admin/bans/ban', {
+            const response = await fetch('/api/auth/verify-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({ password: password })
             });
-
             const data = await response.json();
-            console.log('Ответ сервера:', data);
 
             if (data.success) {
-                showNotification('Пользователь заблокирован');
-                closeBanModal();
-                await checkUserBanStatus();
-                setTimeout(() => window.location.reload(), 1500);
+                closeVerifyPasswordModal();
+                // Открываем модальное окно для ввода нового email
+                document.getElementById('newEmailInput').value = '';
+                document.getElementById('changeEmailModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
             } else {
-                showNotification(data.message || 'Ошибка при блокировке', true);
+                errorDiv.textContent = data.message || 'Неверный пароль';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             }
         } catch (error) {
-            console.error('Error banning user:', error);
-            showNotification('Не удалось заблокировать пользователя', true);
-        } finally {
+            errorDiv.textContent = 'Ошибка соединения';
+            errorDiv.style.display = 'block';
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
     }
 
-    async function unbanUser() {
-        if (!confirm('Вы уверены, что хотите разблокировать этого пользователя?')) return;
+    function closeChangeEmailModal() {
+        document.getElementById('changeEmailModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    async function submitEmailChange() {
+        const newEmail = document.getElementById('newEmailInput').value.trim();
+        const errorDiv = document.getElementById('changeEmailError');
+        const submitBtn = document.getElementById('changeEmailSubmitBtn');
+        const originalText = submitBtn.innerHTML;
+
+        if (!newEmail) {
+            errorDiv.textContent = 'Введите email';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+        if (!emailRegex.test(newEmail)) {
+            errorDiv.textContent = 'Введите корректный email';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        errorDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
 
         try {
-            const response = await fetch(`/api/admin/bans/unban/${currentBanProfileUserId}`, {
-                method: 'POST'
+            const response = await fetch('/api/auth/change-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: newEmail })
             });
             const data = await response.json();
 
             if (data.success) {
-                showNotification('Пользователь разблокирован');
-                await checkUserBanStatus();
-                setTimeout(() => window.location.reload(), 1500);
+                closeChangeEmailModal();
+                showNotification('Email успешно изменён!');
+                setTimeout(() => {
+                    window.location.href = '/profile?emailChanged=true';
+                }, 1500);
             } else {
-                showNotification(data.message || 'Ошибка при разблокировке', true);
+                errorDiv.textContent = data.message || 'Ошибка при смене email';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             }
         } catch (error) {
-            console.error('Error unbanning user:', error);
-            showNotification('Не удалось разблокировать пользователя', true);
+            errorDiv.textContent = 'Ошибка соединения';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
     }
 
-    // ==================== СМЕНА ПАРОЛЯ (с автоматическим email) ====================
+    // ==================== СМЕНА ПАРОЛЯ ====================
     function openChangePasswordModal() {
+        const isUserBannedGlobally = typeof isUserBanned !== 'undefined' ? isUserBanned : false;
+        if (isUserBannedGlobally) {
+            showNotification('Ваш аккаунт заблокирован. Вы не можете изменить пароль.', true);
+            return;
+        }
+
         const emailRows = document.querySelectorAll('.profile-info-row');
         let userEmail = '';
 
@@ -1666,7 +1794,8 @@
             if (label && label.textContent.includes('Почта')) {
                 const value = row.querySelector('.profile-value');
                 if (value) {
-                    userEmail = value.textContent.trim();
+                    const emailSpan = value.querySelector('span');
+                    userEmail = emailSpan ? emailSpan.textContent.trim() : value.textContent.trim();
                     break;
                 }
             }
@@ -2005,6 +2134,187 @@
         });
     }
 
+    // ==================== БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ ====================
+    async function checkUserBanStatus() {
+        if (!currentBanProfileUserId) return;
+
+        try {
+            const response = await fetch(`/api/admin/bans/check/${currentBanProfileUserId}`);
+            const data = await response.json();
+
+            const banInfoDiv = document.getElementById('banInfo');
+            const banBtn = document.getElementById('banUserBtn');
+            const unbanBtn = document.getElementById('unbanUserBtn');
+
+            if (data.banned) {
+                if (banInfoDiv) {
+                    banInfoDiv.style.display = 'block';
+                    document.getElementById('banReason').textContent = data.reason || 'Не указана';
+                    document.getElementById('banUntil').textContent = formatBanDate(data.bannedUntil);
+                }
+                if (banBtn) banBtn.style.display = 'none';
+                if (unbanBtn) unbanBtn.style.display = 'flex';
+            } else {
+                if (banInfoDiv) banInfoDiv.style.display = 'none';
+                if (banBtn) banBtn.style.display = 'flex';
+                if (unbanBtn) unbanBtn.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error checking ban status:', error);
+        }
+    }
+
+    function formatBanDate(dateStr) {
+        if (!dateStr) return 'не указана';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function openBanModal() {
+        const banModal = document.getElementById('banModal');
+        if (!banModal) return;
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const customDateInput = document.getElementById('banCustomDate');
+        if (customDateInput) customDateInput.min = tomorrow.toISOString().split('T')[0];
+
+        const durationSelect = document.getElementById('banDuration');
+        const customDateContainer = document.getElementById('banCustomDateContainer');
+
+        const handleDurationChange = function() {
+            customDateContainer.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
+        };
+
+        durationSelect.removeEventListener('change', handleDurationChange);
+        durationSelect.addEventListener('change', handleDurationChange);
+
+        document.getElementById('banReasonInput').value = '';
+        document.getElementById('banDuration').value = '1_WEEK';
+        customDateContainer.style.display = 'none';
+
+        banModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeBanModal() {
+        const banModal = document.getElementById('banModal');
+        if (banModal) banModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function getDurationText(duration) {
+        switch(duration) {
+            case '1_DAY': return '1 день';
+            case '1_WEEK': return '1 неделя';
+            case '1_MONTH': return '1 месяц';
+            case '1_YEAR': return '1 год';
+            case 'CUSTOM': return 'своя дата';
+            default: return 'не указано';
+        }
+    }
+
+    async function submitBan() {
+        const duration = document.getElementById('banDuration').value;
+        const reason = document.getElementById('banReasonInput').value.trim();
+        let customDate = null;
+
+        console.log('=== submitBan ===');
+        console.log('userId:', currentBanProfileUserId);
+        console.log('duration:', duration);
+        console.log('reason:', reason);
+
+        if (!currentBanProfileUserId) {
+            showNotification('ID пользователя не найден', true);
+            return;
+        }
+
+        if (duration === 'CUSTOM') {
+            customDate = document.getElementById('banCustomDate').value;
+            if (!customDate) {
+                showNotification('Выберите дату окончания блокировки', true);
+                return;
+            }
+            const customDateObj = new Date(customDate);
+            customDateObj.setHours(23, 59, 59);
+            customDate = customDateObj.toISOString();
+        }
+
+        if (!reason) {
+            showNotification('Укажите причину блокировки', true);
+            return;
+        }
+
+        if (reason.length > 500) {
+            showNotification('Причина блокировки не должна превышать 500 символов', true);
+            return;
+        }
+
+        if (!confirm(`Вы уверены, что хотите заблокировать пользователя?\nПричина: ${reason}\nСрок: ${getDurationText(duration)}`)) return;
+
+        const submitBtn = document.querySelector('.ban-submit-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Блокировка...';
+
+        const requestBody = {
+            userId: currentBanProfileUserId,
+            reason: reason,
+            duration: duration,
+            customDate: customDate
+        };
+
+        console.log('Отправляем запрос:', requestBody);
+
+        try {
+            const response = await fetch('/api/admin/bans/ban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+            console.log('Ответ сервера:', data);
+
+            if (data.success) {
+                showNotification('Пользователь заблокирован');
+                closeBanModal();
+                await checkUserBanStatus();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при блокировке', true);
+            }
+        } catch (error) {
+            console.error('Error banning user:', error);
+            showNotification('Не удалось заблокировать пользователя', true);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    }
+
+    async function unbanUser() {
+        if (!confirm('Вы уверены, что хотите разблокировать этого пользователя?')) return;
+
+        try {
+            const response = await fetch(`/api/admin/bans/unban/${currentBanProfileUserId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('Пользователь разблокирован');
+                await checkUserBanStatus();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'Ошибка при разблокировке', true);
+            }
+        } catch (error) {
+            console.error('Error unbanning user:', error);
+            showNotification('Не удалось разблокировать пользователя', true);
+        }
+    }
+
     function showNotification(message, isError = false) {
         const notification = document.createElement('div');
         notification.style.position = 'fixed';
@@ -2045,16 +2355,22 @@
         if (event.target === banModal) {
             closeBanModal();
         }
+        const verifyPasswordModal = document.getElementById('verifyPasswordModal');
+        if (event.target === verifyPasswordModal) {
+            closeVerifyPasswordModal();
+        }
+        const changeEmailModal = document.getElementById('changeEmailModal');
+        if (event.target === changeEmailModal) {
+            closeChangeEmailModal();
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         loadUnreadChatsCount();
         setInterval(loadUnreadChatsCount, 10000);
 
-        // Проверяем статус блокировки
         checkUserBanStatus();
 
-        // Привязываем кнопки блокировки
         const banBtn = document.getElementById('banUserBtn');
         if (banBtn) banBtn.addEventListener('click', openBanModal);
 

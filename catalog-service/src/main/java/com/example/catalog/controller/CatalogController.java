@@ -545,4 +545,61 @@ public class CatalogController {
         return false;
     }
 
+    @PutMapping("/premises/owner/{ownerId}/update-contacts")
+    public ResponseEntity<Void> updateOwnerContacts(@PathVariable Long ownerId,
+                                                    @RequestBody Map<String, String> contacts) {
+        System.out.println("=== Обновление контактных данных владельца #" + ownerId + " ===");
+
+        List<Premise> ownerPremises = premiseRepository.findByOwnerId(ownerId);
+
+        if (ownerPremises.isEmpty()) {
+            System.out.println("У владельца #" + ownerId + " нет объявлений");
+            return ResponseEntity.ok().build();
+        }
+
+        String firstName = contacts.get("firstName");
+        String lastName = contacts.get("lastName");
+        String middleName = contacts.get("middleName");
+        String phone = contacts.get("phone");
+        String email = contacts.get("email");
+
+        int updatedCount = 0;
+
+        for (Premise premise : ownerPremises) {
+            boolean updated = false;
+
+            if (firstName != null && !firstName.equals(premise.getContactFirstName())) {
+                premise.setContactFirstName(firstName);
+                updated = true;
+            }
+            if (lastName != null && !lastName.equals(premise.getContactLastName())) {
+                premise.setContactLastName(lastName);
+                updated = true;
+            }
+            if (middleName != null && !middleName.equals(premise.getContactMiddleName())) {
+                premise.setContactMiddleName(middleName);
+                updated = true;
+            }
+            if (phone != null && !phone.equals(premise.getContactPhone())) {
+                premise.setContactPhone(phone);
+                updated = true;
+            }
+            if (email != null && !email.equals(premise.getContactEmail())) {
+                premise.setContactEmail(email);
+                updated = true;
+            }
+
+            if (updated) {
+                premiseRepository.save(premise);
+                updatedCount++;
+                System.out.println("✓ Обновлено объявление #" + premise.getId());
+            }
+        }
+
+        System.out.println("Обновлено объявлений: " + updatedCount + " из " + ownerPremises.size());
+        System.out.println("=== Обновление контактов завершено ===");
+
+        return ResponseEntity.ok().build();
+    }
+
 }

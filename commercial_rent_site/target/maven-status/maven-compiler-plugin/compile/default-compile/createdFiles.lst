@@ -1,5 +1,6 @@
 com\example\rentapp\controller\ComplaintController.class
 com\example\rentapp\config\DataInitializer.class
+com\example\rentapp\repository\AvailabilityNotificationRepository.class
 com\example\rentapp\controller\MainController.class
 com\example\rentapp\controller\RenterBookingsController.class
 com\example\rentapp\client\CatalogClient.class
@@ -31,6 +32,7 @@ com\example\rentapp\config\SecurityConfig$1.class
 com\example\rentapp\controller\BookingApiController.class
 com\example\rentapp\dto\NotificationSettingsDto.class
 com\example\rentapp\dto\RegisterRequest.class
+com\example\rentapp\entity\AvailabilityNotification.class
 com\example\rentapp\repository\ComplaintRepository.class
 com\example\rentapp\service\ConfigService.class
 com\example\rentapp\dto\WebSocketMessageDto.class
@@ -59,6 +61,7 @@ com\example\rentapp\controller\FuturePagesController.class
 com\example\rentapp\service\CommentService.class
 com\example\rentapp\service\ChatService.class
 com\example\rentapp\service\CustomUserDetailsService.class
+com\example\rentapp\dto\AvailabilityNotificationRequestDto.class
 com\example\rentapp\dto\BanRequestDto.class
 com\example\rentapp\entity\Booking.class
 com\example\rentapp\repository\ChatMessageRepository.class
@@ -75,6 +78,7 @@ com\example\rentapp\dto\PremiseForm.class
 com\example\rentapp\controller\WebCatalogController.class
 com\example\rentapp\controller\FavoritePageController.class
 com\example\rentapp\dto\PremiseDto.class
+com\example\rentapp\controller\AvailabilityNotificationController.class
 com\example\rentapp\controller\CommentApiController.class
 com\example\rentapp\controller\ComplaintApiController.class
 com\example\rentapp\controller\FavoriteController.class

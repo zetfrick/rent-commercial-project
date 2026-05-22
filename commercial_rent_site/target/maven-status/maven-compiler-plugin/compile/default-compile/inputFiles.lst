@@ -4,6 +4,7 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\FuturePagesController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\UserRepository.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\Notification.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\AvailabilityNotificationRepository.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\api\ApiPremiseController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\FavoriteController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\VerifyCodeRequest.java
@@ -34,6 +35,7 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\RenterBookingsController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\ChatMessageRepository.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\Complaint.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\AvailabilityNotification.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\BookingRepository.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\BookingDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\FavoritePageController.java
@@ -53,11 +55,13 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\CommentDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\repository\CommentRepository.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\User.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\AvailabilityNotificationRequestDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\api\ApiCatalogController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\config\WebSocketConfig.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\FavoriteDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\AdminController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\BookingService.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\controller\AvailabilityNotificationController.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\ChatMessageDto.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\client\CatalogClient.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\dto\NewPasswordRequest.java

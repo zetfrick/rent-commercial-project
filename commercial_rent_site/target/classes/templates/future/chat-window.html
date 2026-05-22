@@ -1470,7 +1470,7 @@
 
         if (isSystem) {
             div.innerHTML = `
-                <div class="message-text">${escapeHtml(message.text)}</div>
+                <div class="message-text">${message.text}</div>
                 <div class="message-time">${formattedTime}</div>
             `;
         } else if (isFileMessage) {
@@ -1658,7 +1658,7 @@
 
             if (isSystem) {
                 div.innerHTML = `
-                    <div class="message-text">${escapeHtml(msg.text)}</div>
+                    <div class="message-text">${msg.text}</div>
                     <div class="message-time">${formattedTime}</div>
                 `;
             } else if (isFileMessage) {

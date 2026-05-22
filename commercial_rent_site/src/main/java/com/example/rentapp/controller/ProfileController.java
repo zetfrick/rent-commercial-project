@@ -9,8 +9,11 @@ import com.example.rentapp.service.BookingService;
 import com.example.rentapp.service.FileStorageService;
 import com.example.rentapp.service.UserBanService;
 import com.example.rentapp.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,8 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 public class ProfileController {
@@ -45,7 +50,7 @@ public class ProfileController {
     public String profile(@RequestParam(required = false) String username,
                           @AuthenticationPrincipal UserDetails userDetails,
                           @RequestParam(required = false) String city,
-                          jakarta.servlet.http.HttpServletRequest request,
+                          HttpServletRequest request,
                           Model model) {
 
         String currentUsername = (userDetails != null) ? userDetails.getUsername() : null;
@@ -71,9 +76,42 @@ public class ProfileController {
                 ? userService.findByLogin(currentUsername).orElse(null)
                 : null;
 
+        // Если это свой профиль и данные в сессии устарели, обновляем сессию
+        if (targetUsername.equals(currentUsername) && currentUser != null && userDetails != null) {
+            boolean needsUpdate = false;
+            if (userDetails instanceof org.springframework.security.core.userdetails.User) {
+                if (!profileUser.getEmail().equals(currentUser.getEmail())) {
+                    needsUpdate = true;
+                }
+            }
+
+            if (needsUpdate) {
+                org.springframework.security.core.userdetails.User updatedUserDetails =
+                        new org.springframework.security.core.userdetails.User(
+                                profileUser.getLogin(),
+                                profileUser.getPassword(),
+                                userDetails.getAuthorities()
+                        );
+
+                UsernamePasswordAuthenticationToken newAuth =
+                        new UsernamePasswordAuthenticationToken(
+                                updatedUserDetails,
+                                userDetails.getPassword(),
+                                userDetails.getAuthorities()
+                        );
+
+                SecurityContextHolder.getContext().setAuthentication(newAuth);
+                request.getSession().setAttribute(
+                        SecurityContextHolder.class.getName(),
+                        SecurityContextHolder.getContext()
+                );
+            }
+        }
+
         model.addAttribute("profileUser", profileUser);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("isOwnProfile", targetUsername.equals(currentUsername));
+        model.addAttribute("isUserBanned", userBanService.isUserBanned(profileUser.getId()));
 
         model.addAttribute("editMode", false);
         return "future/profile";
@@ -84,7 +122,7 @@ public class ProfileController {
     @GetMapping("/profile/edit")
     public String editProfile(@AuthenticationPrincipal UserDetails userDetails,
                               @RequestParam(required = false) String city,
-                              jakarta.servlet.http.HttpServletRequest request,
+                              HttpServletRequest request,
                               Model model) {
         User user = getCurrentUser(userDetails);
 
@@ -94,12 +132,14 @@ public class ProfileController {
         model.addAttribute("profileUser", user);
         model.addAttribute("isOwnProfile", true);
         model.addAttribute("editMode", true);
+        model.addAttribute("isUserBanned", userBanService.isUserBanned(user.getId()));
         return "future/profile";
     }
 
     @PostMapping("/profile/edit")
     public String saveProfile(@AuthenticationPrincipal UserDetails userDetails,
-                              @ModelAttribute User updatedUser) {
+                              @ModelAttribute User updatedUser,
+                              HttpServletRequest httpRequest) {
 
         User currentUser = getCurrentUser(userDetails);
 
@@ -107,13 +147,75 @@ public class ProfileController {
             return "redirect:/profile?error=access_denied";
         }
 
+        // Сохраняем старые значения для сравнения
+        String oldFirstName = currentUser.getFirstName();
+        String oldLastName = currentUser.getLastName();
+        String oldMiddleName = currentUser.getMiddleName();
+        String oldPhone = currentUser.getPhone();
+
+        // Обновляем профиль
         currentUser.setFirstName(updatedUser.getFirstName());
         currentUser.setLastName(updatedUser.getLastName());
         currentUser.setMiddleName(updatedUser.getMiddleName());
         currentUser.setPhone(updatedUser.getPhone());
+        // НЕ меняем email здесь, так как есть отдельный метод для смены email
 
         userService.save(currentUser);
-        return "redirect:/profile?success=true";
+
+        // Проверяем, изменились ли контактные данные
+        boolean contactsChanged = false;
+        Map<String, String> contacts = new HashMap<>();
+
+        if (!Objects.equals(oldFirstName, currentUser.getFirstName()) && currentUser.getFirstName() != null) {
+            contacts.put("firstName", currentUser.getFirstName());
+            contactsChanged = true;
+        }
+        if (!Objects.equals(oldLastName, currentUser.getLastName()) && currentUser.getLastName() != null) {
+            contacts.put("lastName", currentUser.getLastName());
+            contactsChanged = true;
+        }
+        if (!Objects.equals(oldMiddleName, currentUser.getMiddleName()) && currentUser.getMiddleName() != null) {
+            contacts.put("middleName", currentUser.getMiddleName());
+            contactsChanged = true;
+        }
+        if (!Objects.equals(oldPhone, currentUser.getPhone()) && currentUser.getPhone() != null) {
+            contacts.put("phone", currentUser.getPhone());
+            contactsChanged = true;
+        }
+
+        // Если контакты изменились, обновляем их в catalog-service
+        if (contactsChanged) {
+            try {
+                catalogClient.updateOwnerContacts(currentUser.getId(), contacts);
+                System.out.println("✅ Контакты владельца #" + currentUser.getId() + " синхронизированы с catalog-service");
+            } catch (Exception e) {
+                System.err.println("❌ Ошибка синхронизации контактов: " + e.getMessage());
+            }
+        }
+
+        // ===== ОБНОВЛЯЕМ СЕССИЮ SPRING SECURITY =====
+        org.springframework.security.core.userdetails.User updatedUserDetails =
+                new org.springframework.security.core.userdetails.User(
+                        currentUser.getLogin(),
+                        currentUser.getPassword(),
+                        userDetails.getAuthorities()
+                );
+
+        UsernamePasswordAuthenticationToken newAuth =
+                new UsernamePasswordAuthenticationToken(
+                        updatedUserDetails,
+                        userDetails.getPassword(),
+                        userDetails.getAuthorities()
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
+
+        httpRequest.getSession().setAttribute(
+                SecurityContextHolder.class.getName(),
+                SecurityContextHolder.getContext()
+        );
+
+        return "redirect:/profile?updated=true";
     }
 
     // ==================== ДОБАВЛЕНИЕ ПОМЕЩЕНИЯ ====================
@@ -121,7 +223,7 @@ public class ProfileController {
     @GetMapping("/premise/add")
     public String addPremiseForm(@AuthenticationPrincipal UserDetails userDetails,
                                  @RequestParam(required = false) String city,
-                                 jakarta.servlet.http.HttpServletRequest request,
+                                 HttpServletRequest request,
                                  Model model) {
         User owner = getCurrentUser(userDetails);
 
@@ -218,7 +320,7 @@ public class ProfileController {
     public String userPremises(@PathVariable String username,
                                @AuthenticationPrincipal UserDetails userDetails,
                                @RequestParam(required = false) String city,
-                               jakarta.servlet.http.HttpServletRequest request,
+                               HttpServletRequest request,
                                Model model) {
 
         User profileUser = userService.findByLogin(username)

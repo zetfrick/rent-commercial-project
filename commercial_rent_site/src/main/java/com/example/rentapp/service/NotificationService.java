@@ -138,6 +138,8 @@ public class NotificationService {
                 return "⚠️ Аренда заканчивается сегодня - Аренда помещений";
             case "COMMENT":
                 return "💬 Новый комментарий - Аренда помещений";
+            case "AVAILABILITY_FREE":
+                return "🔔 Даты освободились - Аренда помещений";
             default:
                 return "Новое уведомление - Аренда помещений";
         }
@@ -227,6 +229,17 @@ public class NotificationService {
                                 "Перейти к объявлению: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
                         displayName, displayContent, baseUrl, link
+                );
+            case "AVAILABILITY_FREE":
+                // Удаляем HTML-теги из content для email (на случай если они есть)
+                String plainContent = displayContent.replaceAll("<[^>]*>", "").trim();
+
+                return String.format(
+                        "Здравствуйте!\n\n" +
+                                "%s\n\n" +
+                                "Перейти к объявлению: %s%s\n\n" +
+                                "С уважением,\nКоманда Аренда помещений",
+                        plainContent, baseUrl, link
                 );
             default:
                 return String.format(

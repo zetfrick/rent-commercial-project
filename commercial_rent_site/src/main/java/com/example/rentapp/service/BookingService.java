@@ -3,8 +3,10 @@ package com.example.rentapp.service;
 import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.PremiseDto;
+import com.example.rentapp.entity.AvailabilityNotification;
 import com.example.rentapp.entity.Booking;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.repository.AvailabilityNotificationRepository;
 import com.example.rentapp.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -38,17 +40,18 @@ public class BookingService {
     private NotificationService notificationService;
 
     @Autowired
-    private ChatService chatService;  // ДОБАВЛЕНО
+    private ChatService chatService;
+
+    @Autowired
+    private AvailabilityNotificationRepository availabilityNotificationRepository;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     // ==================== ЗАПУСК ПРИ СТАРТЕ ПРИЛОЖЕНИЯ ====================
 
-    // Выполняется после полного запуска приложения
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
         System.out.println("=== ApplicationReadyEvent: Проверка приближающихся аренд при старте ===");
-        // Задержка в 5 секунд, чтобы все сервисы успели запуститься
         new Thread(() -> {
             try {
                 Thread.sleep(5000);
@@ -60,7 +63,6 @@ public class BookingService {
         }).start();
     }
 
-    // Общий метод для проверки всех типов уведомлений
     private void sendAllBookingReminders() {
         sendUpcomingRentNotifications();
         sendEndingRentNotifications();
@@ -68,7 +70,6 @@ public class BookingService {
 
     // ==================== УВЕДОМЛЕНИЯ О ПРИБЛИЖАЮЩЕЙСЯ АРЕНДЕ ====================
 
-    // Запускается каждый день в 00:00
     @Scheduled(cron = "0 0 0 * * *")
     public void sendUpcomingRentNotifications() {
         System.out.println("=== [SCHEDULED] Проверка приближающихся аренд в 00:00 ===");
@@ -76,19 +77,15 @@ public class BookingService {
         LocalDate in3Days = today.plusDays(3);
         LocalDate in1Day = today.plusDays(1);
 
-        // Находим все APPROVED бронирования, которые начинаются через 3 дня, 1 день или сегодня
         List<Booking> upcomingBookings = bookingRepository.findUpcomingApprovedBookings(in3Days, in1Day, today);
-
         System.out.println("Найдено приближающихся аренд: " + upcomingBookings.size());
 
         for (Booking booking : upcomingBookings) {
             sendBookingReminder(booking);
         }
-
         System.out.println("=== [SCHEDULED] Проверка приближающихся аренд завершена ===");
     }
 
-    // Запускается каждый день в 00:00 (для окончания аренды)
     @Scheduled(cron = "0 0 0 * * *")
     public void sendEndingRentNotifications() {
         System.out.println("=== [SCHEDULED] Проверка заканчивающихся аренд в 00:00 ===");
@@ -96,24 +93,17 @@ public class BookingService {
         LocalDate in3Days = today.plusDays(3);
         LocalDate in1Day = today.plusDays(1);
 
-        // Находим все APPROVED бронирования, которые заканчиваются через 3 дня, 1 день или сегодня
         List<Booking> endingBookings = bookingRepository.findEndingApprovedBookings(in3Days, in1Day, today);
-
         System.out.println("Найдено заканчивающихся аренд: " + endingBookings.size());
 
         for (Booking booking : endingBookings) {
             sendBookingEndingReminder(booking);
         }
-
         System.out.println("=== [SCHEDULED] Проверка заканчивающихся аренд завершена ===");
     }
 
-    // Добавляем также проверку каждый час для гарантии (опционально)
-    // Запускается каждый час
     @Scheduled(cron = "0 0 * * * *")
     public void sendHourlyReminders() {
-        // Проверяем, не пропустили ли мы какие-то уведомления
-        // Можно закомментировать, если не нужно
         sendUpcomingRentNotifications();
         sendEndingRentNotifications();
     }
@@ -145,10 +135,7 @@ public class BookingService {
         String premiseLink = "/premise/" + booking.getPremiseId();
         String dateRange = booking.getStartDate().format(DATE_FORMATTER) + " - " + booking.getEndDate().format(DATE_FORMATTER);
 
-        // Создаем HTML-ссылку на владельца для арендатора
         String ownerProfileLink = "<a href='/profile?username=" + booking.getOwnerName() + "'>" + escapeHtml(booking.getOwnerName()) + "</a>";
-
-        // Уведомление арендатору - с HTML-ссылкой на владельца
         String renterContent = "Ваша аренда у " + ownerProfileLink + " помещения \"" + premise.getTypeInRussian() +
                 "\" в " + premise.getCity() + " начинается " + daysText + ". Период: " + dateRange;
         notificationService.createNotification(
@@ -161,10 +148,7 @@ public class BookingService {
                 premiseLink
         );
 
-        // Создаем HTML-ссылку на арендатора для владельца
         String renterProfileLink = "<a href='/profile?username=" + booking.getRenterName() + "'>" + escapeHtml(booking.getRenterName()) + "</a>";
-
-        // Уведомление арендодателю - с HTML-ссылкой на арендатора
         String ownerContent = "Аренда помещения \"" + premise.getTypeInRussian() + "\" в " + premise.getCity() +
                 " для арендатора " + renterProfileLink + " начинается " + daysText +
                 ". Период: " + dateRange;
@@ -208,10 +192,7 @@ public class BookingService {
         String premiseLink = "/premise/" + booking.getPremiseId();
         String dateRange = booking.getStartDate().format(DATE_FORMATTER) + " - " + booking.getEndDate().format(DATE_FORMATTER);
 
-        // Создаем HTML-ссылку на владельца для арендатора
         String ownerProfileLink = "<a href='/profile?username=" + booking.getOwnerName() + "'>" + escapeHtml(booking.getOwnerName()) + "</a>";
-
-        // Уведомление арендатору - с HTML-ссылкой на владельца
         String renterContent = "Ваша аренда у " + ownerProfileLink + " помещения \"" + premise.getTypeInRussian() +
                 "\" в " + premise.getCity() + " заканчивается " + daysText + ". Период: " + dateRange;
         notificationService.createNotification(
@@ -224,10 +205,7 @@ public class BookingService {
                 premiseLink
         );
 
-        // Создаем HTML-ссылку на арендатора для владельца
         String renterProfileLink = "<a href='/profile?username=" + booking.getRenterName() + "'>" + escapeHtml(booking.getRenterName()) + "</a>";
-
-        // Уведомление арендодателю - с HTML-ссылкой на арендатора
         String ownerContent = "Аренда помещения \"" + premise.getTypeInRussian() + "\" в " + premise.getCity() +
                 " для арендатора " + renterProfileLink + " заканчивается " + daysText +
                 ". Период: " + dateRange;
@@ -244,7 +222,6 @@ public class BookingService {
         System.out.println("✓ Отправлено уведомление об окончании аренды #" + booking.getId() + " (" + daysText + ")");
     }
 
-    // Вспомогательный метод для экранирования HTML
     private String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
@@ -254,9 +231,98 @@ public class BookingService {
                 .replace("'", "&#39;");
     }
 
+    // ==================== МЕТОДЫ ДЛЯ ПРОВЕРКИ СВОБОДНЫХ ДАТ И УВЕДОМЛЕНИЙ ====================
+
+    /**
+     * Проверяет, освободились ли даты, и отправляет уведомления подписанным пользователям
+     * Вызывается при изменении статуса бронирования (отмена, отклонение)
+     */
+    @Transactional
+    public void checkAndNotifyAvailability(Long premiseId, LocalDate startDate, LocalDate endDate) {
+        if (premiseId == null || startDate == null || endDate == null) return;
+
+        // Находим все активные подписки на это помещение
+        List<AvailabilityNotification> notifications = availabilityNotificationRepository
+                .findByPremiseIdAndNotifiedFalse(premiseId);
+
+        if (notifications.isEmpty()) return;
+
+        System.out.println("=== Проверка подписок на освобождение дат для помещения #" + premiseId + " ===");
+        System.out.println("Освободившиеся даты: " + startDate.format(DATE_FORMATTER) + " - " + endDate.format(DATE_FORMATTER));
+        System.out.println("Всего активных подписок: " + notifications.size());
+
+        PremiseDto premise = catalogClient.getPremiseById(premiseId);
+        String premiseTitle = (premise != null) ?
+                (premise.getTypeInRussian() + " в " + premise.getCity()) : "Помещение";
+
+        // Получаем информацию о владельце
+        String ownerInfo = "";
+        if (premise != null && premise.getOwnerId() != null) {
+            User owner = userService.findById(premise.getOwnerId()).orElse(null);
+            if (owner != null) {
+                String firstName = owner.getFirstName() != null ? owner.getFirstName() : "";
+                String lastName = owner.getLastName() != null ? owner.getLastName() : "";
+                if (!firstName.isEmpty() || !lastName.isEmpty()) {
+                    ownerInfo = String.format(" (%s %s, @%s)", firstName, lastName, owner.getLogin());
+                } else {
+                    ownerInfo = String.format(" (@%s)", owner.getLogin());
+                }
+            }
+        }
+
+        // Ссылка на объявление
+        String premiseLink = "/premise/" + premiseId;
+
+        int notifiedCount = 0;
+
+        for (AvailabilityNotification notif : notifications) {
+            // Проверяем, пересекаются ли запрошенные даты с освободившимися
+            if (!(notif.getEndDate().isBefore(startDate) || notif.getStartDate().isAfter(endDate))) {
+                // Формируем текст уведомления ВНУТРИ цикла, используя notif
+                String notifDateRange = notif.getStartDate().format(DATE_FORMATTER) + " — " + notif.getEndDate().format(DATE_FORMATTER);
+                String contentText = "🔔 Даты " + notifDateRange + " в объявлении \"" + premiseTitle + "\"" + ownerInfo + " освободились!";
+
+                notificationService.createNotification(
+                        notif.getUserId(),
+                        "AVAILABILITY_FREE",
+                        premiseId,
+                        null,
+                        null,
+                        contentText,  // ← чистый текст без HTML и без дублирования ссылки
+                        premiseLink
+                );
+
+                notif.setNotified(true);
+                availabilityNotificationRepository.save(notif);
+                notifiedCount++;
+                System.out.println("✓ Уведомление отправлено пользователю #" + notif.getUserId() + " (даты: " + notifDateRange + ")");
+            }
+        }
+
+        System.out.println("Отправлено уведомлений: " + notifiedCount);
+        System.out.println("=== Проверка подписок завершена ===");
+    }
+
+    /**
+     * Проверяет, можно ли создать подписку на указанные даты
+     * (даты должны быть заняты или ожидают подтверждения)
+     */
+    public boolean canSubscribeToDates(Long premiseId, LocalDate startDate, LocalDate endDate) {
+        // Проверяем, заняты ли даты (APPROVED или PENDING)
+        List<Booking> approvedOverlap = bookingRepository.findOverlappingApprovedBookings(premiseId, startDate, endDate);
+        if (!approvedOverlap.isEmpty()) return true;
+
+        List<Booking> pendingOverlap = bookingRepository.findByPremiseIdAndStatus(premiseId, "PENDING");
+        for (Booking pending : pendingOverlap) {
+            if (!(pending.getEndDate().isBefore(startDate) || pending.getStartDate().isAfter(endDate))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ ====================
 
-    // Получить занятые даты для помещения (только APPROVED) - для проверки доступности
     public List<LocalDate> getBookedDates(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of("APPROVED"));
         List<LocalDate> bookedDates = new ArrayList<>();
@@ -271,7 +337,6 @@ public class BookingService {
         return bookedDates;
     }
 
-    // Получить занятые диапазоны дат для помещения (только APPROVED) - для отображения пользователям
     public List<Map<String, Object>> getBookedDateRanges(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of("APPROVED"));
         List<Map<String, Object>> ranges = new ArrayList<>();
@@ -285,7 +350,6 @@ public class BookingService {
         return ranges;
     }
 
-    // НОВЫЙ МЕТОД: получить диапазоны ожидающих дат (только PENDING) - для отображения владельцу
     public List<Map<String, Object>> getPendingDateRanges(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of("PENDING"));
         List<Map<String, Object>> ranges = new ArrayList<>();
@@ -299,7 +363,6 @@ public class BookingService {
         return ranges;
     }
 
-    // НОВЫЙ МЕТОД: получить ожидающие запросы с деталями (для отображения в карточке помещения)
     public List<Map<String, Object>> getPendingRequestsWithDetails(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of("PENDING"));
         List<Map<String, Object>> result = new ArrayList<>();
@@ -316,7 +379,6 @@ public class BookingService {
         return result;
     }
 
-    // Проверить, что даты находятся в пределах доступного периода помещения
     public boolean areDatesWithinAvailablePeriod(Long premiseId, LocalDate startDate, LocalDate endDate) {
         PremiseDto premise = catalogClient.getPremiseById(premiseId);
         if (premise == null) {
@@ -325,19 +387,16 @@ public class BookingService {
         return !startDate.isBefore(premise.getAvailableFrom()) && !endDate.isAfter(premise.getAvailableTo());
     }
 
-    // Получить все одобренные бронирования для помещения с деталями
     public List<BookingDto> getApprovedBookingsWithDetails(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of("APPROVED"));
         return bookings.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // Получить все PENDING запросы для владельца
     public List<BookingDto> getPendingRequestsForOwner(Long ownerId) {
         List<Booking> bookings = bookingRepository.findByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, "PENDING");
         return bookings.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // НОВЫЙ МЕТОД: получить PENDING запросы для владельца по конкретному помещению
     public List<BookingDto> getPendingRequestsForOwnerByPremise(Long ownerId, Long premiseId) {
         List<Booking> bookings = bookingRepository.findByOwnerIdAndStatusOrderByCreatedAtDesc(ownerId, "PENDING");
         return bookings.stream()
@@ -346,19 +405,16 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    // Получить все запросы арендатора
     public List<BookingDto> getRequestsForRenter(Long renterId) {
         return bookingRepository.findByRenterIdOrderByCreatedAtDesc(renterId)
                 .stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // Получить все бронирования (разные статусы) для помещения - для владельца
     public List<BookingDto> getBookingsWithDetails(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseId(premiseId);
         return bookings.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // Получить все активные бронирования (без CANCELLED) для помещения
     public List<BookingDto> getActiveBookingsWithDetails(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseId(premiseId).stream()
                 .filter(b -> !"CANCELLED".equals(b.getStatus()))
@@ -366,7 +422,6 @@ public class BookingService {
         return bookings.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // Получить все бронирования пользователя (как владельца) - без CANCELLED
     public List<BookingDto> getActiveBookingsByOwner(Long ownerId) {
         return bookingRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId).stream()
                 .filter(b -> !"CANCELLED".equals(b.getStatus()))
@@ -374,7 +429,6 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    // Получить все бронирования пользователя (как арендатора) - без CANCELLED
     public List<BookingDto> getActiveBookingsByRenter(Long renterId) {
         return bookingRepository.findByRenterIdOrderByCreatedAtDesc(renterId).stream()
                 .filter(b -> !"CANCELLED".equals(b.getStatus()))
@@ -382,19 +436,16 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    // Получить все бронирования пользователя (как владельца) - ВСЕ (включая CANCELLED)
     public List<BookingDto> getAllBookingsByOwner(Long ownerId) {
         return bookingRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId)
                 .stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // Проверить, свободны ли даты (только APPROVED бронирования)
     public boolean areDatesAvailable(Long premiseId, LocalDate startDate, LocalDate endDate) {
         List<Booking> overlapping = bookingRepository.findOverlappingApprovedBookings(premiseId, startDate, endDate);
         return overlapping.isEmpty();
     }
 
-    // Проверить, есть ли PENDING запрос на даты
     public boolean hasPendingRequest(Long premiseId, LocalDate startDate, LocalDate endDate) {
         List<Booking> pendingOverlap = bookingRepository.findByPremiseIdAndStatus(premiseId, "PENDING");
         for (Booking pending : pendingOverlap) {
@@ -405,7 +456,6 @@ public class BookingService {
         return false;
     }
 
-    // НОВЫЙ МЕТОД: проверить наличие PENDING запроса для конкретного чата
     public boolean hasPendingRequestForChat(Long premiseId, Long currentUserId, Long otherUserId) {
         if (premiseId == null) {
             return false;
@@ -428,13 +478,11 @@ public class BookingService {
         return false;
     }
 
-    // Получить все APPROVED бронирования арендатора
     public List<BookingDto> getApprovedBookingsForRenter(Long renterId) {
         List<Booking> bookings = bookingRepository.findByRenterIdAndStatus(renterId, "APPROVED");
         return bookings.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    // Создать запрос на аренду (для арендатора)
     @Transactional
     public BookingDto createBookingRequest(Long premiseId, Long renterId, Long ownerId,
                                            LocalDate startDate, LocalDate endDate) {
@@ -483,7 +531,6 @@ public class BookingService {
         return convertToDto(saved);
     }
 
-    // Создать бронирование напрямую (для владельца) - сразу APPROVED
     @Transactional
     public BookingDto createBookingDirect(Long premiseId, Long renterId, Long ownerId,
                                           LocalDate startDate, LocalDate endDate) {
@@ -533,7 +580,6 @@ public class BookingService {
         return convertToDto(saved);
     }
 
-    // Одобрить запрос (владелец)
     @Transactional
     public void approveBooking(Long bookingId, Long ownerId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -578,7 +624,6 @@ public class BookingService {
         );
     }
 
-    // Отказать в запросе (владелец)
     @Transactional
     public void rejectBooking(Long bookingId, Long ownerId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -591,6 +636,11 @@ public class BookingService {
         if (!"PENDING".equals(booking.getStatus())) {
             throw new RuntimeException("Запрос уже обработан");
         }
+
+        // Сохраняем даты до обновления статуса
+        Long premiseId = booking.getPremiseId();
+        LocalDate startDate = booking.getStartDate();
+        LocalDate endDate = booking.getEndDate();
 
         bookingRepository.updateStatus(bookingId, "REJECTED");
 
@@ -606,9 +656,11 @@ public class BookingService {
                 null,
                 chatLink
         );
+
+        // Проверяем, не освободились ли даты для подписчиков
+        checkAndNotifyAvailability(premiseId, startDate, endDate);
     }
 
-    // Отменить бронирование (владелец)
     @Transactional
     public void cancelBookingByOwner(Long bookingId, Long ownerId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -621,6 +673,10 @@ public class BookingService {
         if (!"PENDING".equals(booking.getStatus()) && !"APPROVED".equals(booking.getStatus())) {
             throw new RuntimeException("Можно отменить только ожидающие или подтверждённые бронирования");
         }
+
+        Long premiseId = booking.getPremiseId();
+        LocalDate startDate = booking.getStartDate();
+        LocalDate endDate = booking.getEndDate();
 
         bookingRepository.updateStatus(bookingId, "CANCELLED");
 
@@ -638,7 +694,6 @@ public class BookingService {
                 premiseLink
         );
 
-        // Отправляем системное сообщение в чат арендатору
         try {
             String systemMessageText = "❌ <strong>Аренда отменена</strong><br>Владелец <strong>" +
                     (owner != null ? escapeHtml(owner.getLogin()) : "Владелец") +
@@ -654,9 +709,11 @@ public class BookingService {
         } catch (Exception e) {
             System.err.println("✗ Ошибка отправки системного сообщения в чат: " + e.getMessage());
         }
+
+        // Проверяем, не освободились ли даты для подписчиков
+        checkAndNotifyAvailability(premiseId, startDate, endDate);
     }
 
-    // Отменить бронирование (арендатор)
     @Transactional
     public void cancelBookingByRenter(Long bookingId, Long renterId) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -669,6 +726,10 @@ public class BookingService {
         if (!"PENDING".equals(booking.getStatus()) && !"APPROVED".equals(booking.getStatus())) {
             throw new RuntimeException("Можно отменить только ожидающие или подтверждённые бронирования");
         }
+
+        Long premiseId = booking.getPremiseId();
+        LocalDate startDate = booking.getStartDate();
+        LocalDate endDate = booking.getEndDate();
 
         bookingRepository.updateStatus(bookingId, "CANCELLED");
 
@@ -686,7 +747,6 @@ public class BookingService {
                 premiseLink
         );
 
-        // Отправляем системное сообщение в чат владельцу
         try {
             String systemMessageText = "❌ <strong>Аренда отменена</strong><br>Арендатор <strong>" +
                     (renter != null ? escapeHtml(renter.getLogin()) : "Арендатор") +
@@ -702,6 +762,9 @@ public class BookingService {
         } catch (Exception e) {
             System.err.println("✗ Ошибка отправки системного сообщения в чат: " + e.getMessage());
         }
+
+        // Проверяем, не освободились ли даты для подписчиков
+        checkAndNotifyAvailability(premiseId, startDate, endDate);
     }
 
     private BookingDto convertToDto(Booking booking) {

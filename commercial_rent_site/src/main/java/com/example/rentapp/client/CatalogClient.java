@@ -47,4 +47,9 @@ public interface CatalogClient {
 
     @DeleteMapping("/api/comments/{id}")
     Map<String, Object> deleteComment(@PathVariable("id") Long id);
+
+    // НОВЫЙ МЕТОД: обновление контактных данных владельца во всех его объявлениях
+    @PutMapping("/api/premises/owner/{ownerId}/update-contacts")
+    void updateOwnerContacts(@PathVariable("ownerId") Long ownerId,
+                             @RequestBody Map<String, String> contacts);
 }
