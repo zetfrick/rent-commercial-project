@@ -90,13 +90,53 @@
 <script>
     // УЛУЧШЕННАЯ ВЕРСИЯ ДЛЯ ХЕДЕРА
     (function() {
-        // Функция обновления бейджа
+        let lastUnreadChatsCount = 0;
+        let notificationTimeout = null;
+
+        function showFloatingNotification(message) {
+            // Удаляем существующее уведомление
+            const existing = document.querySelector('.floating-chat-notification');
+            if (existing) existing.remove();
+            if (notificationTimeout) clearTimeout(notificationTimeout);
+
+            const notification = document.createElement('div');
+            notification.className = 'floating-chat-notification';
+            notification.innerHTML = `
+                <i class="fas fa-comment-dots"></i>
+                <span>${message}</span>
+            `;
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #ff5722, #ff9800);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 50px;
+                z-index: 10001;
+                animation: slideInRight 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                font-size: 14px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+            `;
+            notification.onclick = () => {
+                window.location.href = '/chats';
+            };
+            document.body.appendChild(notification);
+
+            notificationTimeout = setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
         function updateChatBadge() {
             const badgeElement = document.getElementById('hdChatsBadge');
-            if (!badgeElement) {
-                console.warn('Header: badge element not found');
-                return;
-            }
+            if (!badgeElement) return;
 
             const unreadCount = localStorage.getItem('unreadChatsCount');
             const count = unreadCount ? parseInt(unreadCount) : 0;
@@ -104,54 +144,47 @@
             if (count > 0) {
                 badgeElement.textContent = count;
                 badgeElement.style.display = 'inline-flex';
-                console.log('Header badge updated:', count);
             } else {
                 badgeElement.style.display = 'none';
                 badgeElement.textContent = '0';
             }
         }
 
-        // Загрузка количества непрочитанных чатов
         async function loadUnreadChatsCount() {
             try {
                 const response = await fetch('/chats/api/chats', {
                     credentials: 'include',
-                    headers: {
-                        'Cache-Control': 'no-cache'
-                    }
+                    headers: { 'Cache-Control': 'no-cache' }
                 });
 
                 if (response.ok) {
                     const chats = await response.json();
-                    // Подсчитываем количество чатов с непрочитанными сообщениями
-                    const chatsWithUnread = chats.filter(chat => chat.unreadCount && chat.unreadCount > 0).length;
+                    const totalUnread = chats.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0);
 
-                    if (localStorage.getItem('unreadChatsCount') != chatsWithUnread) {
-                        localStorage.setItem('unreadChatsCount', chatsWithUnread);
-                        updateChatBadge();
-                        // Триггерим событие для синхронизации с другими страницами
-                        window.dispatchEvent(new CustomEvent('unreadChatsUpdate', {
-                            detail: { count: chatsWithUnread }
-                        }));
-                    } else {
-                        updateChatBadge();
+                    const previousCount = parseInt(localStorage.getItem('unreadChatsCount') || '0');
+                    localStorage.setItem('unreadChatsCount', totalUnread);
+                    updateChatBadge();
+
+                    // Если количество увеличилось - показываем уведомление
+                    if (totalUnread > previousCount && totalUnread > 0) {
+                        const newCount = totalUnread - previousCount;
+                        const message = newCount === 1
+                            ? '📨 У вас новое сообщение!'
+                            : `📨 У вас ${newCount} новых сообщений!`;
+                        showFloatingNotification(message);
                     }
-                    console.log('Header loaded unread chats:', chatsWithUnread);
+
+                    console.log('Header loaded unread chats:', totalUnread);
                 } else if (response.status === 401) {
-                    // Не авторизован - очищаем бейдж
                     localStorage.removeItem('unreadChatsCount');
                     updateChatBadge();
-                } else {
-                    console.warn('Header: chats API returned', response.status);
-                    updateChatBadge(); // Показываем то, что есть
                 }
             } catch (error) {
                 console.error('Header error loading chats count:', error);
-                updateChatBadge(); // Fallback на localStorage
+                updateChatBadge();
             }
         }
 
-        // Для мобильных устройств
         function initMobileMenu() {
             const userProfile = document.getElementById('hdUserProfile');
             if (userProfile && window.innerWidth <= 768) {
@@ -164,7 +197,6 @@
                 });
             }
 
-            // Добавляем hover для десктопа
             if (userProfile && window.innerWidth > 768) {
                 userProfile.addEventListener('mouseenter', function() {
                     this.classList.add('active');
@@ -175,6 +207,25 @@
             }
         }
 
+        // Добавляем стиль анимации
+        if (!document.querySelector('#chatNotificationStyle')) {
+            const style = document.createElement('style');
+            style.id = 'chatNotificationStyle';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(120%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                .floating-chat-notification {
+                    cursor: pointer;
+                }
+                .floating-chat-notification:hover {
+                    transform: scale(1.02);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         // Запуск при загрузке страницы
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
@@ -183,27 +234,16 @@
                 setInterval(loadUnreadChatsCount, 10000);
             });
         } else {
-            // DOM уже загружен
             initMobileMenu();
             loadUnreadChatsCount();
             setInterval(loadUnreadChatsCount, 10000);
         }
 
-        // Слушаем событие обновления из других страниц
-        window.addEventListener('unreadChatsUpdate', function(e) {
-            if (e.detail && e.detail.count !== undefined) {
-                localStorage.setItem('unreadChatsCount', e.detail.count);
-            }
-            updateChatBadge();
-        });
-
-        // Обновляем при возвращении на страницу
         window.addEventListener('focus', function() {
             loadUnreadChatsCount();
         });
 
-        // Экспортируем для отладки
-        window.debugHeaderBadge = { updateChatBadge, loadUnreadChatsCount };
+        window.debugChatBadge = { updateChatBadge, loadUnreadChatsCount };
     })();
 </script>
 

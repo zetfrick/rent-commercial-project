@@ -18,9 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -49,13 +47,12 @@ public class WebSocketChatController {
             System.out.println("Отправитель ID: " + message.getSenderId());
             System.out.println("Получатель ID: " + message.getReceiverId());
             System.out.println("Текст: " + message.getText());
-            System.out.println("Principal: " + (principal != null ? principal.getName() : "null"));
 
             User sender = userService.findById(message.getSenderId()).orElse(null);
             User receiver = userService.findById(message.getReceiverId()).orElse(null);
 
             if (sender == null || receiver == null) {
-                System.err.println("❌ Пользователь не найден! sender=" + sender + ", receiver=" + receiver);
+                System.err.println("❌ Пользователь не найден!");
                 return;
             }
 
@@ -65,6 +62,7 @@ public class WebSocketChatController {
             System.out.println("Отправитель (логин): " + senderUsername);
             System.out.println("Получатель (логин): " + receiverUsername);
 
+            // Сохраняем сообщение в БД (уведомление создается внутри sendMessageWithPremise)
             ChatMessage savedMessage;
             if (message.getPremiseId() != null && message.getPremiseId() > 0) {
                 savedMessage = chatService.sendMessageWithPremise(
@@ -92,21 +90,25 @@ public class WebSocketChatController {
                     "MESSAGE"
             );
 
-            System.out.println("📤 Отправка получателю (логин): " + receiverUsername);
-            System.out.println("📤 Destination: /user/" + receiverUsername + "/queue/messages");
-            messagingTemplate.convertAndSendToUser(
-                    receiverUsername,
-                    "/queue/messages",
-                    response
-            );
-            System.out.println("✅ convertAndSendToUser вызван для: " + receiverUsername);
+            // Отправляем получателю (если он онлайн)
+            try {
+                messagingTemplate.convertAndSendToUser(
+                        receiverUsername,
+                        "/queue/messages",
+                        response
+                );
+                System.out.println("✅ WebSocket сообщение отправлено получателю: " + receiverUsername);
+            } catch (Exception e) {
+                System.out.println("⚠️ Получатель не в сети: " + e.getMessage());
+            }
 
+            // Всегда отправляем отправителю (он точно онлайн)
             messagingTemplate.convertAndSendToUser(
                     senderUsername,
                     "/queue/messages",
                     response
             );
-            System.out.println("✅ convertAndSendToUser вызван для отправителя: " + senderUsername);
+            System.out.println("✅ WebSocket сообщение отправлено отправителю: " + senderUsername);
             System.out.println("========================================");
 
         } catch (Exception e) {
@@ -166,7 +168,7 @@ public class WebSocketChatController {
             @RequestParam Long receiverId,
             @RequestParam(required = false) Long premiseId,
             @RequestParam("file") MultipartFile file,
-            Principal principal) throws Exception {
+            Principal principal) {
 
         Map<String, Object> response = new HashMap<>();
 
@@ -189,7 +191,6 @@ public class WebSocketChatController {
             return response;
         }
 
-        // Ограничение размера файла (10 MB)
         long maxSize = 10 * 1024 * 1024;
         if (file.getSize() > maxSize) {
             response.put("success", false);
@@ -197,64 +198,73 @@ public class WebSocketChatController {
             return response;
         }
 
-        // Сохраняем файл
-        String fileName = fileStorageService.saveChatFile(file);
-        String fileUrl = "/chat-uploads/" + fileName;
-
-        // Определяем тип файла и создаём HTML для отображения
-        String fileHtml = generateFileHtml(fileName, fileUrl, file.getContentType(), file.getSize());
-
-        // Сохраняем сообщение с файлом в БД (текст содержит HTML для отображения файла)
-        ChatMessage savedMessage;
-        if (premiseId != null && premiseId > 0) {
-            savedMessage = chatService.sendMessageWithPremise(
-                    sender.getId(),
-                    receiverId,
-                    fileHtml,
-                    premiseId
-            );
-        } else {
-            savedMessage = chatService.sendMessage(
-                    sender.getId(),
-                    receiverId,
-                    fileHtml
-            );
-        }
-
-        // Отправляем через WebSocket, если соединение активно
         try {
-            User receiver = userService.findById(receiverId).orElse(null);
-            if (receiver != null) {
-                WebSocketMessageDto wsMessage = new WebSocketMessageDto(
-                        savedMessage.getId(),
-                        savedMessage.getSenderId(),
-                        savedMessage.getReceiverId(),
-                        savedMessage.getSenderLogin(),
-                        savedMessage.getText(),
-                        savedMessage.getSentAt(),
-                        savedMessage.getPremiseId(),
-                        "FILE"
+            String fileName = fileStorageService.saveChatFile(file);
+            String fileUrl = "/chat-uploads/" + fileName;
+            String fileHtml = generateFileHtml(fileName, fileUrl, file.getContentType(), file.getSize());
+
+            ChatMessage savedMessage;
+            if (premiseId != null && premiseId > 0) {
+                savedMessage = chatService.sendMessageWithFile(
+                        sender.getId(),
+                        receiverId,
+                        fileHtml,
+                        premiseId,
+                        fileName,
+                        fileUrl,
+                        file.getContentType(),
+                        file.getSize()
                 );
-                messagingTemplate.convertAndSendToUser(
-                        receiver.getLogin(),
-                        "/queue/messages",
-                        wsMessage
-                );
-                messagingTemplate.convertAndSendToUser(
-                        sender.getLogin(),
-                        "/queue/messages",
-                        wsMessage
+            } else {
+                savedMessage = chatService.sendMessageWithFile(
+                        sender.getId(),
+                        receiverId,
+                        fileHtml,
+                        null,
+                        fileName,
+                        fileUrl,
+                        file.getContentType(),
+                        file.getSize()
                 );
             }
-        } catch (Exception e) {
-            System.err.println("WebSocket send error: " + e.getMessage());
-        }
 
-        response.put("success", true);
-        response.put("messageId", savedMessage.getId());
-        response.put("fileHtml", fileHtml);
-        response.put("fileName", fileName);
-        response.put("fileUrl", fileUrl);
+            try {
+                User receiver = userService.findById(receiverId).orElse(null);
+                if (receiver != null) {
+                    WebSocketMessageDto wsMessage = new WebSocketMessageDto(
+                            savedMessage.getId(),
+                            savedMessage.getSenderId(),
+                            savedMessage.getReceiverId(),
+                            savedMessage.getSenderLogin(),
+                            savedMessage.getText(),
+                            savedMessage.getSentAt(),
+                            savedMessage.getPremiseId(),
+                            "FILE"
+                    );
+                    messagingTemplate.convertAndSendToUser(
+                            receiver.getLogin(),
+                            "/queue/messages",
+                            wsMessage
+                    );
+                    messagingTemplate.convertAndSendToUser(
+                            sender.getLogin(),
+                            "/queue/messages",
+                            wsMessage
+                    );
+                }
+            } catch (Exception e) {
+                System.err.println("WebSocket send error: " + e.getMessage());
+            }
+
+            response.put("success", true);
+            response.put("messageId", savedMessage.getId());
+            response.put("fileHtml", fileHtml);
+            response.put("fileName", fileName);
+            response.put("fileUrl", fileUrl);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Ошибка сохранения файла: " + e.getMessage());
+        }
         return response;
     }
 
@@ -262,12 +272,10 @@ public class WebSocketChatController {
         String sizeStr = formatFileSize(fileSize);
         String fileExtension = getFileExtension(fileName).toLowerCase();
 
-        // Иконка в зависимости от типа файла
         String iconHtml;
         String previewHtml = "";
 
         if (contentType != null && contentType.startsWith("image/")) {
-            // Для изображений показываем миниатюру
             iconHtml = "<i class='fas fa-image' style='font-size: 24px; color: #ff5722;'></i>";
             previewHtml = "<div class='file-preview-image'><img src='" + fileUrl + "' alt='preview' onclick='openFullscreen(\"" + fileUrl + "\")'></div>";
         } else if (contentType != null && contentType.equals("application/pdf")) {

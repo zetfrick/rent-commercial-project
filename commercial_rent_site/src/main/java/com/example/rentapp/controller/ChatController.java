@@ -12,6 +12,7 @@ import com.example.rentapp.service.ChatService;
 import com.example.rentapp.service.UserBanService;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -420,6 +421,32 @@ public class ChatController {
     public List<BookingDto> getPendingRequests(@AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
         return bookingService.getPendingRequestsForOwner(currentUser.getId());
+    }
+
+    // Добавьте этот метод в ChatController.java
+
+    @GetMapping("/api/unread-count")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getUnreadMessagesCount(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        if (userDetails == null) {
+            response.put("unreadCount", 0);
+            return ResponseEntity.ok(response);
+        }
+
+        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+        if (currentUser == null) {
+            response.put("unreadCount", 0);
+            return ResponseEntity.ok(response);
+        }
+
+        int unreadCount = chatService.getUnreadMessagesCount(currentUser.getId());
+        response.put("unreadCount", unreadCount);
+
+        return ResponseEntity.ok(response);
     }
 
     public static class ChatInfo {

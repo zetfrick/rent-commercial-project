@@ -44,6 +44,30 @@ public class NotificationService {
         sendEmailNotification(userId, type, fromUserName, content, link, fromUserId);
     }
 
+    // Добавьте этот метод в NotificationService.java
+
+    @Transactional
+    public void deleteNotificationsForChat(Long userId, Long fromUserId, Long premiseId) {
+        List<Notification> notifications = notificationRepository.findByUserIdAndReadOrderByCreatedAtDesc(userId, false);
+
+        for (Notification notif : notifications) {
+            if ("MESSAGE".equals(notif.getType())) {
+                if (notif.getFromUserId() != null && notif.getFromUserId().equals(fromUserId)) {
+                    if (premiseId != null && notif.getRelatedId() != null && notif.getRelatedId().equals(premiseId)) {
+                        notificationRepository.deleteById(notif.getId());
+                        System.out.println("🗑️ Удалено уведомление о сообщении для чата с пользователем " + fromUserId);
+                        break;
+                    }
+                    if (premiseId == null && notif.getRelatedId() == null) {
+                        notificationRepository.deleteById(notif.getId());
+                        System.out.println("🗑️ Удалено уведомление о сообщении для чата с пользователем " + fromUserId);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     private void sendEmailNotification(Long userId, String type, String fromUserName, String content, String link, Long fromUserId) {
         try {
             User user = userRepository.findById(userId).orElse(null);
