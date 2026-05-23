@@ -1909,6 +1909,7 @@
     const isUserBanned = /*[[${isUserBanned}]]*/ false;
     const pendingDateRanges = /*[[${pendingDateRanges}]]*/ [];
     const bookedDateRanges = /*[[${bookedDateRanges}]]*/ [];
+    const isAuthenticatedGlobal = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
 
     const premiseData = {
         region: /*[[${premise.region}]]*/ null,
@@ -2398,7 +2399,7 @@
             }
 
             const isUserBannedGlobally = typeof isUserBanned !== 'undefined' ? isUserBanned : false;
-            const isAuthenticated = currentUsername !== null && currentUsername !== '';
+            const isAuthenticated = typeof isAuthenticatedGlobal !== 'undefined' ? isAuthenticatedGlobal : false;
 
             comments.forEach(c => {
                 const isCommentAuthor = currentUsername === c.authorName;
