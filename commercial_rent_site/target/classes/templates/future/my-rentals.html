@@ -362,7 +362,7 @@
     </div>
 
     <div th:unless="${rentals.isEmpty()}" class="rentals-grid">
-        <div th:each="rental : ${rentals}" class="rental-card">
+        <div th:each="rental : ${rentals}" th:with="p=${rental.premise}" class="rental-card">
             <!-- Статус аренды -->
             <div class="rental-status-badge"
                  th:class="${rental.booking.status == 'APPROVED'} ? 'status-approved' :

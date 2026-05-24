@@ -3,6 +3,8 @@ package com.example.rentapp.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -26,6 +28,9 @@ public class User {
     private String lastName;
     private String middleName;
     private String phone;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // === НАСТРОЙКИ УВЕДОМЛЕНИЙ ===
     @Column(nullable = false)

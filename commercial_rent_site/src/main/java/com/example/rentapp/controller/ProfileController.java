@@ -20,6 +20,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +76,33 @@ public class ProfileController {
         User currentUser = (currentUsername != null)
                 ? userService.findByLogin(currentUsername).orElse(null)
                 : null;
+
+        // ========== СТАТИСТИКА ДЛЯ ПРОФИЛЯ ==========
+
+        // 1. Количество активных объявлений (Сдаётся)
+        List<PremiseDto> userPremises = catalogClient.getPremisesByOwnerId(profileUser.getId());
+        long rentedOutCount = userPremises.stream()
+                .filter(PremiseDto::isActive)
+                .count();
+
+        // 2. Количество арендованных помещений (Арендовано)
+        List<BookingDto> renterBookings = bookingService.getApprovedBookingsForRenter(profileUser.getId());
+        long rentedInCount = renterBookings.size();
+
+        // 3. Количество дней с нами
+        long daysWithUs = 0;
+        if (profileUser.getCreatedAt() != null) {
+            daysWithUs = java.time.temporal.ChronoUnit.DAYS.between(
+                    profileUser.getCreatedAt(),
+                    LocalDateTime.now()
+            );
+        }
+
+        model.addAttribute("rentedOutCount", rentedOutCount);
+        model.addAttribute("rentedInCount", rentedInCount);
+        model.addAttribute("daysWithUs", daysWithUs);
+
+        // ========== ОСТАЛЬНОЙ КОД ==========
 
         // Если это свой профиль и данные в сессии устарели, обновляем сессию
         if (targetUsername.equals(currentUsername) && currentUser != null && userDetails != null) {
