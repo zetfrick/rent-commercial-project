@@ -14,14 +14,17 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    // Хранилище онлайн-пользователей (логин -> сессия)
+    public static final ConcurrentHashMap<String, String> onlineUsers = new ConcurrentHashMap<>();
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // ВАЖНО: добавили /user в брокер
         config.enableSimpleBroker("/queue", "/topic", "/user");
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");

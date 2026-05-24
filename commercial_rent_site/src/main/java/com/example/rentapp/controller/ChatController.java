@@ -44,16 +44,10 @@ public class ChatController {
     @Autowired
     private UserBanService userBanService;
 
-    /**
-     * Форматирует текст сообщения для отображения в превью чата
-     * Для файловых сообщений показывает иконку и имя файла
-     */
     private String formatMessagePreview(String text) {
         if (text == null || text.isEmpty()) return "";
 
-        // Проверяем, является ли сообщение файловым
         if (text.contains("file-attachment") || text.contains("file-preview-image")) {
-            // Определяем иконку по типу файла
             String icon = "📎";
             if (text.contains("fa-file-image")) icon = "🖼️";
             else if (text.contains("fa-file-pdf")) icon = "📄";
@@ -64,12 +58,10 @@ public class ChatController {
             else if (text.contains("fa-file-archive")) icon = "🗜️";
             else if (text.contains("fa-image")) icon = "🖼️";
 
-            // Извлекаем имя файла из HTML
             Pattern pattern = Pattern.compile("file-name[^>]*>([^<]+)<");
             Matcher matcher = pattern.matcher(text);
             if (matcher.find()) {
                 String fileName = matcher.group(1);
-                // Ограничиваем длину имени файла
                 if (fileName.length() > 40) {
                     fileName = fileName.substring(0, 37) + "...";
                 }
@@ -78,10 +70,8 @@ public class ChatController {
             return icon + " Файл";
         }
 
-        // Удаляем HTML-теги из обычных сообщений
         String plain = text.replaceAll("<[^>]*>", "");
 
-        // Ограничиваем длину
         if (plain.length() > 60) {
             plain = plain.substring(0, 57) + "...";
         }
@@ -263,12 +253,6 @@ public class ChatController {
 
         User sender = userService.findByLogin(userDetails.getUsername()).orElseThrow();
 
-        System.out.println("=== SEND MESSAGE ===");
-        System.out.println("Sender: " + sender.getLogin() + " (ID: " + sender.getId() + ")");
-        System.out.println("Receiver ID: " + receiverId);
-        System.out.println("Text: " + text);
-        System.out.println("Premise ID: " + premiseId);
-
         ChatMessage message;
         if (premiseId != null) {
             message = chatService.sendMessageWithPremise(sender.getId(), receiverId, text, premiseId);
@@ -276,7 +260,7 @@ public class ChatController {
             message = chatService.sendMessage(sender.getId(), receiverId, text);
         }
 
-        System.out.println("Message saved with ID: " + message.getId() + ", premiseId: " + message.getPremiseId());
+        // Статус DELIVERED уже установлен при сохранении
 
         return "ok";
     }
@@ -316,6 +300,7 @@ public class ChatController {
         return "ok";
     }
 
+    // ИЗМЕНЁННЫЙ МЕТОД: возвращает сообщения со статусом доставки
     @GetMapping("/api/messages")
     @ResponseBody
     public List<ChatMessageDto> getMessages(@RequestParam Long with,
@@ -337,7 +322,8 @@ public class ChatController {
                 msg.getSenderLogin(),
                 msg.getText(),
                 msg.getSentAt(),
-                msg.isRead()
+                msg.isRead(),
+                msg.getDeliveryStatus()  // Добавляем статус доставки
         )).collect(Collectors.toList());
     }
 
@@ -347,11 +333,6 @@ public class ChatController {
                                      @RequestParam(required = false) Long premiseId,
                                      @AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
-
-        System.out.println("=== MARK MESSAGES AS READ ===");
-        System.out.println("Current user: " + currentUser.getLogin() + " (ID: " + currentUser.getId() + ")");
-        System.out.println("Other user ID: " + with);
-        System.out.println("Premise ID: " + premiseId);
 
         if (premiseId != null) {
             chatService.markMessagesAsReadByPremise(currentUser.getId(), with, premiseId);
@@ -422,8 +403,6 @@ public class ChatController {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
         return bookingService.getPendingRequestsForOwner(currentUser.getId());
     }
-
-    // Добавьте этот метод в ChatController.java
 
     @GetMapping("/api/unread-count")
     @ResponseBody

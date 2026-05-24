@@ -1,5 +1,6 @@
 package com.example.rentapp.controller;
 
+import com.example.rentapp.config.WebSocketConfig;
 import com.example.rentapp.dto.WebSocketMessageDto;
 import com.example.rentapp.entity.ChatMessage;
 import com.example.rentapp.entity.User;
@@ -62,7 +63,6 @@ public class WebSocketChatController {
             System.out.println("Отправитель (логин): " + senderUsername);
             System.out.println("Получатель (логин): " + receiverUsername);
 
-            // Сохраняем сообщение в БД (уведомление создается внутри sendMessageWithPremise)
             ChatMessage savedMessage;
             if (message.getPremiseId() != null && message.getPremiseId() > 0) {
                 savedMessage = chatService.sendMessageWithPremise(
@@ -79,6 +79,9 @@ public class WebSocketChatController {
                 );
             }
 
+            // Проверяем, онлайн ли получатель
+            boolean isReceiverOnline = WebSocketConfig.onlineUsers.containsKey(receiverUsername);
+
             WebSocketMessageDto response = new WebSocketMessageDto(
                     savedMessage.getId(),
                     savedMessage.getSenderId(),
@@ -89,26 +92,48 @@ public class WebSocketChatController {
                     savedMessage.getPremiseId(),
                     "MESSAGE"
             );
+            response.setDeliveryStatus(savedMessage.getDeliveryStatus());
 
             // Отправляем получателю (если он онлайн)
-            try {
+            if (isReceiverOnline) {
+                try {
+                    messagingTemplate.convertAndSendToUser(
+                            receiverUsername,
+                            "/queue/messages",
+                            response
+                    );
+                    System.out.println("✅ WebSocket сообщение отправлено получателю: " + receiverUsername);
+
+                    // После успешной отправки получателю обновляем статус доставки
+                    chatService.updateMessageDeliveryStatus(savedMessage.getId(), "RECEIVED");
+                    response.setDeliveryStatus("RECEIVED");
+
+                    // Отправляем обновление статуса отправителю
+                    messagingTemplate.convertAndSendToUser(
+                            senderUsername,
+                            "/queue/messages",
+                            response
+                    );
+
+                } catch (Exception e) {
+                    System.out.println("⚠️ Ошибка отправки получателю: " + e.getMessage());
+                    // Если получатель не в сети, отправляем только отправителю с текущим статусом
+                    messagingTemplate.convertAndSendToUser(
+                            senderUsername,
+                            "/queue/messages",
+                            response
+                    );
+                }
+            } else {
+                System.out.println("⚠️ Получатель не в сети: " + receiverUsername);
                 messagingTemplate.convertAndSendToUser(
-                        receiverUsername,
+                        senderUsername,
                         "/queue/messages",
                         response
                 );
-                System.out.println("✅ WebSocket сообщение отправлено получателю: " + receiverUsername);
-            } catch (Exception e) {
-                System.out.println("⚠️ Получатель не в сети: " + e.getMessage());
             }
 
-            // Всегда отправляем отправителю (он точно онлайн)
-            messagingTemplate.convertAndSendToUser(
-                    senderUsername,
-                    "/queue/messages",
-                    response
-            );
-            System.out.println("✅ WebSocket сообщение отправлено отправителю: " + senderUsername);
+            System.out.println("✅ WebSocket сообщение обработано");
             System.out.println("========================================");
 
         } catch (Exception e) {
@@ -121,7 +146,7 @@ public class WebSocketChatController {
     public void typing(@Payload WebSocketMessageDto message) {
         try {
             User receiver = userService.findById(message.getReceiverId()).orElse(null);
-            if (receiver != null) {
+            if (receiver != null && WebSocketConfig.onlineUsers.containsKey(receiver.getLogin())) {
                 messagingTemplate.convertAndSendToUser(
                         receiver.getLogin(),
                         "/queue/typing",
@@ -136,29 +161,121 @@ public class WebSocketChatController {
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload WebSocketMessageDto message) {
         try {
+            // ВАЖНО: currentUserId - это получатель (кто прочитал)
+            // otherUserId - это отправитель (чей сообщения прочитаны)
+            Long currentUserId = message.getReceiverId();  // кто прочитал
+            Long otherUserId = message.getSenderId();      // чьи сообщения
+
+            System.out.println("=== ОТМЕТКА ПРОЧИТАННЫХ ===");
+            System.out.println("Пользователь ID " + currentUserId + " прочитал сообщения от ID " + otherUserId);
+            System.out.println("ID помещения: " + message.getPremiseId());
+
             if (message.getPremiseId() != null && message.getPremiseId() > 0) {
                 chatService.markMessagesAsReadByPremise(
-                        message.getReceiverId(),
-                        message.getSenderId(),
+                        currentUserId,
+                        otherUserId,
                         message.getPremiseId()
                 );
             } else {
                 chatService.markMessagesAsRead(
-                        message.getReceiverId(),
-                        message.getSenderId()
+                        currentUserId,
+                        otherUserId
                 );
             }
 
-            User sender = userService.findById(message.getSenderId()).orElse(null);
-            if (sender != null) {
+            // ОТПРАВЛЯЕМ ПОДТВЕРЖДЕНИЕ ПРОЧТЕНИЯ ОТПРАВИТЕЛЮ
+            User sender = userService.findById(otherUserId).orElse(null);
+            if (sender != null && WebSocketConfig.onlineUsers.containsKey(sender.getLogin())) {
+                WebSocketMessageDto readReceipt = new WebSocketMessageDto();
+                readReceipt.setId(message.getId());
+                readReceipt.setSenderId(currentUserId);
+                readReceipt.setReceiverId(otherUserId);
+                readReceipt.setType("READ_RECEIPT");
+                readReceipt.setPremiseId(message.getPremiseId());
+                readReceipt.setDeliveryStatus("READ");
+
                 messagingTemplate.convertAndSendToUser(
                         sender.getLogin(),
                         "/queue/read",
+                        readReceipt
+                );
+                System.out.println("✅ Подтверждение прочтения отправлено пользователю " + sender.getLogin());
+            }
+
+            // Также отправляем обновление получателю (для синхронизации)
+            User receiver = userService.findById(currentUserId).orElse(null);
+            if (receiver != null && WebSocketConfig.onlineUsers.containsKey(receiver.getLogin())) {
+                WebSocketMessageDto receipt = new WebSocketMessageDto();
+                receipt.setId(message.getId());
+                receipt.setSenderId(otherUserId);
+                receipt.setReceiverId(currentUserId);
+                receipt.setType("READ_RECEIPT");
+                receipt.setPremiseId(message.getPremiseId());
+                receipt.setDeliveryStatus("READ");
+
+                messagingTemplate.convertAndSendToUser(
+                        receiver.getLogin(),
+                        "/queue/read",
+                        receipt
+                );
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error marking messages as read: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @MessageMapping("/chat.delivered")
+    public void markAsDelivered(@Payload WebSocketMessageDto message) {
+        try {
+            // Обновляем статус доставки для сообщений отправителя
+            if (message.getPremiseId() != null && message.getPremiseId() > 0) {
+                chatService.updateMessagesStatusBetweenUsers(
+                        message.getSenderId(),
+                        message.getReceiverId(),
+                        message.getPremiseId(),
+                        "DELIVERED"
+                );
+            } else {
+                chatService.updateMessagesStatusBetweenUsers(
+                        message.getSenderId(),
+                        message.getReceiverId(),
+                        null,
+                        "DELIVERED"
+                );
+            }
+
+            User receiver = userService.findById(message.getReceiverId()).orElse(null);
+            if (receiver != null && WebSocketConfig.onlineUsers.containsKey(receiver.getLogin())) {
+                messagingTemplate.convertAndSendToUser(
+                        receiver.getLogin(),
+                        "/queue/delivered",
                         message
                 );
             }
         } catch (Exception e) {
-            System.err.println("Error marking messages as read: " + e.getMessage());
+            System.err.println("Error marking messages as delivered: " + e.getMessage());
+        }
+    }
+
+    // НОВЫЙ ЭНДПОИНТ: отслеживание подключения пользователя
+    @MessageMapping("/chat.connect")
+    public void connect(Principal principal) {
+        if (principal != null && principal.getName() != null) {
+            WebSocketConfig.onlineUsers.put(principal.getName(), "connected");
+            System.out.println("🔵 Пользователь подключился: " + principal.getName());
+            System.out.println("Онлайн пользователей: " + WebSocketConfig.onlineUsers.size());
+        }
+    }
+
+    // НОВЫЙ ЭНДПОИНТ: отслеживание отключения пользователя
+    @MessageMapping("/chat.disconnect")
+    public void disconnect(Principal principal) {
+        if (principal != null && principal.getName() != null) {
+            WebSocketConfig.onlineUsers.remove(principal.getName());
+            System.out.println("🔴 Пользователь отключился: " + principal.getName());
+            System.out.println("Онлайн пользователей: " + WebSocketConfig.onlineUsers.size());
         }
     }
 
@@ -228,9 +345,11 @@ public class WebSocketChatController {
                 );
             }
 
-            try {
-                User receiver = userService.findById(receiverId).orElse(null);
-                if (receiver != null) {
+            User receiver = userService.findById(receiverId).orElse(null);
+            boolean isReceiverOnline = receiver != null && WebSocketConfig.onlineUsers.containsKey(receiver.getLogin());
+
+            if (receiver != null && isReceiverOnline) {
+                try {
                     WebSocketMessageDto wsMessage = new WebSocketMessageDto(
                             savedMessage.getId(),
                             savedMessage.getSenderId(),
@@ -239,21 +358,32 @@ public class WebSocketChatController {
                             savedMessage.getText(),
                             savedMessage.getSentAt(),
                             savedMessage.getPremiseId(),
-                            "FILE"
+                            "FILE",
+                            fileName,
+                            fileUrl,
+                            file.getContentType(),
+                            file.getSize()
                     );
+                    wsMessage.setDeliveryStatus(savedMessage.getDeliveryStatus());
+
                     messagingTemplate.convertAndSendToUser(
                             receiver.getLogin(),
                             "/queue/messages",
                             wsMessage
                     );
+
+                    // Обновляем статус доставки
+                    chatService.updateMessageDeliveryStatus(savedMessage.getId(), "RECEIVED");
+                    wsMessage.setDeliveryStatus("RECEIVED");
+
                     messagingTemplate.convertAndSendToUser(
                             sender.getLogin(),
                             "/queue/messages",
                             wsMessage
                     );
+                } catch (Exception e) {
+                    System.err.println("WebSocket send error: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                System.err.println("WebSocket send error: " + e.getMessage());
             }
 
             response.put("success", true);

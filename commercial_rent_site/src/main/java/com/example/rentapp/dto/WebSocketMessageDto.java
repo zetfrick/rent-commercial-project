@@ -15,15 +15,13 @@ public class WebSocketMessageDto {
     private String text;
     private LocalDateTime sentAt;
     private Long premiseId;
-    private String type; // "MESSAGE", "SYSTEM", "TYPING", "READ_RECEIPT", "FILE"
-
-    // Поля для файлов
+    private String type;
     private String fileName;
     private String fileUrl;
     private String fileType;
     private Long fileSize;
+    private String deliveryStatus;  // НОВОЕ ПОЛЕ
 
-    // Конструктор для обычных сообщений (без файлов)
     public WebSocketMessageDto(Long id, Long senderId, Long receiverId, String senderLogin,
                                String text, LocalDateTime sentAt, Long premiseId, String type) {
         this.id = id;
@@ -34,13 +32,9 @@ public class WebSocketMessageDto {
         this.sentAt = sentAt;
         this.premiseId = premiseId;
         this.type = type;
-        this.fileName = null;
-        this.fileUrl = null;
-        this.fileType = null;
-        this.fileSize = null;
+        this.deliveryStatus = "DELIVERED";
     }
 
-    // Конструктор для файловых сообщений
     public WebSocketMessageDto(Long id, Long senderId, Long receiverId, String senderLogin,
                                String text, LocalDateTime sentAt, Long premiseId, String type,
                                String fileName, String fileUrl, String fileType, Long fileSize) {
@@ -56,5 +50,6 @@ public class WebSocketMessageDto {
         this.fileUrl = fileUrl;
         this.fileType = fileType;
         this.fileSize = fileSize;
+        this.deliveryStatus = "DELIVERED";
     }
 }

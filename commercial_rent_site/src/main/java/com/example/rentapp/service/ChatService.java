@@ -33,14 +33,12 @@ public class ChatService {
                 sender.getLogin(),
                 text
         );
+        message.setDeliveryStatus("DELIVERED");
 
         ChatMessage saved = chatMessageRepository.save(message);
 
         String chatLink = "/chats/with/" + sender.getLogin();
 
-        // ВСЕГДА создаем уведомление для первого сообщения в чате
-        // Если у пользователя уже есть непрочитанные сообщения от этого отправителя,
-        // новое уведомление не создаем (только одно уведомление на диалог)
         if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, null)) {
             notificationService.createNotification(
                     receiverId,
@@ -51,9 +49,6 @@ public class ChatService {
                     text.length() > 100 ? text.substring(0, 100) + "..." : text,
                     chatLink
             );
-            System.out.println("✅ Создано уведомление о сообщении от " + sender.getLogin() + " для " + receiver.getLogin());
-        } else {
-            System.out.println("📌 Уведомление уже существует, пропускаем дубликат для диалога от " + sender.getLogin());
         }
 
         return saved;
@@ -72,12 +67,12 @@ public class ChatService {
                 text,
                 premiseId
         );
+        message.setDeliveryStatus("DELIVERED");
 
         ChatMessage saved = chatMessageRepository.save(message);
 
         String chatLink = "/chats/with/" + sender.getLogin() + "/premise/" + premiseId;
 
-        // ВСЕГДА создаем уведомление для первого сообщения в чате (по конкретному помещению)
         if (!notificationService.hasUnreadMessageNotification(receiverId, senderId, premiseId)) {
             notificationService.createNotification(
                     receiverId,
@@ -88,9 +83,6 @@ public class ChatService {
                     text.length() > 100 ? text.substring(0, 100) + "..." : text,
                     chatLink
             );
-            System.out.println("✅ Создано уведомление о сообщении от " + sender.getLogin() + " по помещению #" + premiseId);
-        } else {
-            System.out.println("📌 Уведомление уже существует, пропускаем дубликат для помещения #" + premiseId);
         }
 
         return saved;
@@ -114,6 +106,7 @@ public class ChatService {
                 fileType,
                 fileSize
         );
+        message.setDeliveryStatus("DELIVERED");
 
         ChatMessage saved = chatMessageRepository.save(message);
 
@@ -136,6 +129,22 @@ public class ChatService {
         return saved;
     }
 
+    // НОВЫЙ МЕТОД: обновление статуса доставки сообщения
+    @Transactional
+    public void updateMessageDeliveryStatus(Long messageId, String status) {
+        chatMessageRepository.updateDeliveryStatus(messageId, status);
+    }
+
+    // НОВЫЙ МЕТОД: обновление статусов всех сообщений в диалоге
+    @Transactional
+    public void updateMessagesStatusBetweenUsers(Long senderId, Long receiverId, Long premiseId, String status) {
+        if (premiseId != null) {
+            chatMessageRepository.updateDeliveryStatusByUsersAndPremise(senderId, receiverId, premiseId, status);
+        } else {
+            chatMessageRepository.updateDeliveryStatusByUsers(senderId, receiverId, status);
+        }
+    }
+
     public ChatMessage sendSystemMessage(Long senderId, Long receiverId, String text) {
         ChatMessage message = new ChatMessage(
                 senderId,
@@ -143,6 +152,7 @@ public class ChatService {
                 "Система",
                 text
         );
+        message.setDeliveryStatus("DELIVERED");
         return chatMessageRepository.save(message);
     }
 
@@ -154,6 +164,7 @@ public class ChatService {
                 text,
                 premiseId
         );
+        message.setDeliveryStatus("DELIVERED");
         return chatMessageRepository.save(message);
     }
 
@@ -173,7 +184,6 @@ public class ChatService {
         return chatMessageRepository.findByReceiverIdAndReadFalse(userId);
     }
 
-    // НОВЫЙ МЕТОД: подсчет непрочитанных сообщений
     public int getUnreadMessagesCount(Long userId) {
         return chatMessageRepository.findByReceiverIdAndReadFalse(userId).size();
     }
@@ -181,18 +191,20 @@ public class ChatService {
     @Transactional
     public void markMessagesAsRead(Long currentUserId, Long otherUserId) {
         chatMessageRepository.markMessagesAsRead(otherUserId, currentUserId);
-        System.out.println("Marked messages as read from user " + otherUserId);
 
-        // После отметки о прочтении удаляем уведомление о непрочитанных сообщениях
+        // После отметки о прочтении обновляем статус доставки
+        chatMessageRepository.updateDeliveryStatusByUsers(otherUserId, currentUserId, "READ");
+
         notificationService.deleteNotificationsForChat(currentUserId, otherUserId, null);
     }
 
     @Transactional
     public void markMessagesAsReadByPremise(Long currentUserId, Long otherUserId, Long premiseId) {
         chatMessageRepository.markMessagesAsReadByPremise(otherUserId, currentUserId, premiseId);
-        System.out.println("Marked messages as read from user " + otherUserId + " for premise " + premiseId);
 
-        // После отметки о прочтении удаляем уведомление о непрочитанных сообщениях
+        // После отметки о прочтении обновляем статус доставки
+        chatMessageRepository.updateDeliveryStatusByUsersAndPremise(otherUserId, currentUserId, premiseId, "READ");
+
         notificationService.deleteNotificationsForChat(currentUserId, otherUserId, premiseId);
     }
 }

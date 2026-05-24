@@ -1,5 +1,6 @@
 package com.example.rentapp.service;
 
+import com.example.rentapp.config.WebSocketConfig;
 import com.example.rentapp.dto.NotificationDto;
 import com.example.rentapp.entity.Notification;
 import com.example.rentapp.entity.User;
@@ -41,7 +42,7 @@ public class NotificationService {
         notificationRepository.save(notification);
 
         // Отправляем email, если пользователь включил уведомления
-        sendEmailNotification(userId, type, fromUserName, content, link, fromUserId);
+        sendEmailNotificationIfOffline(userId, type, fromUserName, content, link, fromUserId);
     }
 
     // Добавьте этот метод в NotificationService.java
@@ -68,7 +69,8 @@ public class NotificationService {
         }
     }
 
-    private void sendEmailNotification(Long userId, String type, String fromUserName, String content, String link, Long fromUserId) {
+    private void sendEmailNotificationIfOffline(Long userId, String type, String fromUserName,
+                                                String content, String link, Long fromUserId) {
         try {
             User user = userRepository.findById(userId).orElse(null);
             if (user == null || !user.isEmailNotificationsEnabled()) {
@@ -80,7 +82,15 @@ public class NotificationService {
                 return;
             }
 
-            // Получаем полное имя отправителя
+            // ПРОВЕРЯЕМ: если пользователь онлайн - НЕ ОТПРАВЛЯЕМ email
+            if (WebSocketConfig.onlineUsers.containsKey(user.getLogin())) {
+                System.out.println("📱 Пользователь " + user.getLogin() + " онлайн, email не отправлен (тип: " + type + ")");
+                return;
+            }
+
+            // Только если оффлайн - отправляем email
+            System.out.println("📧 Пользователь " + user.getLogin() + " оффлайн, отправляем email уведомление (тип: " + type + ")");
+
             String fromFullName = null;
             if (fromUserId != null) {
                 User fromUser = userRepository.findById(fromUserId).orElse(null);
@@ -101,7 +111,7 @@ public class NotificationService {
                 message.setSubject(subject);
                 message.setText(emailBody);
                 mailSender.send(message);
-                System.out.println("Email уведомление отправлено на " + user.getEmail());
+                System.out.println("✅ Email уведомление отправлено на " + user.getEmail());
             }
         } catch (Exception e) {
             System.err.println("Ошибка отправки email уведомления: " + e.getMessage());

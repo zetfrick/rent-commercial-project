@@ -175,7 +175,6 @@
             overflow-y: auto;
         }
 
-        /* Двухколоночный контейнер для карточки и запросов */
         .right-panel-grid {
             display: flex;
             gap: 20px;
@@ -191,7 +190,6 @@
             min-width: 0;
         }
 
-        /* Стили для предупреждений */
         .user-banned-warning {
             background: #ffebee;
             padding: 12px 16px;
@@ -238,7 +236,6 @@
             line-height: 1.4;
         }
 
-        /* Карточка помещения */
         .premise-card {
             background: white;
             border-radius: 20px;
@@ -344,7 +341,6 @@
             z-index: 15;
         }
 
-        /* Стиль для статуса "СНЯТО С ПУБЛИКАЦИИ" поверх фото */
         .premise-card .status-badge-overlay {
             position: absolute;
             top: 10px;
@@ -439,7 +435,6 @@
             background: #e64a19;
         }
 
-        /* Карточка запросов на аренду */
         .requests-card {
             background: white;
             border-radius: 20px;
@@ -551,6 +546,7 @@
             padding: 10px 14px;
             border-radius: 18px;
             word-wrap: break-word;
+            transition: opacity 0.3s ease;
         }
 
         .my-message {
@@ -565,6 +561,39 @@
             color: #333;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
+        }
+
+        .my-message.pending {
+            opacity: 0.5;
+            position: relative;
+        }
+
+        .my-message.pending::after {
+            content: "⏳";
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .my-message.delivered {
+            opacity: 0.9;
+        }
+
+        .message-status-icon {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 10px;
+            vertical-align: middle;
+        }
+
+        .message-status-icon.delivered {
+            color: #4caf50;
+        }
+
+        .message-status-icon.read {
+            color: #2196f3;
         }
 
         .message-header {
@@ -613,7 +642,6 @@
             padding: 60px 20px;
         }
 
-        /* Стили для выбранных файлов */
         .selected-files-preview {
             background: #f5f5f5;
             border-radius: 12px;
@@ -691,7 +719,6 @@
             background: #ffebee;
         }
 
-        /* Стили для сообщений с файлами */
         .message .file-attachment {
             display: flex;
             align-items: center;
@@ -822,7 +849,6 @@
             cursor: not-allowed;
         }
 
-        /* Индикатор блокировки в поле ввода */
         .input-area.banned-indicator {
             position: relative;
         }
@@ -1096,12 +1122,8 @@
         }
 
         @media (max-width: 1100px) {
-            .right-panel-grid {
-                flex-direction: column;
-            }
-            .right-panel {
-                width: 360px;
-            }
+            .right-panel-grid { flex-direction: column; }
+            .right-panel { width: 360px; }
         }
 
         @media (max-width: 900px) {
@@ -1157,7 +1179,6 @@
     </div>
 
     <div class="right-panel">
-        <!-- Предупреждения -->
         <div th:if="${otherUserBanned}" class="user-banned-warning">
             <i class="fas fa-ban"></i>
             <p>
@@ -1175,9 +1196,7 @@
             </p>
         </div>
 
-        <!-- Двухколоночный контейнер для карточки и запросов -->
         <div class="right-panel-grid" th:if="${premise != null and premise.id != null}">
-            <!-- Карточка помещения -->
             <div class="premise-card">
                 <div class="premise-scroll-content">
                     <div th:if="${not premise.active}" class="status-badge-overlay">
@@ -1238,7 +1257,6 @@
                 </div>
             </div>
 
-            <!-- Карточка запросов на аренду (справа от карточки) -->
             <div th:if="${isOwner and premise != null and premise.active}" class="requests-card">
                 <h3><i class="fas fa-clock"></i> Запросы на аренду</h3>
                 <div id="pendingRequestsList" class="requests-list">
@@ -1296,7 +1314,6 @@
 <div id="connectionStatus" class="connection-status">🔄 Инициализация...</div>
 
 <script th:inline="javascript">
-    // Весь JavaScript код остаётся без изменений (как в вашем файле)
     const receiverId = /*[[${otherUser.id}]]*/ null;
     const currentUserId = /*[[${currentUser.id}]]*/ null;
     const currentUsername = /*[[${currentUser.login}]]*/ null;
@@ -1324,6 +1341,10 @@
 
     let selectedFiles = [];
 
+    let pendingMessageMap = new Map();
+    let initialReadStatusSent = false;
+    let messagesReadStatusChecked = false;
+
     const premiseData = {
         id: /*[[${premise != null ? premise.id : null}]]*/ null,
         typeInRussian: /*[[${premise != null ? premise.getTypeInRussian() : null}]]*/ null,
@@ -1335,6 +1356,12 @@
         photoPaths: /*[[${premise != null ? premise.photoPaths : null}]]*/ null,
         active: /*[[${premise != null ? premise.active : true}]]*/ true
     };
+
+    function resetReadStatusFlags() {
+        initialReadStatusSent = false;
+        messagesReadStatusChecked = false;
+        console.log('🔄 Сброшены флаги статуса прочтения');
+    }
 
     function updateConnectionStatus(connected) {
         const statusDiv = document.getElementById('connectionStatus');
@@ -1364,6 +1391,333 @@
         }
     }
 
+    function getStatusIcon(deliveryStatus) {
+        if (deliveryStatus === 'READ') {
+            return '<i class="fas fa-check-double message-status-icon read" title="Прочитано"></i>';
+        } else if (deliveryStatus === 'RECEIVED') {
+            return '<i class="fas fa-check message-status-icon delivered" title="Доставлено"></i>';
+        } else if (deliveryStatus === 'DELIVERED') {
+            return '<i class="fas fa-clock message-status-icon" style="color: #ff9800;" title="Отправлено"></i>';
+        }
+        return '';
+    }
+
+    function updateMessageStatus(messageId, newStatus) {
+        const messageElement = document.querySelector(`.message[data-message-id="${messageId}"]`);
+        if (!messageElement) return;
+
+        if (newStatus === 'RECEIVED') {
+            messageElement.classList.remove('pending');
+            messageElement.classList.add('delivered');
+
+            const timeElement = messageElement.querySelector('.message-time');
+            if (timeElement) {
+                const currentText = timeElement.innerHTML;
+                const cleanText = currentText.replace(/<i[^>]*><\/i>/, '').trim();
+                timeElement.innerHTML = `${cleanText} ${getStatusIcon('RECEIVED')}`;
+            }
+        } else if (newStatus === 'READ') {
+            const timeElement = messageElement.querySelector('.message-time');
+            if (timeElement) {
+                const currentText = timeElement.innerHTML;
+                const cleanText = currentText.replace(/<i[^>]*><\/i>/, '').trim();
+                timeElement.innerHTML = `${cleanText} ${getStatusIcon('READ')}`;
+            }
+        }
+    }
+
+    function updateAllReadStatuses() {
+        const messages = document.querySelectorAll('.message');
+        let updatedCount = 0;
+        messages.forEach(msg => {
+            const msgId = parseInt(msg.getAttribute('data-message-id'));
+            if (msgId && msgId > 0 && msg.classList.contains('my-message')) {
+                const timeElement = msg.querySelector('.message-time');
+                if (timeElement && !timeElement.innerHTML.includes('fa-check-double')) {
+                    const currentText = timeElement.innerHTML;
+                    const cleanText = currentText.replace(/<i[^>]*><\/i>/, '').trim();
+                    timeElement.innerHTML = `${cleanText} ${getStatusIcon('READ')}`;
+                    updatedCount++;
+                }
+                msg.classList.remove('pending');
+                msg.classList.add('delivered');
+            }
+        });
+        if (updatedCount > 0) {
+            console.log(`✅ Статусы прочтения обновлены для ${updatedCount} сообщений`);
+        }
+    }
+
+    function sendInitialReadReceipt() {
+        const theirMessages = document.querySelectorAll('.their-message');
+        if (theirMessages.length === 0) {
+            console.log('Нет сообщений от собеседника для отметки прочтения');
+            initialReadStatusSent = true;
+            return;
+        }
+
+        if (initialReadStatusSent) {
+            console.log('Отметка прочтения уже отправлена для этого диалога, пропускаем');
+            return;
+        }
+
+        console.log(`📖 Отправляем отметку о прочтении для ${theirMessages.length} сообщений`);
+
+        markMessagesAsReadHttp().then(() => {
+            console.log('✅ HTTP запрос на отметку прочитанных выполнен');
+        });
+
+        if (stompClient && isWebSocketConnected) {
+            const readData = {
+                senderId: receiverId,
+                receiverId: currentUserId,
+                premiseId: premiseId || null
+            };
+            stompClient.send('/app/chat.read', {}, JSON.stringify(readData));
+            console.log('📤 WebSocket уведомление о прочтении отправлено');
+        }
+
+        setTimeout(() => {
+            updateAllReadStatuses();
+        }, 300);
+
+        initialReadStatusSent = true;
+    }
+
+    function replaceTempMessage(tempId, realMessage) {
+        const tempElement = document.querySelector(`.message[data-message-id="${tempId}"]`);
+        if (tempElement) {
+            tempElement.setAttribute('data-message-id', realMessage.id);
+            if (realMessage.deliveryStatus) {
+                const timeElement = tempElement.querySelector('.message-time');
+                if (timeElement) {
+                    const currentText = timeElement.innerHTML;
+                    const cleanText = currentText.replace(/<i[^>]*><\/i>/, '').trim();
+                    let statusIcon = '';
+                    if (realMessage.deliveryStatus === 'RECEIVED') {
+                        statusIcon = getStatusIcon('RECEIVED');
+                        tempElement.classList.remove('pending');
+                        tempElement.classList.add('delivered');
+                    } else if (realMessage.deliveryStatus === 'READ') {
+                        statusIcon = getStatusIcon('READ');
+                        tempElement.classList.remove('pending');
+                        tempElement.classList.add('delivered');
+                    } else if (realMessage.deliveryStatus === 'DELIVERED') {
+                        statusIcon = getStatusIcon('DELIVERED');
+                    }
+                    timeElement.innerHTML = `${cleanText} ${statusIcon}`;
+                }
+            }
+            if (pendingMessageMap.has(tempId)) {
+                pendingMessageMap.delete(tempId);
+            }
+            pendingMessageMap.set(realMessage.id, realMessage.id);
+            console.log('✅ Временное сообщение заменено на реальное:', tempId, '->', realMessage.id);
+        }
+    }
+
+    function addNewMessageToChat(message) {
+        const existingMessage = document.querySelector(`.message[data-message-id="${message.id}"]`);
+        if (existingMessage) {
+            if (message.deliveryStatus) {
+                updateMessageStatus(message.id, message.deliveryStatus);
+            }
+            return;
+        }
+
+        if (message.id > 0) {
+            const allTempMessages = document.querySelectorAll('.message.pending[data-message-id^="-"]');
+            for (const tempMsg of allTempMessages) {
+                const tempId = parseInt(tempMsg.getAttribute('data-message-id'));
+                if (tempId < 0) {
+                    const tempText = tempMsg.querySelector('.message-text')?.innerText;
+                    if (tempText === message.text) {
+                        replaceTempMessage(tempId, message);
+                        return;
+                    }
+                }
+            }
+        }
+
+        const messagesContainer = document.getElementById('messages');
+        const isCurrentUser = message.senderId == currentUserId;
+        const isSystem = message.type === 'SYSTEM';
+        const isFileMessage = message.type === 'FILE' || (message.text && (message.text.includes('file-attachment') || message.text.includes('file-preview-image')));
+
+        let deliveryClass = '';
+        let statusIcon = '';
+        if (isCurrentUser && !isSystem) {
+            const deliveryStatus = message.deliveryStatus || 'DELIVERED';
+            if (deliveryStatus === 'DELIVERED') {
+                deliveryClass = 'pending';
+                statusIcon = getStatusIcon(deliveryStatus);
+            } else if (deliveryStatus === 'RECEIVED') {
+                deliveryClass = 'delivered';
+                statusIcon = getStatusIcon(deliveryStatus);
+            } else if (deliveryStatus === 'READ') {
+                deliveryClass = 'delivered';
+                statusIcon = getStatusIcon(deliveryStatus);
+            }
+        }
+
+        const div = document.createElement('div');
+        div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')} ${deliveryClass}`;
+        div.setAttribute('data-message-id', message.id);
+
+        const formattedTime = formatDateTime(message.sentAt);
+
+        if (isSystem) {
+            div.innerHTML = `
+                <div class="message-text">${message.text}</div>
+                <div class="message-time">${formattedTime}</div>
+            `;
+        } else if (isFileMessage) {
+            div.innerHTML = `
+                <div class="message-header">
+                    <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(message.senderLogin)}')" class="message-author-link">${escapeHtml(message.senderLogin)}</a>
+                </div>
+                <div class="message-text">${message.text}</div>
+                <div class="message-time">${formattedTime} ${statusIcon}</div>
+            `;
+        } else {
+            div.innerHTML = `
+                <div class="message-header">
+                    <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(message.senderLogin)}')" class="message-author-link">${escapeHtml(message.senderLogin)}</a>
+                </div>
+                <div class="message-text">${escapeHtml(message.text)}</div>
+                <div class="message-time">${formattedTime} ${statusIcon}</div>
+            `;
+        }
+
+        messagesContainer.appendChild(div);
+        scrollToBottom();
+
+        if (message.senderId != currentUserId && !isSystem) {
+            console.log('📖 Новое сообщение от собеседника, отмечаем как прочитанное');
+            setTimeout(() => {
+                markMessagesAsReadViaWebSocket();
+                markMessagesAsReadHttp();
+                updateMessageStatus(message.id, 'READ');
+            }, 100);
+        }
+    }
+
+    function renderMessages(messages) {
+        const container = document.getElementById('messages');
+        if (!container) return;
+        container.innerHTML = '';
+        if (!messages || messages.length === 0) {
+            container.innerHTML = '<div class="empty-chat"><i class="fas fa-comments"></i><p>У вас пока нет сообщений</p></div>';
+            resetReadStatusFlags();
+            return;
+        }
+        let lastDateKey = null;
+        messages.sort((a,b) => new Date(a.sentAt) - new Date(b.sentAt));
+        messages.forEach(msg => {
+            const currentDateKey = getDateKey(msg.sentAt);
+            if (lastDateKey !== currentDateKey) {
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'date-separator';
+                dateDiv.innerHTML = `<span>${new Date(msg.sentAt).toLocaleDateString('ru-RU', {day:'numeric',month:'long'})}</span>`;
+                container.appendChild(dateDiv);
+                lastDateKey = currentDateKey;
+            }
+
+            const isSystem = msg.senderLogin === 'Система';
+            const isCurrentUser = msg.senderId == currentUserId;
+            const isFileMessage = msg.text && (msg.text.includes('file-attachment') || msg.text.includes('file-preview-image'));
+
+            let deliveryClass = '';
+            let statusIcon = '';
+            if (isCurrentUser && !isSystem) {
+                const deliveryStatus = msg.deliveryStatus || 'DELIVERED';
+                if (deliveryStatus === 'DELIVERED') {
+                    deliveryClass = 'pending';
+                    statusIcon = getStatusIcon(deliveryStatus);
+                } else if (deliveryStatus === 'RECEIVED') {
+                    deliveryClass = 'delivered';
+                    statusIcon = getStatusIcon(deliveryStatus);
+                } else if (deliveryStatus === 'READ') {
+                    deliveryClass = 'delivered';
+                    statusIcon = getStatusIcon(deliveryStatus);
+                }
+            }
+
+            const div = document.createElement('div');
+            div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')} ${deliveryClass}`;
+            div.setAttribute('data-message-id', msg.id);
+
+            const formattedTime = formatDateTime(msg.sentAt);
+
+            if (isSystem) {
+                div.innerHTML = `
+                    <div class="message-text">${msg.text}</div>
+                    <div class="message-time">${formattedTime}</div>
+                `;
+            } else if (isFileMessage) {
+                div.innerHTML = `
+                    <div class="message-header">
+                        <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>
+                    </div>
+                    <div class="message-text">${msg.text}</div>
+                    <div class="message-time">${formattedTime} ${statusIcon}</div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="message-header">
+                        <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>
+                    </div>
+                    <div class="message-text">${escapeHtml(msg.text)}</div>
+                    <div class="message-time">${formattedTime} ${statusIcon}</div>
+                `;
+            }
+            container.appendChild(div);
+        });
+        scrollToBottom();
+
+        resetReadStatusFlags();
+
+        setTimeout(() => {
+            sendInitialReadReceipt();
+        }, 200);
+    }
+
+    function sendMessageViaWebSocket(text) {
+        if (!stompClient || !isWebSocketConnected) {
+            return false;
+        }
+
+        const tempId = -Date.now();
+        const tempMessage = {
+            id: tempId,
+            senderId: currentUserId,
+            receiverId: receiverId,
+            senderLogin: currentUsername,
+            text: text,
+            sentAt: new Date().toISOString(),
+            premiseId: premiseId || null,
+            type: 'MESSAGE',
+            deliveryStatus: 'DELIVERED'
+        };
+
+        addNewMessageToChat(tempMessage);
+        pendingMessageMap.set(tempId, tempId);
+
+        const message = {
+            id: tempId,
+            senderId: currentUserId,
+            receiverId: receiverId,
+            senderLogin: currentUsername,
+            text: text,
+            sentAt: new Date().toISOString(),
+            premiseId: premiseId || null,
+            type: 'MESSAGE'
+        };
+
+        stompClient.send('/app/chat.send', {}, JSON.stringify(message));
+        return true;
+    }
+
     function connectWebSocket() {
         if (!currentUsername) return;
 
@@ -1377,24 +1731,47 @@
                 reconnectAttempts = 0;
                 updateConnectionStatus(true);
 
-                const subscribeUrl = '/user/' + currentUsername + '/queue/messages';
-                stompClient.subscribe(subscribeUrl, function(response) {
+                resetReadStatusFlags();
+
+                stompClient.send('/app/chat.connect', {}, JSON.stringify({
+                    username: currentUsername
+                }));
+
+                stompClient.subscribe('/user/' + currentUsername + '/queue/messages', function(response) {
                     const message = JSON.parse(response.body);
                     addNewMessageToChat(message);
+                    if (message.senderId != currentUserId) {
+                        setTimeout(() => {
+                            markMessagesAsReadViaWebSocket();
+                            markMessagesAsReadHttp();
+                            updateMessageStatus(message.id, 'READ');
+                        }, 100);
+                    }
                 });
 
-                const typingUrl = '/user/' + currentUsername + '/queue/typing';
-                stompClient.subscribe(typingUrl, function(response) {
+                stompClient.subscribe('/user/' + currentUsername + '/queue/typing', function(response) {
                     const data = JSON.parse(response.body);
                     if (data.senderLogin !== currentUsername) {
                         showTypingIndicator(data.senderLogin);
                     }
                 });
 
-                const readUrl = '/user/' + currentUsername + '/queue/read';
-                stompClient.subscribe(readUrl, function(response) {
+                stompClient.subscribe('/user/' + currentUsername + '/queue/read', function(response) {
                     const data = JSON.parse(response.body);
+                    console.log('📖 Получено уведомление о прочтении:', data);
+                    updateAllReadStatuses();
                 });
+
+                stompClient.subscribe('/user/' + currentUsername + '/queue/delivered', function(response) {
+                    const data = JSON.parse(response.body);
+                    if (data.messageId) {
+                        updateMessageStatus(data.messageId, 'DELIVERED');
+                    }
+                });
+
+                setTimeout(() => {
+                    sendInitialReadReceipt();
+                }, 500);
             },
             function(error) {
                 isWebSocketConnected = false;
@@ -1407,25 +1784,6 @@
                 }
             }
         );
-    }
-
-    function sendMessageViaWebSocket(text) {
-        if (!stompClient || !isWebSocketConnected) {
-            return false;
-        }
-
-        const message = {
-            senderId: currentUserId,
-            receiverId: receiverId,
-            senderLogin: currentUsername,
-            text: text,
-            sentAt: new Date().toISOString(),
-            premiseId: premiseId || null,
-            type: 'MESSAGE'
-        };
-
-        stompClient.send('/app/chat.send', {}, JSON.stringify(message));
-        return true;
     }
 
     function sendTypingIndicator() {
@@ -1442,7 +1800,10 @@
     }
 
     function markMessagesAsReadViaWebSocket() {
-        if (!stompClient || !isWebSocketConnected) return;
+        if (!stompClient || !isWebSocketConnected) {
+            console.log('WebSocket не подключён, отправляем только HTTP запрос');
+            return;
+        }
 
         const readData = {
             senderId: receiverId,
@@ -1451,53 +1812,11 @@
         };
 
         stompClient.send('/app/chat.read', {}, JSON.stringify(readData));
-    }
+        console.log('📤 WebSocket уведомление о прочтении отправлено');
 
-    function addNewMessageToChat(message) {
-        const existingMessage = document.querySelector(`.message[data-message-id="${message.id}"]`);
-        if (existingMessage) return;
-
-        const messagesContainer = document.getElementById('messages');
-        const isCurrentUser = message.senderId == currentUserId;
-        const isSystem = message.type === 'SYSTEM';
-        const isFileMessage = message.type === 'FILE' || (message.text && (message.text.includes('file-attachment') || message.text.includes('file-preview-image')));
-
-        const div = document.createElement('div');
-        div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')}`;
-        div.setAttribute('data-message-id', message.id);
-
-        const formattedTime = formatDateTime(message.sentAt);
-
-        if (isSystem) {
-            div.innerHTML = `
-                <div class="message-text">${message.text}</div>
-                <div class="message-time">${formattedTime}</div>
-            `;
-        } else if (isFileMessage) {
-            div.innerHTML = `
-                <div class="message-header">
-                    <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(message.senderLogin)}')" class="message-author-link">${escapeHtml(message.senderLogin)}</a>
-                </div>
-                <div class="message-text">${message.text}</div>
-                <div class="message-time">${formattedTime}</div>
-            `;
-        } else {
-            div.innerHTML = `
-                <div class="message-header">
-                    <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(message.senderLogin)}')" class="message-author-link">${escapeHtml(message.senderLogin)}</a>
-                </div>
-                <div class="message-text">${escapeHtml(message.text)}</div>
-                <div class="message-time">${formattedTime}</div>
-            `;
-        }
-
-        messagesContainer.appendChild(div);
-        scrollToBottom();
-
-        if (message.senderId != currentUserId) {
-            markMessagesAsReadViaWebSocket();
-            markMessagesAsReadHttp();
-        }
+        setTimeout(() => {
+            updateAllReadStatuses();
+        }, 100);
     }
 
     function showTypingIndicator(userLogin) {
@@ -1567,8 +1886,18 @@
         try {
             let url = `/chats/api/messages/mark-read?with=${receiverId}`;
             if (premiseId) url += `&premiseId=${premiseId}`;
-            await fetch(url, { method: 'POST' });
-        } catch(e) { console.error(e); }
+            const response = await fetch(url, { method: 'POST' });
+            if (response.ok) {
+                console.log('✅ HTTP запрос на отметку прочитанных отправлен (receiverId=' + receiverId + ')');
+                return true;
+            } else {
+                console.log('⚠️ HTTP запрос на отметку прочитанных вернул статус: ' + response.status);
+                return false;
+            }
+        } catch(e) {
+            console.error('Ошибка при отметке прочитанных:', e);
+            return false;
+        }
     }
 
     function showNotification(message, isError = false) {
@@ -1626,63 +1955,6 @@
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
 
-    function renderMessages(messages) {
-        const container = document.getElementById('messages');
-        if (!container) return;
-        container.innerHTML = '';
-        if (!messages || messages.length === 0) {
-            container.innerHTML = '<div class="empty-chat"><i class="fas fa-comments"></i><p>У вас пока нет сообщений</p></div>';
-            return;
-        }
-        let lastDateKey = null;
-        messages.sort((a,b) => new Date(a.sentAt) - new Date(b.sentAt));
-        messages.forEach(msg => {
-            const currentDateKey = getDateKey(msg.sentAt);
-            if (lastDateKey !== currentDateKey) {
-                const dateDiv = document.createElement('div');
-                dateDiv.className = 'date-separator';
-                dateDiv.innerHTML = `<span>${new Date(msg.sentAt).toLocaleDateString('ru-RU', {day:'numeric',month:'long'})}</span>`;
-                container.appendChild(dateDiv);
-                lastDateKey = currentDateKey;
-            }
-
-            const isSystem = msg.senderLogin === 'Система';
-            const isCurrentUser = msg.senderId == currentUserId;
-            const isFileMessage = msg.text && (msg.text.includes('file-attachment') || msg.text.includes('file-preview-image'));
-
-            const div = document.createElement('div');
-            div.className = `message ${isSystem ? 'system-message' : (isCurrentUser ? 'my-message' : 'their-message')}`;
-            div.setAttribute('data-message-id', msg.id);
-
-            const formattedTime = formatDateTime(msg.sentAt);
-
-            if (isSystem) {
-                div.innerHTML = `
-                    <div class="message-text">${msg.text}</div>
-                    <div class="message-time">${formattedTime}</div>
-                `;
-            } else if (isFileMessage) {
-                div.innerHTML = `
-                    <div class="message-header">
-                        <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>
-                    </div>
-                    <div class="message-text">${msg.text}</div>
-                    <div class="message-time">${formattedTime}</div>
-                `;
-            } else {
-                div.innerHTML = `
-                    <div class="message-header">
-                        <a href="javascript:void(0)" onclick="goToProfile('${escapeHtml(msg.senderLogin)}')" class="message-author-link">${escapeHtml(msg.senderLogin)}</a>
-                    </div>
-                    <div class="message-text">${escapeHtml(msg.text)}</div>
-                    <div class="message-time">${formattedTime}</div>
-                `;
-            }
-            container.appendChild(div);
-        });
-        scrollToBottom();
-    }
-
     async function loadNewMessagesHttp() {
         try {
             let url = `/chats/api/messages?with=${receiverId}`;
@@ -1691,7 +1963,9 @@
             if (response.ok) {
                 const messages = await response.json();
                 renderMessages(messages);
-                await markMessagesAsReadHttp();
+                setTimeout(() => {
+                    sendInitialReadReceipt();
+                }, 300);
             }
         } catch(e) { console.error(e); }
     }
@@ -1812,7 +2086,8 @@
                             text: data.fileHtml,
                             sentAt: new Date().toISOString(),
                             premiseId: premiseId || null,
-                            type: 'FILE'
+                            type: 'FILE',
+                            deliveryStatus: 'DELIVERED'
                         };
                         addNewMessageToChat(wsMessage);
                     }
@@ -1920,12 +2195,10 @@
             if (responseApproved.ok) {
                 approvedRanges = await responseApproved.json();
             }
-
             const responsePending = await fetch(`/api/bookings/premise/${premiseId}/pending-ranges`);
             if (responsePending.ok) {
                 pendingRanges = await responsePending.json();
             }
-
             displayBookedRanges();
         } catch(e) { console.error(e); }
     }
@@ -1933,9 +2206,7 @@
     function displayBookedRanges() {
         const container = document.getElementById('bookedRangesContainer');
         const items = document.getElementById('bookedRangesItems');
-
         let allRangesHtml = '';
-
         if (approvedRanges && approvedRanges.length > 0) {
             allRangesHtml += approvedRanges.map(range => `
                 <span class="booked-date-range-badge">
@@ -1945,7 +2216,6 @@
                 </span>
             `).join('');
         }
-
         if (pendingRanges && pendingRanges.length > 0) {
             allRangesHtml += pendingRanges.map(range => `
                 <span class="pending-date-range-badge">
@@ -1955,7 +2225,6 @@
                 </span>
             `).join('');
         }
-
         if (allRangesHtml) {
             container.style.display = 'block';
             items.innerHTML = allRangesHtml;
@@ -1968,20 +2237,16 @@
         const startInput = document.getElementById('startDate');
         const endInput = document.getElementById('endDate');
         const today = new Date().toISOString().split('T')[0];
-
         let minDate = today;
         let maxDate = null;
-
         if (premiseData.availableFrom && premiseData.availableFrom > today) {
             minDate = premiseData.availableFrom;
         }
         if (premiseData.availableTo) {
             maxDate = premiseData.availableTo;
         }
-
         startInput.min = minDate;
         endInput.min = minDate;
-
         if (maxDate) {
             startInput.max = maxDate;
             endInput.max = maxDate;
@@ -1993,7 +2258,6 @@
         const endInput = document.getElementById('endDate');
         const startDate = startInput.value;
         const endDate = endInput.value;
-
         if (startDate && endDate) {
             if (startDate > endDate) {
                 startInput.value = endDate;
@@ -2009,14 +2273,12 @@
         const endDate = document.getElementById('endDate').value;
         const indicator = document.getElementById('availabilityIndicator');
         const submitBtn = document.getElementById('submitBtn');
-
         if (!startDate || !endDate) {
             indicator.style.display = 'none';
             submitBtn.disabled = true;
             currentAvailability = false;
             return;
         }
-
         if (startDate > endDate) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
@@ -2025,7 +2287,6 @@
             currentAvailability = false;
             return;
         }
-
         if (premiseData.availableFrom && startDate < premiseData.availableFrom) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
@@ -2034,7 +2295,6 @@
             currentAvailability = false;
             return;
         }
-
         if (premiseData.availableTo && endDate > premiseData.availableTo) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
@@ -2043,13 +2303,10 @@
             currentAvailability = false;
             return;
         }
-
         const start = new Date(startDate);
         const end = new Date(endDate);
-
         let hasConflict = false;
         let conflictingRanges = [];
-
         for (const range of approvedRanges) {
             const rangeStart = new Date(range.start);
             const rangeEnd = new Date(range.end);
@@ -2058,7 +2315,6 @@
                 conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)} (подтверждена)`);
             }
         }
-
         for (const range of pendingRanges) {
             const rangeStart = new Date(range.start);
             const rangeEnd = new Date(range.end);
@@ -2067,7 +2323,6 @@
                 conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)} (ожидает подтверждения)`);
             }
         }
-
         if (hasConflict) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
@@ -2089,17 +2344,14 @@
             showNotification('Даты недоступны', true);
             return;
         }
-
         if (!premiseActive) {
             showNotification('Невозможно создать бронирование - объявление снято с публикации', true);
             return;
         }
-
         if (otherUserBanned) {
             showNotification('Невозможно создать бронирование - пользователь заблокирован', true);
             return;
         }
-
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
         if (!startDate || !endDate) {
@@ -2110,18 +2362,15 @@
             showNotification('Дата начала не может быть позже даты окончания', true);
             return;
         }
-
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Обработка...';
-
         let url;
         if (isOwner) {
             url = `/api/bookings/create?premiseId=${premiseId}&renterId=${receiverId}&startDate=${startDate}&endDate=${endDate}`;
         } else {
             url = `/api/bookings/request?premiseId=${premiseId}&ownerId=${receiverId}&startDate=${startDate}&endDate=${endDate}`;
         }
-
         try {
             const response = await fetch(url, { method: 'POST' });
             const data = await response.json();
@@ -2135,7 +2384,6 @@
                         method: 'POST'
                     });
                 }
-
                 showNotification(isOwner ? 'Аренда оформлена!' : 'Запрос отправлен владельцу!');
                 closeModal();
                 await loadBookedRanges();
@@ -2158,7 +2406,6 @@
         try {
             const response = await fetch(`/api/bookings/owner/${currentUserId}/pending/premise/${premiseId}`);
             const requests = await response.json();
-
             if (requests.length === 0) {
                 container.innerHTML = '<div class="empty-requests"><i class="fas fa-inbox"></i> Нет активных запросов</div>';
                 return;
@@ -2187,12 +2434,10 @@
             const data = await response.json();
             if (data.success) {
                 showNotification(action === 'approve' ? 'Аренда подтверждена!' : 'Запрос отклонён');
-
                 const messageType = action === 'approve' ? 'booking_approved' : 'booking_rejected';
                 await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=${messageType}&premiseId=${premiseId}`, {
                     method: 'POST'
                 });
-
                 await loadPendingRequests();
                 await loadBookedRanges();
                 await loadNewMessagesHttp();
@@ -2213,7 +2458,6 @@
             showNotification('Невозможно создать бронирование - пользователь заблокирован', true);
             return;
         }
-
         document.getElementById('bookingModal').style.display = 'block';
         document.body.style.overflow = 'hidden';
         updateDatePickerLimits();
@@ -2231,7 +2475,6 @@
         document.getElementById('endDate').value = '';
         document.getElementById('availabilityIndicator').style.display = 'none';
         document.getElementById('submitBtn').disabled = true;
-
         const modalTitle = document.getElementById('modalTitle');
         if (isOwner) {
             modalTitle.innerHTML = '<i class="fas fa-handshake"></i> Оформление аренды';
@@ -2269,11 +2512,9 @@
         const files = Array.from(e.target.files);
         const maxSize = 10 * 1024 * 1024;
         const validFiles = files.filter(f => f.size <= maxSize);
-
         if (validFiles.length !== files.length) {
             showNotification('Некоторые файлы превышают 10 МБ и не были добавлены', true);
         }
-
         selectedFiles.push(...validFiles);
         updateFilePreview();
         updateFileInput();
@@ -2304,20 +2545,18 @@
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
+        resetReadStatusFlags();
         renderMessages(initialMessages);
         updateInputAreaWarning();
         if (messageInput && premiseActive) {
             messageInput.focus();
         }
-
         connectWebSocket();
-
         pollingInterval = setInterval(() => {
             if (!isWebSocketConnected) {
                 loadNewMessagesHttp();
             }
         }, 30000);
-
         await loadBookedRanges();
         initPremiseSlider();
         if (isOwner) await loadPendingRequests();
@@ -2325,7 +2564,12 @@
 
     window.addEventListener('beforeunload', () => {
         if (pollingInterval) clearInterval(pollingInterval);
-        if (stompClient) stompClient.disconnect();
+        if (stompClient && stompClient.connected) {
+            stompClient.send('/app/chat.disconnect', {}, JSON.stringify({
+                username: currentUsername
+            }));
+            stompClient.disconnect();
+        }
     });
 </script>
 </body>

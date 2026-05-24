@@ -23,7 +23,7 @@ public class ChatMessage {
 
     private String senderLogin;
 
-    @Column(length = 10000)  // Увеличиваем длину для текста сообщения
+    @Column(length = 10000)
     private String text;
 
     private LocalDateTime sentAt = LocalDateTime.now();
@@ -43,11 +43,15 @@ public class ChatMessage {
 
     private Long fileSize;
 
+    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'DELIVERED'")
+    private String deliveryStatus = "DELIVERED";
+
     public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text) {
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.senderLogin = senderLogin;
         this.text = text;
+        this.deliveryStatus = "DELIVERED";
     }
 
     public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text, Long premiseId) {
@@ -56,6 +60,7 @@ public class ChatMessage {
         this.senderLogin = senderLogin;
         this.text = text;
         this.premiseId = premiseId;
+        this.deliveryStatus = "DELIVERED";
     }
 
     public ChatMessage(Long senderId, Long receiverId, String senderLogin, String text, Long premiseId,
@@ -69,5 +74,6 @@ public class ChatMessage {
         this.fileUrl = fileUrl;
         this.fileType = fileType;
         this.fileSize = fileSize;
+        this.deliveryStatus = "DELIVERED";
     }
 }
