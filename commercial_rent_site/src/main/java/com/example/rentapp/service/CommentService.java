@@ -14,8 +14,6 @@ public class CommentService {
     @Autowired
     private CatalogClient catalogClient;
 
-    // Убираем notificationService и userService отсюда - уведомления будут в контроллере
-
     public CommentDto addComment(CommentDto commentDto) {
         if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
             throw new IllegalArgumentException("Текст комментария не может быть пустым");
@@ -23,16 +21,42 @@ public class CommentService {
         if (commentDto.getPremiseId() == null) {
             throw new IllegalArgumentException("Не указан ID помещения");
         }
-
-        // Только сохраняем комментарий через catalog-client, без уведомлений
         return catalogClient.addComment(commentDto);
     }
 
+    /**
+     * Добавление ответа на комментарий
+     */
+    public CommentDto addReply(CommentDto commentDto) {
+        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
+            throw new IllegalArgumentException("Текст ответа не может быть пустым");
+        }
+        if (commentDto.getPremiseId() == null) {
+            throw new IllegalArgumentException("Не указан ID помещения");
+        }
+        if (commentDto.getParentCommentId() == null) {
+            throw new IllegalArgumentException("Не указан ID комментария, на который отвечаете");
+        }
+        return catalogClient.addReply(commentDto);
+    }
+
+    /**
+     * Получение комментариев с ответами (иерархически)
+     */
+    public List<CommentDto> getCommentsWithReplies(Long premiseId) {
+        return catalogClient.getCommentsWithReplies(premiseId);
+    }
+
+    /**
+     * Получение плоского списка комментариев (без иерархии) - для обратной совместимости
+     */
     public List<CommentDto> getCommentsByPremiseId(Long premiseId) {
         return catalogClient.getCommentsByPremiseId(premiseId);
     }
 
-    // НОВЫЙ МЕТОД: удаление комментария
+    /**
+     * Удаление комментария
+     */
     public boolean deleteComment(Long commentId) {
         try {
             Map<String, Object> result = catalogClient.deleteComment(commentId);

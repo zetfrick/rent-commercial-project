@@ -52,4 +52,10 @@ public interface CatalogClient {
     @PutMapping("/api/premises/owner/{ownerId}/update-contacts")
     void updateOwnerContacts(@PathVariable("ownerId") Long ownerId,
                              @RequestBody Map<String, String> contacts);
+
+    @GetMapping("/api/comments/premise/{premiseId}/with-replies")
+    List<CommentDto> getCommentsWithReplies(@PathVariable("premiseId") Long premiseId);
+
+    @PostMapping("/api/comments/reply")
+    CommentDto addReply(@RequestBody CommentDto commentDto);
 }

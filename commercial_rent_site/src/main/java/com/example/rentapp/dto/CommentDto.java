@@ -5,30 +5,45 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * DTO для комментариев к объявлению
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommentDto {
 
     private Long id;
-
     private Long premiseId;
+    private String authorName;
+    private Long authorId;
+    private String text;
+    private LocalDateTime createdAt;
 
-    private String authorName;        // Логин пользователя, оставившего комментарий
+    // НОВЫЕ ПОЛЯ ДЛЯ ОТВЕТОВ
+    private Long parentCommentId;
+    private Long repliedToUserId;
+    private String repliedToUserName;
 
-    private String text;              // Текст комментария
+    // ВЛОЖЕННЫЕ ОТВЕТЫ
+    private List<CommentDto> replies = new ArrayList<>();
 
-    private LocalDateTime createdAt;  // Дата и время создания
-
-    // Конструктор для удобства создания из контроллера
     public CommentDto(Long premiseId, String authorName, String text) {
         this.premiseId = premiseId;
         this.authorName = authorName;
         this.text = text;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Конструктор для ответа - ИСПРАВЛЕНА ОПЕЧАТКА: premiereId -> premiseId
+    public CommentDto(Long premiseId, String authorName, String text,
+                      Long parentCommentId, Long repliedToUserId, String repliedToUserName) {
+        this.premiseId = premiseId;  // ← было "premiereId", исправлено на "premiseId"
+        this.authorName = authorName;
+        this.text = text;
+        this.parentCommentId = parentCommentId;
+        this.repliedToUserId = repliedToUserId;
+        this.repliedToUserName = repliedToUserName;
         this.createdAt = LocalDateTime.now();
     }
 }

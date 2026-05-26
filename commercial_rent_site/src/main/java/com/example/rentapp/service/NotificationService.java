@@ -45,8 +45,6 @@ public class NotificationService {
         sendEmailNotificationIfOffline(userId, type, fromUserName, content, link, fromUserId);
     }
 
-    // Добавьте этот метод в NotificationService.java
-
     @Transactional
     public void deleteNotificationsForChat(Long userId, Long fromUserId, Long premiseId) {
         List<Notification> notifications = notificationRepository.findByUserIdAndReadOrderByCreatedAtDesc(userId, false);
@@ -148,8 +146,14 @@ public class NotificationService {
                 return "⚠️ Аренда заканчивается сегодня - Аренда помещений";
             case "COMMENT":
                 return "💬 Новый комментарий - Аренда помещений";
+            case "COMMENT_REPLY":
+                return "💬 Ответ на комментарий - Аренда помещений";
             case "AVAILABILITY_FREE":
                 return "🔔 Даты освободились - Аренда помещений";
+            case "USER_BANNED":
+                return "⛔ Аккаунт заблокирован - Аренда помещений";
+            case "USER_UNBANNED":
+                return "✅ Аккаунт разблокирован - Аренда помещений";
             default:
                 return "Новое уведомление - Аренда помещений";
         }
@@ -240,6 +244,20 @@ public class NotificationService {
                                 "С уважением,\nКоманда Аренда помещений",
                         displayName, displayContent, baseUrl, link
                 );
+            case "COMMENT_REPLY":
+                // Извлекаем ID помещения из ссылки (убираем параметр commentId)
+                String premiseLink = link;
+                if (premiseLink != null && premiseLink.contains("?commentId=")) {
+                    premiseLink = premiseLink.substring(0, premiseLink.indexOf("?commentId="));
+                }
+                return String.format(
+                        "Здравствуйте!\n\n" +
+                                "Пользователь %s ответил на ваш комментарий:\n\n" +
+                                "«%s»\n\n" +
+                                "Перейти к объявлению: %s%s\n\n" +  // ← ссылка на помещение
+                                "С уважением,\nКоманда Аренда помещений",
+                        displayName, displayContent, baseUrl, premiseLink
+                );
             case "AVAILABILITY_FREE":
                 // Удаляем HTML-теги из content для email (на случай если они есть)
                 String plainContent = displayContent.replaceAll("<[^>]*>", "").trim();
@@ -250,6 +268,20 @@ public class NotificationService {
                                 "Перейти к объявлению: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
                         plainContent, baseUrl, link
+                );
+            case "USER_BANNED":
+                return String.format(
+                        "Здравствуйте!\n\n" +
+                                "%s\n\n" +
+                                "С уважением,\nКоманда Аренда помещений",
+                        displayContent
+                );
+            case "USER_UNBANNED":
+                return String.format(
+                        "Здравствуйте!\n\n" +
+                                "%s\n\n" +
+                                "С уважением,\nКоманда Аренда помещений",
+                        displayContent
                 );
             default:
                 return String.format(

@@ -472,7 +472,8 @@
         'BOOKING_ENDS_IN_3_DAYS': 'fa-calendar-week',
         'BOOKING_ENDS_IN_1_DAY': 'fa-calendar-day',
         'BOOKING_ENDS_TODAY': 'fa-calendar-times',
-        'COMMENT': 'fa-comment'
+        'COMMENT': 'fa-comment',
+        'COMMENT_REPLY': 'fa-reply'
     };
 
     const typeColors = {
@@ -489,7 +490,8 @@
         'BOOKING_ENDS_IN_3_DAYS': '#ff9800',
         'BOOKING_ENDS_IN_1_DAY': '#ff5722',
         'BOOKING_ENDS_TODAY': '#f44336',
-        'COMMENT': '#9c27b0'
+        'COMMENT': '#9c27b0',
+        'COMMENT_REPLY': '#e91e63'
     };
 
     // ==================== НАСТРОЙКИ EMAIL-УВЕДОМЛЕНИЙ ====================
@@ -675,6 +677,11 @@
             case 'COMMENT':
                 html = `<i class="fas ${typeIcons[notif.type]}" style="color: ${typeColors[notif.type]}; margin-right: 8px;"></i>
                         <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> оставил комментарий к вашему объявлению
+                        ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть →</a>` : ''}`;
+                break;
+            case 'COMMENT_REPLY':
+                html = `<i class="fas ${typeIcons[notif.type] || 'fa-reply'}" style="color: ${typeColors[notif.type] || '#9c27b0'}; margin-right: 8px;"></i>
+                        <a href="/profile?username=${encodeURIComponent(notif.fromUserName)}">${escapeHtml(notif.fromUserName)}</a> ответил на ваш комментарий
                         ${notif.link ? `<a href="#" onclick="markAsReadAndRedirect(${notif.id}, '${notif.link}'); return false;"> Посмотреть →</a>` : ''}`;
                 break;
             case 'BOOKING_STARTS_IN_3_DAYS':

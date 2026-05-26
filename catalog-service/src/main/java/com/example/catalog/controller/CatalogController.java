@@ -26,10 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -69,7 +66,6 @@ public class CatalogController {
         LocalDate today = LocalDate.now();
         System.out.println("=== [SCHEDULED] Проверка просроченных объявлений на " + today + " ===");
 
-        // Находим активные объявления, у которых дата окончания доступности уже прошла
         List<Premise> expiredPremises = premiseRepository.findByActiveTrueAndAvailableToBefore(today);
 
         System.out.println("Найдено просроченных объявлений: " + expiredPremises.size());
@@ -81,7 +77,6 @@ public class CatalogController {
             System.out.println("Владелец ID: " + premise.getOwnerId());
             System.out.println("Дата доступности до: " + premise.getAvailableTo());
 
-            // Проверяем наличие владельца
             if (premise.getOwnerId() == null) {
                 System.err.println("!!! ПРЕДУПРЕЖДЕНИЕ: У объявления #" + premise.getId() + " отсутствует владелец (owner_id = null)");
                 System.err.println("!!! Уведомление не будет отправлено");
@@ -92,7 +87,6 @@ public class CatalogController {
                 continue;
             }
 
-            // Проверяем, не заблокирован ли пользователь
             if (isUserBanned(premise.getOwnerId())) {
                 System.out.println("⚠ Владелец #" + premise.getOwnerId() + " заблокирован, объявление снимается без уведомления");
                 premise.setActive(false);
@@ -107,7 +101,6 @@ public class CatalogController {
             premiseRepository.save(premise);
             System.out.println("✓ Объявление #" + premise.getId() + " снято с публикации (истек срок доступности)");
 
-            // Отправляем уведомление владельцу о снятии помещения с русским названием типа
             try {
                 System.out.println("→ Попытка отправить уведомление владельцу ID=" + premise.getOwnerId());
                 String typeInRussian = PremiseConfig.TYPE_RUSSIAN.getOrDefault(premise.getType(), premise.getType());
@@ -148,7 +141,6 @@ public class CatalogController {
                 System.out.println("  Прошло дней: " + java.time.Duration.between(premise.getUnpublishedAt(), LocalDateTime.now()).toDays());
             }
 
-            // Удаляем фото с диска
             List<String> photoPaths = premise.getPhotoPaths();
             if (photoPaths != null && !photoPaths.isEmpty()) {
                 String uploadDir = "uploads/";
@@ -196,7 +188,6 @@ public class CatalogController {
                 unpublishedCount++;
                 System.out.println("✓ Объявление #" + premise.getId() + " снято с публикации");
 
-                // ===== ДОБАВЬТЕ ОТПРАВКУ УВЕДОМЛЕНИЯ ДЛЯ КАЖДОГО ОБЪЯВЛЕНИЯ =====
                 try {
                     String typeInRussian = PremiseConfig.TYPE_RUSSIAN.getOrDefault(premise.getType(), premise.getType());
                     notificationService.sendNotification(
@@ -212,7 +203,6 @@ public class CatalogController {
                 } catch (Exception e) {
                     System.err.println("  ✗ Ошибка отправки уведомления для объявления #" + premise.getId() + ": " + e.getMessage());
                 }
-                // ===== КОНЕЦ БЛОКА =====
             }
         }
 
@@ -256,7 +246,6 @@ public class CatalogController {
         System.out.println("OwnerId: " + premiseDto.getOwnerId());
         System.out.println("Тип: " + premiseDto.getType());
 
-        // Проверяем, не заблокирован ли пользователь
         if (premiseDto.getOwnerId() != null && isUserBanned(premiseDto.getOwnerId())) {
             System.err.println("!!! Ошибка: Пользователь #" + premiseDto.getOwnerId() + " заблокирован и не может добавлять помещения");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -283,7 +272,6 @@ public class CatalogController {
             return ResponseEntity.notFound().build();
         }
 
-        // Проверяем, не заблокирован ли владелец
         if (existingPremise.getOwnerId() != null && isUserBanned(existingPremise.getOwnerId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -352,7 +340,6 @@ public class CatalogController {
             System.out.println("Стало активно: " + active);
             System.out.println("Владелец ID: " + premise.getOwnerId());
 
-            // Проверяем, не заблокирован ли владелец (нельзя опубликовать если заблокирован)
             if (active && premise.getOwnerId() != null && isUserBanned(premise.getOwnerId())) {
                 response.put("success", false);
                 response.put("message", "Невозможно опубликовать объявление - ваш аккаунт заблокирован");
@@ -444,6 +431,8 @@ public class CatalogController {
         return ResponseEntity.ok(response);
     }
 
+    // ==================== МЕТОДЫ ДЛЯ КОММЕНТАРИЕВ С ОТВЕТАМИ ====================
+
     @GetMapping("/comments/premise/{premiseId}")
     public ResponseEntity<List<CommentDto>> getCommentsByPremiseId(@PathVariable Long premiseId) {
         List<Comment> comments = commentRepository.findByPremiseIdOrderByCreatedAtDesc(premiseId);
@@ -453,13 +442,63 @@ public class CatalogController {
                         c.getId(),
                         c.getPremiseId(),
                         c.getAuthorName(),
-                        null,
+                        c.getAuthorId(),
                         c.getText(),
-                        c.getCreatedAt()
+                        c.getCreatedAt(),
+                        c.getParentCommentId(),
+                        c.getRepliedToUserId(),
+                        c.getRepliedToUserName(),
+                        new ArrayList<>()
                 )
         ).toList();
 
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/comments/premise/{premiseId}/with-replies")
+    public ResponseEntity<List<CommentDto>> getCommentsWithReplies(@PathVariable Long premiseId) {
+        List<Comment> allComments = commentRepository.findAllByPremiseIdOrderByCreatedAtAsc(premiseId);
+
+        if (allComments.isEmpty()) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        Map<Long, CommentDto> commentMap = new HashMap<>();
+        List<CommentDto> rootComments = new ArrayList<>();
+
+        for (Comment comment : allComments) {
+            CommentDto dto = new CommentDto();
+            BeanUtils.copyProperties(comment, dto);
+            dto.setReplies(new ArrayList<>());
+            commentMap.put(dto.getId(), dto);
+        }
+
+        for (Comment comment : allComments) {
+            CommentDto dto = commentMap.get(comment.getId());
+            if (comment.getParentCommentId() != null && comment.getParentCommentId() > 0) {
+                CommentDto parent = commentMap.get(comment.getParentCommentId());
+                if (parent != null) {
+                    if (parent.getReplies() == null) {
+                        parent.setReplies(new ArrayList<>());
+                    }
+                    parent.getReplies().add(dto);
+                } else {
+                    rootComments.add(dto);
+                }
+            } else {
+                rootComments.add(dto);
+            }
+        }
+
+        rootComments.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+
+        for (CommentDto dto : commentMap.values()) {
+            if (dto.getReplies() != null && !dto.getReplies().isEmpty()) {
+                dto.getReplies().sort((a, b) -> a.getCreatedAt().compareTo(b.getCreatedAt()));
+            }
+        }
+
+        return ResponseEntity.ok(rootComments);
     }
 
     @PostMapping("/comments")
@@ -468,15 +507,18 @@ public class CatalogController {
             return ResponseEntity.badRequest().build();
         }
 
-        // Проверяем, не заблокирован ли пользователь по authorId
         if (commentDto.getAuthorId() != null && isUserBanned(commentDto.getAuthorId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         Comment comment = new Comment(
                 commentDto.getPremiseId(),
+                commentDto.getAuthorId(),
                 commentDto.getAuthorName(),
-                commentDto.getText()
+                commentDto.getText(),
+                null,
+                null,
+                null
         );
 
         Comment saved = commentRepository.save(comment);
@@ -485,9 +527,72 @@ public class CatalogController {
                 saved.getId(),
                 saved.getPremiseId(),
                 saved.getAuthorName(),
-                commentDto.getAuthorId(),
+                saved.getAuthorId(),
                 saved.getText(),
-                saved.getCreatedAt()
+                saved.getCreatedAt(),
+                null,
+                null,
+                null,
+                new ArrayList<>()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/comments/reply")
+    public ResponseEntity<CommentDto> addReply(@RequestBody CommentDto commentDto) {
+        if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        if (commentDto.getAuthorId() != null && isUserBanned(commentDto.getAuthorId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (commentDto.getParentCommentId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Optional<Comment> parentOpt = commentRepository.findById(commentDto.getParentCommentId());
+        if (parentOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        Comment parentComment = parentOpt.get();
+
+        // ВАЖНО: определяем repliedToUserId из родительского комментария, если не передан
+        Long repliedToUserId = commentDto.getRepliedToUserId();
+        String repliedToUserName = commentDto.getRepliedToUserName();
+
+        if (repliedToUserId == null && parentComment.getAuthorId() != null) {
+            repliedToUserId = parentComment.getAuthorId();
+            repliedToUserName = parentComment.getAuthorName();
+            System.out.println("→ Определён repliedToUserId из родительского комментария: " + repliedToUserId);
+        }
+
+        Comment reply = new Comment(
+                commentDto.getPremiseId(),
+                commentDto.getAuthorId(),
+                commentDto.getAuthorName(),
+                commentDto.getText(),
+                commentDto.getParentCommentId(),
+                repliedToUserId,
+                repliedToUserName
+        );
+
+        Comment saved = commentRepository.save(reply);
+
+        CommentDto response = new CommentDto(
+                saved.getId(),
+                saved.getPremiseId(),
+                saved.getAuthorName(),
+                saved.getAuthorId(),
+                saved.getText(),
+                saved.getCreatedAt(),
+                saved.getParentCommentId(),
+                saved.getRepliedToUserId(),
+                saved.getRepliedToUserName(),
+                new ArrayList<>()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -504,9 +609,21 @@ public class CatalogController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        commentRepository.deleteById(id);
+        deleteCommentAndReplies(id);
+
         response.put("success", true);
         return ResponseEntity.ok(response);
+    }
+
+    private void deleteCommentAndReplies(Long commentId) {
+        List<Comment> replies = commentRepository.findRepliesByParentId(commentId);
+
+        for (Comment reply : replies) {
+            deleteCommentAndReplies(reply.getId());
+        }
+
+        commentRepository.deleteById(commentId);
+        System.out.println("✓ Удалён комментарий #" + commentId);
     }
 
     @GetMapping("/debug/services")
@@ -523,13 +640,6 @@ public class CatalogController {
         return result;
     }
 
-    // ==================== МЕТОДЫ ДЛЯ ПРОВЕРКИ БЛОКИРОВКИ ПОЛЬЗОВАТЕЛЯ ====================
-
-    /**
-     * Проверяет, заблокирован ли пользователь
-     * @param userId ID пользователя
-     * @return true если пользователь заблокирован
-     */
     private boolean isUserBanned(Long userId) {
         if (userId == null) return false;
 
@@ -601,5 +711,4 @@ public class CatalogController {
 
         return ResponseEntity.ok().build();
     }
-
 }

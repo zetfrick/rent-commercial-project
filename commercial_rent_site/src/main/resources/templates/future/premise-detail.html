@@ -768,7 +768,7 @@
             font-style: italic;
         }
 
-        /* ====================== КОММЕНТАРИИ ====================== */
+        /* ====================== КОММЕНТАРИИ С ОТВЕТАМИ ====================== */
         .comments-section {
             background: white;
             padding: 35px;
@@ -820,13 +820,49 @@
             flex-direction: column;
             gap: 20px;
         }
-        .comment {
+
+        /* Стили для корневых комментариев */
+        .comment-root {
             background: #f9f9f9;
             padding: 20px;
             border-radius: 16px;
             border-left: 5px solid #ff9800;
             position: relative;
         }
+
+        /* Стили для ответов */
+        .comment-reply {
+            margin-left: 40px;
+            margin-top: 12px;
+            background: #ffffff;
+            border-left: 3px solid #2196f3;
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+        }
+        .comment-reply .comment-header {
+            background: #f0f7ff;
+        }
+
+        .reply-info {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed #eee;
+        }
+        .reply-info i {
+            color: #2196f3;
+            margin-right: 5px;
+        }
+        .reply-info a {
+            color: #2196f3;
+            text-decoration: none;
+        }
+        .reply-info a:hover {
+            text-decoration: underline;
+        }
+
         .comment-header {
             display: flex;
             justify-content: space-between;
@@ -877,6 +913,107 @@
         }
         .comment-action-btn.delete:hover {
             background: #ffebee;
+        }
+
+        /* Кнопка ответа */
+        .reply-btn {
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 15px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #2196f3;
+        }
+        .reply-btn:hover {
+            background: #e3f2fd;
+        }
+
+        /* Форма ответа */
+        .reply-form {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+            display: none;
+        }
+        .reply-form.active {
+            display: block;
+        }
+        .reply-form textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            resize: vertical;
+            font-size: 13px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        .reply-form .reply-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .reply-form button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .reply-form .reply-submit {
+            background: #ff5722;
+            color: white;
+        }
+        .reply-form .reply-submit:hover {
+            background: #e64a19;
+            transform: translateY(-2px);
+        }
+        .reply-form .reply-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+        .reply-form .reply-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        /* Сворачивание ответов */
+        .replies-toggle {
+            margin-top: 10px;
+        }
+        .toggle-replies-btn {
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            color: #666;
+            padding: 4px 8px;
+            border-radius: 15px;
+            transition: all 0.2s;
+        }
+        .toggle-replies-btn:hover {
+            background: #f0f0f0;
+        }
+        .replies-container {
+            margin-top: 15px;
+        }
+        .replies-container.collapsed {
+            display: none;
+        }
+
+        /* Подсветка при переходе по ссылке из уведомления */
+        .scroll-to-reply {
+            animation: highlight 2s ease;
+        }
+        @keyframes highlight {
+            0% { background-color: #fff3cd; border-left-color: #ffc107; }
+            70% { background-color: #fff3cd; border-left-color: #ffc107; }
+            100% { background-color: transparent; border-left-color: #2196f3; }
         }
 
         .no-comments {
@@ -1087,6 +1224,24 @@
             background: #f5f5f5 !important;
             opacity: 0.6;
         }
+        .calendar-day.occupied {
+            background: #fff3e0 !important;
+            color: #ff9800 !important;
+            text-decoration: none !important;
+            position: relative;
+        }
+        .calendar-day.occupied:hover {
+            background: #ffe0b3 !important;
+            transform: scale(1.05);
+        }
+        .calendar-day.occupied::after {
+            content: "🔔";
+            font-size: 8px;
+            position: absolute;
+            bottom: 0;
+            right: 2px;
+            opacity: 0.7;
+        }
         .calendar-footer {
             padding: 10px 16px;
             border-top: 1px solid #eee;
@@ -1168,6 +1323,7 @@
             .booking-item { flex-direction: column; align-items: flex-start; }
             .cancel-booking-btn { margin-top: 10px; align-self: flex-start; }
             .date-range-row { flex-direction: column; gap: 10px; }
+            .comment-reply { margin-left: 15px; }
         }
 
         .top-buttons {
@@ -1358,27 +1514,6 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
-        }
-        /* В конце тега <style> добавьте: */
-        .calendar-day.occupied {
-            background: #fff3e0 !important;
-            color: #ff9800 !important;
-            text-decoration: none !important;
-            position: relative;
-        }
-
-        .calendar-day.occupied:hover {
-            background: #ffe0b3 !important;
-            transform: scale(1.05);
-        }
-
-        .calendar-day.occupied::after {
-            content: "🔔";
-            font-size: 8px;
-            position: absolute;
-            bottom: 0;
-            right: 2px;
-            opacity: 0.7;
         }
     </style>
 </head>
@@ -1790,7 +1925,7 @@
             <div th:unless="${isUserBanned}">
                 <div style="background: #e3f2fd; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
                     <i class="fas fa-info-circle" style="color: #2196f3; font-size: 20px;"></i>
-                    <span style="color: #1565c0; font-size: 14px;">✍️ Здесь вы можете оставить свой комментарий</span>
+                    <span style="color: #1565c0; font-size: 14px;">✍️ Здесь вы можете оставить свой комментарий или ответить на другие</span>
                 </div>
                 <form id="commentForm" class="comment-form">
                     <textarea id="commentText" placeholder="Напишите ваш комментарий или вопрос..." required></textarea>
@@ -2322,6 +2457,274 @@
         });
     }
 
+    // ======================== КОММЕНТАРИИ С ОТВЕТАМИ ========================
+
+    async function loadComments() {
+        const list = document.getElementById('commentsList');
+        if (!list) return;
+
+        try {
+            const res = await fetch(`/api/comments/premise/${premiseId}`);
+            if (!res.ok) throw new Error('Failed to fetch');
+
+            const comments = await res.json();
+            list.innerHTML = '';
+
+            if (!comments || comments.length === 0) {
+                list.innerHTML = `<div class="no-comments">Пока нет комментариев. Будьте первым!</div>`;
+                return;
+            }
+
+            const isUserBannedGlobally = typeof isUserBanned !== 'undefined' ? isUserBanned : false;
+            const isAuthenticated = typeof isAuthenticatedGlobal !== 'undefined' ? isAuthenticatedGlobal : false;
+
+            comments.forEach(comment => {
+                const commentHtml = renderComment(comment, 0, isUserBannedGlobally, isAuthenticated);
+                list.appendChild(commentHtml);
+            });
+
+            // Проверяем, есть ли параметр commentId в URL (для скролла к комментарию)
+            const urlParams = new URLSearchParams(window.location.search);
+            const scrollToCommentId = urlParams.get('commentId');
+            if (scrollToCommentId) {
+                setTimeout(() => {
+                    const targetComment = document.querySelector(`.comment-root[data-comment-id="${scrollToCommentId}"], .comment-reply[data-comment-id="${scrollToCommentId}"]`);
+                    if (targetComment) {
+                        targetComment.classList.add('scroll-to-reply');
+                        targetComment.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => {
+                            targetComment.classList.remove('scroll-to-reply');
+                        }, 3000);
+                    }
+                }, 500);
+            }
+        } catch (e) {
+            console.error('Error loading comments:', e);
+            list.innerHTML = `<div class="no-comments">Не удалось загрузить комментарии</div>`;
+        }
+    }
+
+    function renderComment(comment, level, isUserBanned, isAuthenticated) {
+        const isReply = level > 0;
+        const div = document.createElement('div');
+        div.className = isReply ? 'comment-reply' : 'comment-root';
+        div.setAttribute('data-comment-id', comment.id);
+
+        const isCommentAuthor = currentUsername === comment.authorName;
+        const canDelete = isCommentAuthor || isAdmin;
+        const canReply = isAuthenticated && !isUserBanned;
+        const canReport = isAuthenticated && !isUserBanned;
+
+        let replyInfoHtml = '';
+        if (comment.parentCommentId && comment.repliedToUserName) {
+            replyInfoHtml = `
+                <div class="reply-info">
+                    <i class="fas fa-reply"></i> Ответ для
+                    <a href="/profile?username=${encodeURIComponent(comment.repliedToUserName)}">
+                        ${escapeHtml(comment.repliedToUserName)}
+                    </a>
+                </div>
+            `;
+        }
+
+        const repliesCount = comment.replies ? comment.replies.length : 0;
+        const hasReplies = repliesCount > 0;
+
+        div.innerHTML = `
+            ${replyInfoHtml}
+            <div class="comment-header">
+                <a href="/profile?username=${encodeURIComponent(comment.authorName)}"
+                   class="comment-author"
+                   style="text-decoration: none; color: #ff5722; font-weight: 600;">
+                    ${escapeHtml(comment.authorName)}
+                </a>
+                <span class="comment-date">${new Date(comment.createdAt).toLocaleString('ru-RU')}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(comment.text)}</div>
+            <div class="comment-actions">
+                ${canReply ? `
+                    <button class="reply-btn" onclick="showReplyForm(${comment.id}, '${escapeHtml(comment.authorName)}', ${comment.authorId || 'null'})">
+                        <i class="fas fa-reply"></i> Ответить
+                    </button>
+                ` : ''}
+                ${canReport ? `
+                    <button class="comment-action-btn report" onclick="openCommentComplaintModal(${comment.id}, '${escapeHtml(comment.authorName)}', '${escapeHtml(comment.text)}')">
+                        <i class="fas fa-flag"></i> Пожаловаться
+                    </button>
+                ` : ''}
+                ${canDelete ? `
+                    <button class="comment-action-btn delete" onclick="deleteComment(${comment.id})">
+                        <i class="fas fa-trash-alt"></i> Удалить
+                    </button>
+                ` : ''}
+            </div>
+            ${hasReplies ? `
+                <div class="replies-toggle">
+                    <button class="toggle-replies-btn" onclick="toggleReplies(${comment.id})">
+                        <i class="fas fa-chevron-down"></i> Показать ответы (${repliesCount})
+                    </button>
+                </div>
+                <div id="replies-${comment.id}" class="replies-container collapsed">
+                    ${comment.replies.map(reply => renderComment(reply, level + 1, isUserBanned, isAuthenticated).outerHTML).join('')}
+                </div>
+            ` : ''}
+            <div id="reply-form-${comment.id}" class="reply-form"></div>
+        `;
+
+        return div;
+    }
+
+    function showReplyForm(parentCommentId, repliedToUserName, repliedToUserId) {
+        const formContainer = document.getElementById(`reply-form-${parentCommentId}`);
+        if (!formContainer) return;
+
+        // Закрываем другие открытые формы
+        document.querySelectorAll('.reply-form.active').forEach(form => {
+            if (form.id !== `reply-form-${parentCommentId}`) {
+                form.classList.remove('active');
+                form.innerHTML = '';
+            }
+        });
+
+        if (formContainer.classList.contains('active')) {
+            formContainer.classList.remove('active');
+            formContainer.innerHTML = '';
+            return;
+        }
+
+        formContainer.innerHTML = `
+            <div class="reply-form active">
+                <textarea id="reply-text-${parentCommentId}" placeholder="Ответ для ${escapeHtml(repliedToUserName)}..." rows="3"></textarea>
+                <div class="reply-actions">
+                    <button class="reply-cancel" onclick="cancelReply(${parentCommentId})">Отмена</button>
+                    <button class="reply-submit" onclick="submitReply(${parentCommentId}, '${escapeHtml(repliedToUserName)}', ${repliedToUserId})">Ответить</button>
+                </div>
+            </div>
+        `;
+        formContainer.classList.add('active');
+        document.getElementById(`reply-text-${parentCommentId}`)?.focus();
+    }
+
+    function cancelReply(parentCommentId) {
+        const formContainer = document.getElementById(`reply-form-${parentCommentId}`);
+        if (formContainer) {
+            formContainer.classList.remove('active');
+            formContainer.innerHTML = '';
+        }
+    }
+
+    async function submitReply(parentCommentId, repliedToUserName, repliedToUserId) {
+        const textarea = document.getElementById(`reply-text-${parentCommentId}`);
+        const text = textarea?.value.trim();
+
+        if (!text) {
+            showNotification('Введите текст ответа', true);
+            return;
+        }
+
+        const submitBtn = document.querySelector(`#reply-form-${parentCommentId} .reply-submit`);
+        const originalText = submitBtn?.innerHTML;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Отправка...';
+        }
+
+        try {
+            const response = await fetch('/api/comments/reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    premiseId: premiseId,
+                    text: text,
+                    parentCommentId: parentCommentId,
+                    repliedToUserId: repliedToUserId,
+                    repliedToUserName: repliedToUserName
+                })
+            });
+
+            if (response.ok) {
+                showNotification('✅ Ответ добавлен!');
+                cancelReply(parentCommentId);
+                await loadComments();
+            } else {
+                const errorData = await response.text();
+                showNotification('Ошибка при отправке ответа: ' + errorData, true);
+            }
+        } catch (err) {
+            console.error('Error submitting reply:', err);
+            showNotification('Не удалось отправить ответ', true);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    }
+
+    function toggleReplies(commentId) {
+        const container = document.getElementById(`replies-${commentId}`);
+        const btn = container?.previousElementSibling?.querySelector('.toggle-replies-btn');
+
+        if (container) {
+            if (container.classList.contains('collapsed')) {
+                container.classList.remove('collapsed');
+                if (btn) btn.innerHTML = '<i class="fas fa-chevron-up"></i> Скрыть ответы';
+            } else {
+                container.classList.add('collapsed');
+                if (btn) btn.innerHTML = '<i class="fas fa-chevron-down"></i> Показать ответы';
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    document.getElementById('commentForm')?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const textArea = document.getElementById('commentText');
+        const text = textArea.value.trim();
+
+        if (!text || !premiseId) return;
+
+        const submitBtn = this.querySelector('button');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Отправка...';
+
+        try {
+            const res = await fetch('/api/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    premiseId: premiseId,
+                    text: text
+                })
+            });
+
+            if (res.ok) {
+                textArea.value = '';
+                await loadComments();
+                showNotification('✅ Комментарий добавлен!', false);
+            } else {
+                const errorData = await res.text();
+                showNotification('Ошибка при отправке комментария: ' + errorData, true);
+            }
+        } catch (err) {
+            console.error('Error submitting comment:', err);
+            showNotification('Не удалось отправить комментарий', true);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+    });
+
     // ======================== КАРТА ========================
     ymaps.ready(() => {
         const region = premiseData.region || '';
@@ -2381,116 +2784,8 @@
         });
     });
 
-    // ======================== КОММЕНТАРИИ ========================
-    async function loadComments() {
-        const list = document.getElementById('commentsList');
-        if (!list) return;
-
-        try {
-            const res = await fetch(`/api/comments/premise/${premiseId}`);
-            if (!res.ok) throw new Error('Failed to fetch');
-
-            const comments = await res.json();
-            list.innerHTML = '';
-
-            if (!comments || comments.length === 0) {
-                list.innerHTML = `<div class="no-comments">Пока нет комментариев. Будьте первым!</div>`;
-                return;
-            }
-
-            const isUserBannedGlobally = typeof isUserBanned !== 'undefined' ? isUserBanned : false;
-            const isAuthenticated = typeof isAuthenticatedGlobal !== 'undefined' ? isAuthenticatedGlobal : false;
-
-            comments.forEach(c => {
-                const isCommentAuthor = currentUsername === c.authorName;
-                const canDelete = isCommentAuthor || isAdmin;
-                const canReport = isAuthenticated && !isUserBannedGlobally;
-
-                const div = document.createElement('div');
-                div.className = 'comment';
-                div.innerHTML = `
-                    <div class="comment-header">
-                        <a href="/profile?username=${encodeURIComponent(c.authorName)}"
-                           class="comment-author"
-                           style="text-decoration: none; color: #ff5722; font-weight: 600;">
-                            ${escapeHtml(c.authorName)}
-                        </a>
-                        <span class="comment-date">${new Date(c.createdAt).toLocaleString('ru-RU')}</span>
-                    </div>
-                    <div class="comment-text">${escapeHtml(c.text)}</div>
-                    <div class="comment-actions">
-                        ${canReport ? `
-                            <button class="comment-action-btn report" onclick="openCommentComplaintModal(${c.id}, '${escapeHtml(c.authorName)}', '${escapeHtml(c.text)}')">
-                                <i class="fas fa-flag"></i> Пожаловаться
-                            </button>
-                        ` : ''}
-                        ${canDelete ? `
-                            <button class="comment-action-btn delete" onclick="deleteComment(${c.id})">
-                                <i class="fas fa-trash-alt"></i> Удалить
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        } catch (e) {
-            console.error('Error loading comments:', e);
-            list.innerHTML = `<div class="no-comments">Не удалось загрузить комментарии</div>`;
-        }
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    document.getElementById('commentForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const textArea = document.getElementById('commentText');
-        const text = textArea.value.trim();
-
-        if (!text || !premiseId) return;
-
-        const submitBtn = this.querySelector('button');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Отправка...';
-
-        try {
-            const res = await fetch('/api/comments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    premiseId: premiseId,
-                    text: text
-                })
-            });
-
-            if (res.ok) {
-                textArea.value = '';
-                await loadComments();
-                showNotification('✅ Комментарий добавлен!', false);
-            } else {
-                const errorData = await res.text();
-                showNotification('Ошибка при отправке комментария: ' + errorData, true);
-            }
-        } catch (err) {
-            console.error('Error submitting comment:', err);
-            showNotification('Не удалось отправить комментарий', true);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-        }
-    });
-
     // ======================== ФУНКЦИИ ДЛЯ УВЕДОМЛЕНИЯ О СВОБОДНЫХ ДАТАХ ========================
 
-    // Форматирование даты
     function formatDate(date) {
         if (!date) return '';
         const day = String(date.getDate()).padStart(2, '0');
@@ -2499,7 +2794,6 @@
         return `${day}.${month}.${year}`;
     }
 
-    // Парсинг ДД.ММ.ГГГГ в Date (корректно, без сдвига по часовому поясу)
     function parseDate(dateStr) {
         if (!dateStr) return null;
         const parts = dateStr.split('.');
@@ -2508,11 +2802,9 @@
         const month = parseInt(parts[1], 10) - 1;
         const year = parseInt(parts[2], 10);
         if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-        // Используем UTC для создания даты без сдвига по часовому поясу
         return new Date(Date.UTC(year, month, day));
     }
 
-    // Преобразование ДД.ММ.ГГГГ в YYYY-MM-DD (ISO)
     function dateToIso(dateStr) {
         const date = parseDate(dateStr);
         if (!date) return '';
@@ -2533,7 +2825,6 @@
         return new Date(Date.UTC(year, month, day));
     }
 
-    // Списки занятых дат (APPROVED + PENDING) в формате "YYYY-MM-DD"
     let allOccupiedDatesISO = new Set();
     let notifyCurrentStartDate = null;
     let notifyCurrentEndDate = null;
@@ -2542,11 +2833,6 @@
     function buildOccupiedDatesSet() {
         allOccupiedDatesISO.clear();
 
-        console.log('=== buildOccupiedDatesSet ===');
-        console.log('bookedDateRanges:', bookedDateRanges);
-        console.log('pendingDateRanges:', pendingDateRanges);
-
-        // Добавляем APPROVED даты
         if (bookedDateRanges && bookedDateRanges.length > 0) {
             for (const range of bookedDateRanges) {
                 const startStr = range.start;
@@ -2559,7 +2845,6 @@
                         while (current <= end) {
                             const isoDate = current.toISOString().split('T')[0];
                             allOccupiedDatesISO.add(isoDate);
-                            console.log('Добавлена APPROVED дата:', isoDate);
                             current.setUTCDate(current.getUTCDate() + 1);
                         }
                     }
@@ -2567,7 +2852,6 @@
             }
         }
 
-        // Добавляем PENDING даты
         if (pendingDateRanges && pendingDateRanges.length > 0) {
             for (const range of pendingDateRanges) {
                 const startStr = range.start;
@@ -2580,21 +2864,16 @@
                         while (current <= end) {
                             const isoDate = current.toISOString().split('T')[0];
                             allOccupiedDatesISO.add(isoDate);
-                            console.log('Добавлена PENDING дата:', isoDate);
                             current.setUTCDate(current.getUTCDate() + 1);
                         }
                     }
                 }
             }
         }
-
-        console.log('Всего занятых дат:', allOccupiedDatesISO.size);
-        console.log('Занятые даты:', Array.from(allOccupiedDatesISO));
     }
 
     function getMinDateForNotify() {
         const today = new Date();
-        // Нормализуем сегодняшнюю дату в UTC
         const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
         const availableFrom = premiseData.availableFrom ? parseIsoDate(premiseData.availableFrom) : null;
         if (availableFrom && availableFrom > todayUTC) {
@@ -2613,16 +2892,13 @@
         return maxDate;
     }
 
-    // Функция проверки, является ли дата вне доступного периода (НЕ кликабельная)
     function isDateOutOfRange(date, minDate, maxDate) {
-        // Сравниваем UTC даты
         const dateUTC = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
         const minUTC = minDate ? new Date(Date.UTC(minDate.getUTCFullYear(), minDate.getUTCMonth(), minDate.getUTCDate())) : null;
         const maxUTC = maxDate ? new Date(Date.UTC(maxDate.getUTCFullYear(), maxDate.getUTCMonth(), maxDate.getUTCDate())) : null;
         return (minUTC && dateUTC < minUTC) || (maxUTC && dateUTC > maxUTC);
     }
 
-    // Функция проверки, занята ли дата (для отображения, но кликабельная)
     function isDateOccupied(date) {
         if (!date) return false;
         const isoDate = date.toISOString().split('T')[0];
@@ -2633,7 +2909,6 @@
         const calendar = document.getElementById(calendarId);
         if (!calendar) return;
 
-        // targetDate может быть строкой или null/undefined
         let targetDateObj = null;
         if (targetDate) {
             if (typeof targetDate === 'string') {
@@ -2831,7 +3106,6 @@
             return;
         }
 
-        // Проверяем, есть ли хотя бы одна занятая дата в выбранном диапазоне
         let hasOccupied = false;
         const current = new Date(startDate);
         while (current <= endDate) {
@@ -2845,13 +3119,11 @@
         if (!hasOccupied) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator available';
-            const diff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
             indicator.innerHTML = `<i class="fas fa-check-circle"></i> Все даты свободны! Вы можете арендовать помещение прямо сейчас.`;
             submitBtn.disabled = false;
             return;
         }
 
-        // Есть занятые даты - можно подписаться на уведомление
         indicator.style.display = 'block';
         indicator.className = 'availability-indicator unavailable';
         indicator.innerHTML = `<i class="fas fa-clock"></i> Некоторые даты заняты. Вы получите уведомление, когда они освободятся.`;
@@ -2859,7 +3131,6 @@
     }
 
     function openNotifyModal() {
-        // ОБНОВЛЯЕМ СПИСОК ЗАНЯТЫХ ДАТ ПЕРЕД ОТКРЫТИЕМ МОДАЛЬНОГО ОКНА
         buildOccupiedDatesSet();
 
         document.getElementById('notifyStartDate').value = '';
@@ -2905,7 +3176,6 @@
             return;
         }
 
-        // Проверяем, есть ли хотя бы одна занятая дата (иначе подписываться смысла нет)
         let hasOccupied = false;
         const current = new Date(startDateObj);
         while (current <= endDateObj) {
@@ -2954,7 +3224,6 @@
         }
     }
 
-    // Инициализация календарей для модального окна
     function initNotifyCalendars() {
         const startInput = document.getElementById('notifyStartDate');
         const endInput = document.getElementById('notifyEndDate');

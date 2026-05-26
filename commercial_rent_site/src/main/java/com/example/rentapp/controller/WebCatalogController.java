@@ -245,6 +245,7 @@ public class WebCatalogController {
                 throw new RuntimeException("Ваш аккаунт заблокирован. Вы не можете оставлять комментарии.");
             }
             commentDto.setAuthorName(userDetails.getUsername());
+            commentDto.setAuthorId(currentUser != null ? currentUser.getId() : null);
         }
 
         CommentDto saved = commentService.addComment(commentDto);
@@ -265,7 +266,7 @@ public class WebCatalogController {
                             saved.getId(),                           // ID комментария
                             currentUser.getId(),                     // от кого (комментатор)
                             currentUser.getLogin(),                  // имя комментатора
-                            commentDto.getText() != null ? commentDto.getText().substring(0, Math.min(commentDto.getText().length(), 100)) : "",  // текст комментария (первые 100 символов)
+                            commentDto.getText() != null ? (commentDto.getText().length() > 100 ? commentDto.getText().substring(0, 100) : commentDto.getText()) : "",  // текст комментария (первые 100 символов)
                             "/premise/" + commentDto.getPremiseId()   // ссылка на объявление
                     );
                 }
@@ -278,9 +279,71 @@ public class WebCatalogController {
         return saved;
     }
 
+    // НОВЫЙ МЕТОД: добавление ответа на комментарий
+    @PostMapping("/api/comments/reply")
+    @ResponseBody
+    public CommentDto addReply(@RequestBody CommentDto commentDto,
+                               @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new RuntimeException("Необходимо авторизоваться");
+        }
+
+        User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
+        if (currentUser == null) {
+            throw new RuntimeException("Пользователь не найден");
+        }
+
+        if (userBanService.isUserBanned(currentUser.getId())) {
+            throw new RuntimeException("Ваш аккаунт заблокирован. Вы не можете отвечать на комментарии.");
+        }
+
+        commentDto.setAuthorName(userDetails.getUsername());
+        commentDto.setAuthorId(currentUser.getId());
+
+        // Проверяем, что parentCommentId указан
+        if (commentDto.getParentCommentId() == null) {
+            throw new RuntimeException("Не указан ID комментария, на который отвечаете");
+        }
+
+        CommentDto saved = commentService.addReply(commentDto);
+
+        // ===== ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ ПОЛЬЗОВАТЕЛЮ, КОТОРОМУ ОТВЕТИЛИ =====
+        if (commentDto.getRepliedToUserId() != null &&
+                !commentDto.getRepliedToUserId().equals(currentUser.getId())) {
+            try {
+                PremiseDto premise = catalogClient.getPremiseById(commentDto.getPremiseId());
+                String premiseTitle = "";
+                if (premise != null) {
+                    premiseTitle = premise.getTypeInRussian() + " в " + premise.getCity();
+                }
+
+                String replyText = commentDto.getText();
+                if (replyText.length() > 100) {
+                    replyText = replyText.substring(0, 100) + "...";
+                }
+
+                notificationService.createNotification(
+                        commentDto.getRepliedToUserId(),
+                        "COMMENT_REPLY",
+                        saved.getId(),
+                        currentUser.getId(),
+                        currentUser.getLogin(),
+                        currentUser.getLogin() + " ответил на ваш комментарий: \"" + replyText + "\"",
+                        "/premise/" + commentDto.getPremiseId() + "?commentId=" + saved.getId()
+                );
+                System.out.println("✓ Уведомление об ответе отправлено пользователю #" + commentDto.getRepliedToUserId());
+            } catch (Exception e) {
+                System.err.println("✗ Ошибка отправки уведомления об ответе: " + e.getMessage());
+            }
+        }
+
+        return saved;
+    }
+
     @GetMapping("/api/comments/premise/{premiseId}")
     @ResponseBody
     public List<CommentDto> getComments(@PathVariable Long premiseId) {
-        return commentService.getCommentsByPremiseId(premiseId);
+        // Возвращаем комментарии с иерархическими ответами
+        return commentService.getCommentsWithReplies(premiseId);
     }
 }
