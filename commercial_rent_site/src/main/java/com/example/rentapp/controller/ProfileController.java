@@ -253,6 +253,11 @@ public class ProfileController {
                                  @RequestParam(required = false) String city,
                                  HttpServletRequest request,
                                  Model model) {
+        // ПРОВЕРКА: если пользователь не авторизован, перенаправляем на логин
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
+
         User owner = getCurrentUser(userDetails);
 
         if (userBanService.isUserBanned(owner.getId())) {
@@ -281,6 +286,11 @@ public class ProfileController {
                              @RequestParam("latitude") String latitudeStr,
                              @RequestParam("longitude") String longitudeStr,
                              Model model) {
+
+        // ПРОВЕРКА: если пользователь не авторизован, перенаправляем на логин
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
 
         User owner = getCurrentUser(userDetails);
 

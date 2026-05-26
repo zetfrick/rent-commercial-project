@@ -161,6 +161,14 @@ public class WebCatalogController {
                                   jakarta.servlet.http.HttpServletRequest request,
                                   @RequestParam(required = false) String city,
                                   Model model) {
+
+        // ===== ДОБАВЬТЕ ЭТУ ПРОВЕРКУ =====
+        if (userDetails == null) {
+            // Сохраняем URL для перенаправления после логина
+            request.getSession().setAttribute("redirectAfterLogin", request.getRequestURI());
+            return "redirect:/auth/login";
+        }
+
         PremiseDto premise = catalogClient.getPremiseById(id);
 
         if (premise == null) {
@@ -199,6 +207,10 @@ public class WebCatalogController {
                                 @RequestParam(required = false) String extraFees,
                                 @RequestParam(required = false) String importantInfo,
                                 @AuthenticationPrincipal UserDetails userDetails) {
+
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
 
         PremiseDto premise = catalogClient.getPremiseById(id);
 

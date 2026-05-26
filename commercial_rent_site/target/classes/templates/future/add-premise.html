@@ -430,6 +430,178 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Выпадающий список с множественным выбором */
+    .multiselect-dropdown {
+        position: relative;
+        width: 100%;
+        background: rgba(255,255,255,0.96);
+        border-radius: 12px;
+        border: none;
+    }
+
+    .dropdown-header {
+        position: relative;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.96);
+        border-radius: 12px;
+        cursor: pointer;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        box-sizing: border-box;
+        cursor: text; /* Убеждаемся, что курсор текстовый */
+    }
+
+    /* Убираем странный серый фон при авто-заполнении */
+    .search-input:-webkit-autofill,
+    .search-input:-webkit-autofill:hover,
+    .search-input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0px 1000px white inset;
+        box-shadow: 0 0 0px 1000px white inset;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #ff5722;
+        box-shadow: 0 0 0 2px rgba(255,87,34,0.2);
+    }
+
+    .selected-count {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        color: #666;
+        background: #f5f5f5;
+        padding: 4px 8px;
+        border-radius: 20px;
+    }
+
+    .dropdown-list {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 300px;
+        overflow-y: auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        margin-top: 5px;
+    }
+
+    .dropdown-list.open {
+        display: block;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .dropdown-options {
+        padding: 8px 0;
+    }
+
+    .dropdown-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .dropdown-option:hover {
+        background: #fff0e8;
+    }
+
+    .dropdown-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .dropdown-option label {
+        flex: 1;
+        margin: 0;
+        cursor: pointer;
+        color: #333;
+        font-weight: normal;
+    }
+
+    .selected-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 0;
+    }
+
+    .selected-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #ff5722, #ff9800);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .selected-tag .remove-tag {
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        padding: 0 4px;
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+
+    .selected-tag .remove-tag:hover {
+        background: rgba(255,255,255,0.3);
+        transform: scale(1.2);
+    }
+
+    /* Кнопка очистки */
+    .clear-all-btn {
+        background: #ff5722;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-top: 10px;
+        transition: 0.2s;
+    }
+
+    .clear-all-btn:hover {
+        background: #e64a19;
+        transform: translateY(-1px);
+    }
+
+    /* Анимация */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
     </style>
 </head>
 <body>
@@ -488,14 +660,19 @@
                 </div>
 
                 <!-- Дополнительные удобства -->
-                <label>Дополнительные удобства</label>
-                <div class="amenities-table">
-                    <div class="amenity-item" th:each="amenity : ${amenities}">
-                        <input type="checkbox"
-                               name="amenities"
-                               th:value="${amenity}"
-                               th:id="${amenity}">
-                        <label th:for="${amenity}" th:text="${amenityInRussian.get(amenity)}">Кондиционер</label>
+                <div class="form-group">
+                    <label>Дополнительные удобства</label>
+                    <div class="multiselect-dropdown">
+                        <div class="dropdown-header">
+                            <input type="text" id="amenitiesSearch" class="search-input" placeholder="Поиск удобств..." autocomplete="off">
+                            <div class="selected-count" id="selectedCount">Выбрано: 0</div>
+                        </div>
+                        <div id="amenitiesDropdown" class="dropdown-list">
+                            <div class="dropdown-options" id="amenitiesOptions">
+                                <!-- Опции будут добавлены через JavaScript -->
+                            </div>
+                        </div>
+                        <div class="selected-items" id="selectedAmenities"></div>
                     </div>
                 </div>
 
@@ -762,6 +939,255 @@
             setTimeout(() => notification.remove(), 600);
         }, 4500);
     }
+
+    // ==================== ВЫПАДАЮЩИЙ СПИСОК С ПОИСКОМ ДЛЯ УДОБСТВ ====================
+    class AmenitiesDropdown {
+        constructor(amenities, amenityRussian) {
+            this.amenities = amenities;
+            this.amenityRussian = amenityRussian;
+            this.selectedAmenities = new Set();
+            this.filteredAmenities = [...amenities];
+            this.init();
+        }
+
+        init() {
+            this.renderOptions();
+            this.attachEvents();
+        }
+
+        renderOptions() {
+            const container = document.getElementById('amenitiesOptions');
+            if (!container) return;
+
+            if (this.filteredAmenities.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Ничего не найдено</div>';
+                return;
+            }
+
+            container.innerHTML = this.filteredAmenities.map(amenity => `
+                <div class="dropdown-option" data-value="${amenity}">
+                    <input type="checkbox"
+                           id="amenity_${amenity}"
+                           value="${amenity}"
+                           ${this.selectedAmenities.has(amenity) ? 'checked' : ''}>
+                    <label for="amenity_${amenity}">${this.amenityRussian[amenity] || amenity}</label>
+                </div>
+            `).join('');
+
+            // Добавляем обработчики для новых опций
+            container.querySelectorAll('.dropdown-option').forEach(option => {
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                const value = option.dataset.value;
+
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    if (checkbox.checked) {
+                        this.selectedAmenities.add(value);
+                    } else {
+                        this.selectedAmenities.delete(value);
+                    }
+                    this.updateSelectedTags();
+                    this.updateHiddenInput();
+                    this.updateSelectedCount();
+                    this.renderOptions(); // Перерендериваем для обновления состояния чекбоксов
+                });
+
+                option.addEventListener('click', (e) => {
+                    if (e.target !== checkbox && !option.contains(e.target.closest('label'))) {
+                        checkbox.checked = !checkbox.checked;
+                        const event = new Event('change', { bubbles: true });
+                        checkbox.dispatchEvent(event);
+                    }
+                });
+            });
+        }
+
+        updateSelectedTags() {
+            const container = document.getElementById('selectedAmenities');
+            if (!container) return;
+
+            if (this.selectedAmenities.size === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const tags = Array.from(this.selectedAmenities).map(amenity => `
+                <span class="selected-tag" data-value="${amenity}">
+                    ${this.amenityRussian[amenity] || amenity}
+                    <span class="remove-tag" data-value="${amenity}">×</span>
+                </span>
+            `).join('');
+
+            container.innerHTML = tags;
+
+            // Добавляем обработчики для удаления тегов
+            container.querySelectorAll('.remove-tag').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const value = btn.dataset.value;
+                    this.selectedAmenities.delete(value);
+                    this.updateSelectedTags();
+                    this.updateHiddenInput();
+                    this.updateSelectedCount();
+                    this.renderOptions(); // Перерендериваем для обновления чекбоксов
+                });
+            });
+        }
+
+        updateHiddenInput() {
+            // Ищем или создаем контейнер для скрытых полей
+            let hiddenContainer = document.getElementById('hiddenAmenitiesContainer');
+
+            if (!hiddenContainer) {
+                hiddenContainer = document.createElement('div');
+                hiddenContainer.id = 'hiddenAmenitiesContainer';
+                hiddenContainer.style.display = 'none';
+                // Добавляем в форму
+                const form = document.getElementById('premiseForm');
+                if (form) {
+                    form.appendChild(hiddenContainer);
+                }
+            }
+
+            // Очищаем контейнер
+            hiddenContainer.innerHTML = '';
+
+            // Создаем скрытые инпуты для выбранных удобств
+            Array.from(this.selectedAmenities).forEach(amenity => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'amenities';
+                hiddenInput.value = amenity;
+                hiddenContainer.appendChild(hiddenInput);
+            });
+
+            console.log('Отправляемые удобства:', Array.from(this.selectedAmenities));
+        }
+
+        updateSelectedCount() {
+            const countElement = document.getElementById('selectedCount');
+            if (countElement) {
+                countElement.textContent = `Выбрано: ${this.selectedAmenities.size}`;
+            }
+        }
+
+        filter(searchTerm) {
+            if (!searchTerm || searchTerm.trim() === '') {
+                this.filteredAmenities = [...this.amenities];
+            } else {
+                const term = searchTerm.toLowerCase().trim();
+                this.filteredAmenities = this.amenities.filter(amenity => {
+                    const russianName = this.amenityRussian[amenity] || amenity;
+                    return amenity.toLowerCase().includes(term) ||
+                           russianName.toLowerCase().includes(term);
+                });
+            }
+            this.renderOptions();
+        }
+
+        attachEvents() {
+            const searchInput = document.getElementById('amenitiesSearch');
+            const dropdown = document.getElementById('amenitiesDropdown');
+            const header = document.querySelector('.dropdown-header');
+            const multiselect = document.querySelector('.multiselect-dropdown');
+
+            // Поиск с debounce
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.filter(e.target.value);
+                }, 300);
+            });
+
+            // Открытие/закрытие дропдауна - реагируем на клик по всему header И на поле ввода
+            const toggleDropdown = (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+                if (dropdown.classList.contains('open')) {
+                    searchInput.focus();
+                    this.filter(searchInput.value); // Обновляем фильтр при открытии
+                }
+            };
+
+            header.addEventListener('click', toggleDropdown);
+
+            // Отдельный обработчик для поля ввода
+            searchInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!dropdown.classList.contains('open')) {
+                    dropdown.classList.add('open');
+                    searchInput.focus();
+                    this.filter(searchInput.value);
+                }
+            });
+
+            // Закрытие при клике вне компонента
+            document.addEventListener('click', (e) => {
+                if (!multiselect || !multiselect.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                }
+            });
+
+            // Останавливаем всплытие при клике внутри дропдауна
+            dropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            // Очистка всех выбранных удобств
+            const clearAllBtn = document.createElement('button');
+            clearAllBtn.textContent = 'Очистить все';
+            clearAllBtn.className = 'clear-all-btn';
+            clearAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectedAmenities.clear();
+                this.updateSelectedTags();
+                this.updateHiddenInput();
+                this.updateSelectedCount();
+                this.renderOptions();
+            });
+
+            const dropdownContainer = document.querySelector('.multiselect-dropdown');
+            if (dropdownContainer && !dropdownContainer.querySelector('.clear-all-btn')) {
+                dropdownContainer.appendChild(clearAllBtn);
+            }
+        }
+    }
+
+    // Инициализация после загрузки страницы
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const amenities = [];
+            const amenityRussian = {};
+
+            // Получаем данные из Thymeleaf
+            if (window.amenitiesList) {
+                window.amenitiesList.forEach(amenity => {
+                    amenities.push(amenity);
+                });
+            }
+
+            if (window.amenityRussianMap) {
+                Object.assign(amenityRussian, window.amenityRussianMap);
+            }
+
+            if (amenities.length > 0) {
+                window.amenitiesDropdown = new AmenitiesDropdown(amenities, amenityRussian);
+
+                // Загружаем существующие выбранные удобства из скрытых полей (если есть)
+                const existingHiddenInputs = document.querySelectorAll('input[name="amenities"]');
+                existingHiddenInputs.forEach(input => {
+                    if (input.value && input.type === 'hidden') {
+                        window.amenitiesDropdown.selectedAmenities.add(input.value);
+                    }
+                });
+
+                window.amenitiesDropdown.updateSelectedTags();
+                window.amenitiesDropdown.updateHiddenInput();
+                window.amenitiesDropdown.updateSelectedCount();
+            }
+        }, 100);
+    });
 
     // ==================== КАСТОМНЫЙ КАЛЕНДАРЬ ====================
 
@@ -1941,7 +2367,18 @@
             e.preventDefault();
             return false;
         }
+
+        if (window.amenitiesDropdown) {
+            // Просто убеждаемся, что скрытые поля созданы
+            window.amenitiesDropdown.updateHiddenInput();
+        }
     });
+</script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.amenitiesList = /*[[${amenities}]]*/ [];
+    window.amenityRussianMap = /*[[${amenityInRussian}]]*/ {};
+    /*]]>*/
 </script>
 </body>
 </html>
