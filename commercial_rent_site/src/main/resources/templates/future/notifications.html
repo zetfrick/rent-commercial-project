@@ -514,23 +514,62 @@
     }
 
     async function saveEmailNotificationsSetting(enabled) {
+        console.log('=== saveEmailNotificationsSetting called ===');
+        console.log('enabled:', enabled);
+
+        const toggle = document.getElementById('emailNotificationsToggle');
+        const statusSpan = document.getElementById('toggleStatus');
+
+        if (!statusSpan) {
+            console.error('❌ statusSpan element not found!');
+            return;
+        }
+
+        // Сохраняем исходное состояние на случай ошибки
+        const originalText = statusSpan.textContent;
+        const originalClass = statusSpan.className;
+
+        // Меняем UI мгновенно для отзывчивости (оптимистичное обновление)
+        statusSpan.textContent = enabled ? 'Включены' : 'Отключены';
+        statusSpan.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
+
         try {
             const response = await fetch('/notifications/api/settings/email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ enabled: enabled })
+                body: JSON.stringify({ emailNotificationsEnabled: enabled })
             });
-            const data = await response.json();
 
-            if (data.success) {
-                const statusSpan = document.getElementById('toggleStatus');
-                statusSpan.textContent = enabled ? 'Включены' : 'Отключены';
-                statusSpan.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
-                showNotification(enabled ? 'Email-уведомления включены' : 'Email-уведомления отключены');
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            // ИСПРАВЛЕНО: проверяем наличие emailNotificationsEnabled вместо success
+            if (data.emailNotificationsEnabled !== undefined) {
+                // Успех - оставляем обновлённый UI
+                showNotification(enabled ? '✅ Email-уведомления включены' : '🔕 Email-уведомления отключены');
+                console.log('✅ Settings saved successfully');
+            } else {
+                // Ошибка - возвращаем исходное состояние
+                statusSpan.textContent = originalText;
+                statusSpan.className = originalClass;
+                // Возвращаем чекбокс в исходное состояние
+                if (toggle) toggle.checked = !enabled;
+                showNotification(data.message || 'Ошибка при сохранении настроек', true);
             }
         } catch (error) {
-            console.error('Error saving notification settings:', error);
-            showNotification('Ошибка при сохранении настроек', true);
+            console.error('❌ Error saving notification settings:', error);
+            // Возвращаем исходное состояние
+            statusSpan.textContent = originalText;
+            statusSpan.className = originalClass;
+            // Возвращаем чекбокс в исходное состояние
+            if (toggle) toggle.checked = !enabled;
+            showNotification('❌ Ошибка при сохранении настроек: ' + error.message, true);
         }
     }
 

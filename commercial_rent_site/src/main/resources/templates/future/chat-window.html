@@ -921,6 +921,7 @@
             background: #f44336;
         }
 
+        /* ==================== МОДАЛЬНОЕ ОКНО - ФИКС ДЛЯ КАЛЕНДАРЯ ==================== */
         .modal {
             display: none;
             position: fixed;
@@ -931,6 +932,8 @@
             height: 100%;
             background: rgba(0,0,0,0.5);
             backdrop-filter: blur(5px);
+            /* Важно: разрешаем содержимому выходить за пределы */
+            overflow: visible !important;
         }
 
         .modal-content {
@@ -940,8 +943,69 @@
             max-width: 550px;
             border-radius: 24px;
             animation: fadeIn 0.3s;
+            /* Убираем overflow-y: auto, чтобы календарь не обрезался */
+            overflow: visible !important;
             max-height: 85vh;
+            /* Добавляем отдельный контейнер для скролла внутри body */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Контейнер для скролла внутри модального окна */
+        .modal-body {
+            padding: 20px;
             overflow-y: auto;
+            flex: 1;
+            /* Важно: body не должен обрезать содержимое */
+            overflow-x: visible;
+        }
+
+        /* Обёртка для полей с датой - позиционирование для календаря */
+        .date-picker-wrapper {
+            position: relative;
+            /* Важно: не обрезаем выпадающий календарь */
+            overflow: visible !important;
+        }
+
+        .calendar-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #ff5722;
+            font-size: 20px;
+            z-index: 10;
+            background: transparent;
+        }
+
+        /* Стили для выпадающего календаря - позиционируется относительно .date-picker-wrapper */
+        .custom-calendar {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            z-index: 10050 !important; /* Выше, чем у модального окна */
+            display: none;
+            width: 300px;
+            margin-top: 5px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        /* Если календарь не помещается снизу - показываем сверху */
+        @media (max-height: 600px) {
+            .custom-calendar {
+                top: auto;
+                bottom: 100%;
+                margin-top: 0;
+                margin-bottom: 5px;
+            }
+        }
+
+        .custom-calendar.active {
+            display: block;
         }
 
         .modal-header {
@@ -952,6 +1016,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .modal-close {
@@ -962,7 +1027,201 @@
             color: white;
         }
 
-        .modal-body { padding: 20px; }
+        /* Стили для календаря внутри модального окна */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #ff5722, #ff9800);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .calendar-month-year {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 16px;
+        }
+
+        .calendar-nav span {
+            cursor: pointer;
+            font-size: 18px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .calendar-nav span:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            padding: 10px 0;
+            background: #f8f9fa;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            padding: 8px;
+            gap: 4px;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 8px 4px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 13px;
+            transition: all 0.2s;
+            background: white;
+            color: #333;
+        }
+
+        .calendar-day:hover:not(.disabled):not(.confirmed-occupied):not(.pending-occupied) {
+            background: #fff0e8 !important;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.selected {
+            background: #ff5722 !important;
+            color: white !important;
+        }
+
+        /* Дата вне доступного диапазона - некликабельная, серая */
+        .calendar-day.disabled {
+            color: #bbb !important;
+            background: #f5f5f5 !important;
+            cursor: not-allowed;
+            text-decoration: none;
+            opacity: 0.6;
+        }
+
+        /* Обычная свободная дата - белая, кликабельная */
+        .calendar-day:not(.disabled):not(.confirmed-occupied):not(.pending-occupied):not(.other-month) {
+            background: white;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .calendar-day:not(.disabled):not(.confirmed-occupied):not(.pending-occupied):not(.other-month):hover {
+            background: #fff0e8 !important;
+            transform: scale(1.05);
+        }
+
+        .calendar-day.disabled:hover {
+            transform: none;
+            background: #f5f5f5 !important;
+        }
+
+        /* Подтверждённые даты (APPROVED) - красные, НЕКЛИКАБЕЛЬНЫЕ */
+        .calendar-day.confirmed-occupied {
+            background: #ffebee !important;
+            color: #f44336 !important;
+            cursor: not-allowed;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .calendar-day.confirmed-occupied:hover {
+            transform: none;
+            background: #ffebee !important;
+        }
+
+        .calendar-day.confirmed-occupied::after {
+            content: "✓";
+            font-size: 8px;
+            position: absolute;
+            bottom: 0;
+            right: 2px;
+            opacity: 0.8;
+        }
+
+        /* Ожидающие даты (PENDING) - жёлтые, НЕКЛИКАБЕЛЬНЫЕ */
+        .calendar-day.pending-occupied {
+            background: #fff8e1 !important;
+            color: #ff9800 !important;
+            cursor: not-allowed;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .calendar-day.pending-occupied:hover {
+            transform: none;
+            background: #fff8e1 !important;
+        }
+
+        .calendar-day.pending-occupied::after {
+            content: "⏳";
+            font-size: 8px;
+            position: absolute;
+            bottom: 0;
+            right: 2px;
+            opacity: 0.8;
+        }
+
+        .calendar-day.other-month {
+            color: #aaa !important;
+            background: #fafafa !important;
+            opacity: 0.8;
+        }
+
+        /* Кликабельные даты из других месяцев */
+        .calendar-day.other-month:not(.disabled):not(.confirmed-occupied):not(.pending-occupied) {
+            cursor: pointer;
+            color: #555 !important;
+            background: #f5f5f5 !important;
+        }
+
+        .calendar-day.other-month:not(.disabled):not(.confirmed-occupied):not(.pending-occupied):hover {
+            background: #fff0e8 !important;
+            transform: scale(1.05);
+        }
+
+        /* Некликабельные даты из других месяцев (занятые или вне диапазона) */
+        .calendar-day.other-month.disabled,
+        .calendar-day.other-month.confirmed-occupied,
+        .calendar-day.other-month.pending-occupied {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .calendar-footer {
+            padding: 10px 16px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .calendar-today-btn {
+            background: none;
+            border: none;
+            color: #ff5722;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .calendar-today-btn:hover {
+            background: #fff0e8;
+        }
 
         .date-group input {
             width: 100%;
@@ -1290,11 +1549,19 @@
             <div class="date-range-row">
                 <div class="date-group">
                     <label><i class="fas fa-calendar-alt"></i> Дата начала</label>
-                    <input type="date" id="startDate" min="">
+                    <div class="date-picker-wrapper">
+                        <input type="text" id="startDate" placeholder="ДД.ММ.ГГГГ" readonly autocomplete="off">
+                        <i class="fas fa-calendar-alt calendar-icon" data-target="start"></i>
+                        <div id="calendarStart" class="custom-calendar"></div>
+                    </div>
                 </div>
                 <div class="date-group">
                     <label><i class="fas fa-calendar-check"></i> Дата окончания</label>
-                    <input type="date" id="endDate" min="">
+                    <div class="date-picker-wrapper">
+                        <input type="text" id="endDate" placeholder="ДД.ММ.ГГГГ" readonly autocomplete="off">
+                        <i class="fas fa-calendar-alt calendar-icon" data-target="end"></i>
+                        <div id="calendarEnd" class="custom-calendar"></div>
+                    </div>
                 </div>
             </div>
 
@@ -2199,9 +2466,63 @@
             if (responsePending.ok) {
                 pendingRanges = await responsePending.json();
             }
+
+            // Строим множества занятых дат для календаря
+            buildOccupiedDatesSet();
             displayBookedRanges();
-        } catch(e) { console.error(e); }
+
+            // ОБНОВЛЯЕМ ОБА КАЛЕНДАРЯ, а не только активный
+            updateStartCalendar();
+            updateEndCalendar();
+
+        } catch(e) {
+            console.error('Error loading booked ranges:', e);
+        }
     }
+
+    // Добавьте эти функции для обновления календарей извне
+    function updateStartCalendar() {
+        const startDateValue = document.getElementById('startDate').value;
+        const startDate = startDateValue ? parseDate(startDateValue) : null;
+        const minDate = getMinDateForBooking();
+        let maxDate = getMaxDateForBooking();
+        if (currentEndDate) {
+            maxDate = currentEndDate;
+        }
+        renderCalendar('calendarStart', startDate, onSelectStart, minDate, maxDate, true);
+    }
+
+    function updateEndCalendar() {
+        const endDateValue = document.getElementById('endDate').value;
+        const endDate = endDateValue ? parseDate(endDateValue) : null;
+        let minDate = getMinDateForBooking();
+        if (currentStartDate) {
+            minDate = currentStartDate;
+        }
+        const maxDate = getMaxDateForBooking();
+        renderCalendar('calendarEnd', endDate, onSelectEnd, minDate, maxDate, false);
+    }
+
+    // Определяем функции onSelectStart и onSelectEnd глобально
+    window.onSelectStart = function(dateStr, isStart) {
+        const selectedDate = parseDate(dateStr);
+        if (selectedDate) {
+            currentStartDate = selectedDate;
+            document.getElementById('startDate').value = dateStr;
+            updateEndCalendar();
+            syncDates();
+        }
+    };
+
+    window.onSelectEnd = function(dateStr, isStart) {
+        const selectedDate = parseDate(dateStr);
+        if (selectedDate) {
+            currentEndDate = selectedDate;
+            document.getElementById('endDate').value = dateStr;
+            updateStartCalendar();
+            syncDates();
+        }
+    };
 
     function displayBookedRanges() {
         const container = document.getElementById('bookedRangesContainer');
@@ -2256,30 +2577,50 @@
     function syncDates() {
         const startInput = document.getElementById('startDate');
         const endInput = document.getElementById('endDate');
-        const startDate = startInput.value;
-        const endDate = endInput.value;
-        if (startDate && endDate) {
-            if (startDate > endDate) {
-                startInput.value = endDate;
-            } else if (endDate < startDate) {
-                endInput.value = startDate;
+        const startDateStr = startInput.value;
+        const endDateStr = endInput.value;
+
+        if (startDateStr && endDateStr) {
+            const startDate = parseDate(startDateStr);
+            const endDate = parseDate(endDateStr);
+
+            if (startDate && endDate && isDateAfter(startDate, endDate)) {
+                startInput.value = endDateStr;
+            }
+            if (startDate && endDate && isDateAfter(startDate, endDate)) {
+                endInput.value = startDateStr;
             }
         }
         checkAvailability();
     }
 
     async function checkAvailability() {
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const startDateStr = startDateInput.value;
+        const endDateStr = endDateInput.value;
         const indicator = document.getElementById('availabilityIndicator');
         const submitBtn = document.getElementById('submitBtn');
+
+        if (!startDateStr || !endDateStr) {
+            indicator.style.display = 'none';
+            submitBtn.disabled = true;
+            currentAvailability = false;
+            return;
+        }
+
+        const startDate = parseDate(startDateStr);
+        const endDate = parseDate(endDateStr);
+
         if (!startDate || !endDate) {
             indicator.style.display = 'none';
             submitBtn.disabled = true;
             currentAvailability = false;
             return;
         }
-        if (startDate > endDate) {
+
+        // Проверка: дата начала не может быть позже даты окончания
+        if (isDateAfter(startDate, endDate)) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
             indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата начала не может быть позже даты окончания!`;
@@ -2287,52 +2628,73 @@
             currentAvailability = false;
             return;
         }
-        if (premiseData.availableFrom && startDate < premiseData.availableFrom) {
+
+        // Проверка доступности помещения
+        const availableFrom = premiseData.availableFrom ? parseIsoDate(premiseData.availableFrom) : null;
+        const availableTo = premiseData.availableTo ? parseIsoDate(premiseData.availableTo) : null;
+
+        if (availableFrom && isDateBefore(startDate, availableFrom)) {
+            const formattedDate = formatDate(availableFrom);
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
-            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата начала не может быть раньше ${formatDateRu(premiseData.availableFrom)}`;
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата начала не может быть раньше ${formattedDate}`;
             submitBtn.disabled = true;
             currentAvailability = false;
             return;
         }
-        if (premiseData.availableTo && endDate > premiseData.availableTo) {
+
+        if (availableTo && isDateAfter(endDate, availableTo)) {
+            const formattedDate = formatDate(availableTo);
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
-            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата окончания не может быть позже ${formatDateRu(premiseData.availableTo)}`;
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Дата окончания не может быть позже ${formattedDate}`;
             submitBtn.disabled = true;
             currentAvailability = false;
             return;
         }
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+
+        // Проверка конфликтов с существующими бронированиями
         let hasConflict = false;
         let conflictingRanges = [];
+
+        // Проверка APPROVED (подтверждённые)
         for (const range of approvedRanges) {
-            const rangeStart = new Date(range.start);
-            const rangeEnd = new Date(range.end);
-            if (start <= rangeEnd && end >= rangeStart) {
-                hasConflict = true;
-                conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)} (подтверждена)`);
+            const rangeStart = parseIsoDate(range.start);
+            const rangeEnd = parseIsoDate(range.end);
+            if (rangeStart && rangeEnd) {
+                // Конфликт ЕСТЬ, если диапазоны пересекаются:
+                // (startDate <= rangeEnd) AND (endDate >= rangeStart)
+                const isOverlapping = !isDateAfter(startDate, rangeEnd) && !isDateBefore(endDate, rangeStart);
+                if (isOverlapping) {
+                    hasConflict = true;
+                    conflictingRanges.push(`${formatDate(rangeStart)} — ${formatDate(rangeEnd)} (подтверждена)`);
+                }
             }
         }
+
+        // Проверка PENDING (ожидающие)
         for (const range of pendingRanges) {
-            const rangeStart = new Date(range.start);
-            const rangeEnd = new Date(range.end);
-            if (start <= rangeEnd && end >= rangeStart) {
-                hasConflict = true;
-                conflictingRanges.push(`${formatDateRu(range.start)} — ${formatDateRu(range.end)} (ожидает подтверждения)`);
+            const rangeStart = parseIsoDate(range.start);
+            const rangeEnd = parseIsoDate(range.end);
+            if (rangeStart && rangeEnd) {
+                const isOverlapping = !isDateAfter(startDate, rangeEnd) && !isDateBefore(endDate, rangeStart);
+                if (isOverlapping) {
+                    hasConflict = true;
+                    conflictingRanges.push(`${formatDate(rangeStart)} — ${formatDate(rangeEnd)} (ожидает подтверждения)`);
+                }
             }
         }
+
         if (hasConflict) {
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator unavailable';
-            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Выбранные даты пересекаются с занятыми периодами:<br> ${conflictingRanges.join(', ')}`;
+            indicator.innerHTML = `<i class="fas fa-times-circle"></i> Выбранные даты пересекаются с занятыми периодами:<br> ${conflictingRanges.join('<br>')}`;
             submitBtn.disabled = true;
             currentAvailability = false;
         } else {
+            const diff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
             indicator.style.display = 'block';
             indicator.className = 'availability-indicator available';
-            const diff = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000*60*60*24)) + 1;
             indicator.innerHTML = `<i class="fas fa-check-circle"></i> Период свободен! (${diff} дн.)`;
             submitBtn.disabled = false;
             currentAvailability = true;
@@ -2352,31 +2714,56 @@
             showNotification('Невозможно создать бронирование - пользователь заблокирован', true);
             return;
         }
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
-        if (!startDate || !endDate) {
+
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const startDateStr = startDateInput.value;
+        const endDateStr = endDateInput.value;
+
+        if (!startDateStr || !endDateStr) {
             showNotification('Выберите даты', true);
             return;
         }
-        if (startDate > endDate) {
+
+        // ПРЕОБРАЗУЕМ ДАТЫ ИЗ ДД.ММ.ГГГГ В YYYY-MM-DD
+        const startDateObj = parseDate(startDateStr);
+        const endDateObj = parseDate(endDateStr);
+
+        if (!startDateObj || !endDateObj) {
+            showNotification('Некорректные даты', true);
+            return;
+        }
+
+        const startDateFormatted = dateToIso(startDateStr);
+        const endDateFormatted = dateToIso(endDateStr);
+
+        if (!startDateFormatted || !endDateFormatted) {
+            showNotification('Некорректные даты', true);
+            return;
+        }
+
+        if (startDateFormatted > endDateFormatted) {
             showNotification('Дата начала не может быть позже даты окончания', true);
             return;
         }
+
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Обработка...';
+
         let url;
         if (isOwner) {
-            url = `/api/bookings/create?premiseId=${premiseId}&renterId=${receiverId}&startDate=${startDate}&endDate=${endDate}`;
+            url = `/api/bookings/create?premiseId=${premiseId}&renterId=${receiverId}&startDate=${startDateFormatted}&endDate=${endDateFormatted}`;
         } else {
-            url = `/api/bookings/request?premiseId=${premiseId}&ownerId=${receiverId}&startDate=${startDate}&endDate=${endDate}`;
+            url = `/api/bookings/request?premiseId=${premiseId}&ownerId=${receiverId}&startDate=${startDateFormatted}&endDate=${endDateFormatted}`;
         }
+
         try {
             const response = await fetch(url, { method: 'POST' });
             const data = await response.json();
             if (data.success) {
                 if (!isOwner) {
-                    await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=booking_request&premiseId=${premiseId}&startDate=${startDate}&endDate=${endDate}`, {
+                    await fetch(`/chats/send-system-message?receiverId=${receiverId}&messageType=booking_request&premiseId=${premiseId}&startDate=${startDateFormatted}&endDate=${endDateFormatted}`, {
                         method: 'POST'
                     });
                 } else {
@@ -2393,6 +2780,7 @@
                 showNotification(data.message || 'Ошибка', true);
             }
         } catch(e) {
+            console.error('Error:', e);
             showNotification('Ошибка соединения', true);
         } finally {
             submitBtn.disabled = false;
@@ -2424,6 +2812,433 @@
             console.error('Error loading pending requests:', e);
             container.innerHTML = '<div class="empty-requests"><i class="fas fa-exclamation-circle"></i> Ошибка загрузки</div>';
         }
+    }
+
+    // ==================== КАСТОМНЫЙ КАЛЕНДАРЬ ДЛЯ МОДАЛЬНОГО ОКНА ====================
+
+    let currentStartDate = null;
+    let currentEndDate = null;
+    let activeCalendar = null;
+    let allConfirmedDatesISO = new Set();
+    let allPendingDatesISO = new Set();
+
+    function formatDate(date) {
+        if (!date) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+    }
+
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        // Поддерживает форматы: ДД.ММ.ГГГГ или ГГГГ-ММ-ДД
+        let day, month, year;
+
+        if (dateStr.includes('-')) {
+            // Формат ISO: ГГГГ-ММ-ДД
+            const parts = dateStr.split('-');
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            day = parseInt(parts[2], 10);
+        } else {
+            // Формат: ДД.ММ.ГГГГ
+            const parts = dateStr.split('.');
+            if (parts.length !== 3) return null;
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            year = parseInt(parts[2], 10);
+        }
+
+        if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+        // ВАЖНО: создаём дату в UTC, чтобы избежать сдвига по часовому поясу
+        return new Date(Date.UTC(year, month, day));
+    }
+
+    function dateToIso(dateStr) {
+        const date = parseDate(dateStr);
+        if (!date) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function parseIsoDate(isoStr) {
+        if (!isoStr) return null;
+        const parts = isoStr.split('-');
+        if (parts.length !== 3) return null;
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+        // ВАЖНО: возвращаем Date объект в UTC
+        return new Date(Date.UTC(year, month, day));
+    }
+
+    function isSameDate(date1, date2) {
+        if (!date1 || !date2) return false;
+        return date1.getUTCFullYear() === date2.getUTCFullYear() &&
+               date1.getUTCMonth() === date2.getUTCMonth() &&
+               date1.getUTCDate() === date2.getUTCDate();
+    }
+
+    function isDateBefore(date1, date2) {
+        if (!date1 || !date2) return false;
+        return date1.getTime() < date2.getTime();
+    }
+
+    function isDateAfter(date1, date2) {
+        if (!date1 || !date2) return false;
+        return date1.getTime() > date2.getTime();
+    }
+
+    function buildOccupiedDatesSet() {
+        allConfirmedDatesISO.clear();
+        allPendingDatesISO.clear();
+
+        console.log('=== buildOccupiedDatesSet ===');
+        console.log('approvedRanges:', approvedRanges);
+        console.log('pendingRanges:', pendingRanges);
+
+        // Добавляем APPROVED даты (подтверждённые) - красные
+        if (approvedRanges && approvedRanges.length > 0) {
+            for (const range of approvedRanges) {
+                const startStr = range.start;
+                const endStr = range.end;
+                if (startStr && endStr) {
+                    const start = parseIsoDate(startStr);
+                    const end = parseIsoDate(endStr);
+                    if (start && end) {
+                        const current = new Date(start);
+                        while (current <= end) {
+                            const isoDate = current.toISOString().split('T')[0];
+                            allConfirmedDatesISO.add(isoDate);
+                            console.log('Добавлена APPROVED дата:', isoDate);
+                            current.setUTCDate(current.getUTCDate() + 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Добавляем PENDING даты (ожидающие подтверждения) - жёлтые
+        if (pendingRanges && pendingRanges.length > 0) {
+            for (const range of pendingRanges) {
+                const startStr = range.start;
+                const endStr = range.end;
+                if (startStr && endStr) {
+                    const start = parseIsoDate(startStr);
+                    const end = parseIsoDate(endStr);
+                    if (start && end) {
+                        const current = new Date(start);
+                        while (current <= end) {
+                            const isoDate = current.toISOString().split('T')[0];
+                            allPendingDatesISO.add(isoDate);
+                            console.log('Добавлена PENDING дата:', isoDate);
+                            current.setUTCDate(current.getUTCDate() + 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log('Всего подтверждённых дат:', allConfirmedDatesISO.size);
+        console.log('Всего ожидающих дат:', allPendingDatesISO.size);
+    }
+
+    function isDateConfirmed(date) {
+        if (!date) return false;
+        // Форматируем дату в UTC
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const isoDate = `${year}-${month}-${day}`;
+        const isConfirmed = allConfirmedDatesISO.has(isoDate);
+        if (isConfirmed) console.log(`Дата ${isoDate} является CONFIRMED`);
+        return isConfirmed;
+    }
+
+    function isDatePending(date) {
+        if (!date) return false;
+        // Форматируем дату в UTC
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const isoDate = `${year}-${month}-${day}`;
+        const isPending = allPendingDatesISO.has(isoDate) && !allConfirmedDatesISO.has(isoDate);
+        if (isPending) console.log(`Дата ${isoDate} является PENDING`);
+        return isPending;
+    }
+
+    function isDateOccupied(date) {
+        return isDateConfirmed(date) || isDatePending(date);
+    }
+
+    function getMinDateForBooking() {
+        // Получаем сегодняшнюю дату в UTC
+        const today = new Date();
+        const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+
+        if (premiseData.availableFrom) {
+            // Парсим availableFrom как Date объект
+            const availableFrom = parseIsoDate(premiseData.availableFrom);
+            if (availableFrom && availableFrom.getTime() > todayUTC.getTime()) {
+                return availableFrom;
+            }
+        }
+        return todayUTC;
+    }
+
+    function getMaxDateForBooking() {
+        if (premiseData.availableTo) {
+            return parseIsoDate(premiseData.availableTo);
+        }
+        const maxDate = new Date();
+        maxDate.setUTCFullYear(maxDate.getUTCFullYear() + 10);
+        return maxDate;
+    }
+
+    function renderCalendar(calendarId, targetDate, onSelect, minDate, maxDate, isStartPicker) {
+        const calendar = document.getElementById(calendarId);
+        if (!calendar) return;
+
+        let targetDateObj = null;
+        if (targetDate) {
+            if (typeof targetDate === 'string') {
+                targetDateObj = parseDate(targetDate);
+            } else if (targetDate instanceof Date) {
+                targetDateObj = new Date(targetDate);
+            }
+        }
+
+        const now = targetDateObj ? new Date(targetDateObj) : new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        const startDayOfWeek = firstDayOfMonth.getDay();
+        const daysInMonth = lastDayOfMonth.getDate();
+
+        const prevMonthLastDay = new Date(year, month, 0);
+        const daysFromPrevMonth = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+
+        let days = [];
+
+        for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
+            const date = new Date(year, month - 1, prevMonthLastDay.getDate() - i);
+            days.push({ date, isCurrentMonth: false });
+        }
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(year, month, i);
+            days.push({ date, isCurrentMonth: true });
+        }
+
+        const remainingDays = 42 - days.length;
+        for (let i = 1; i <= remainingDays; i++) {
+            const date = new Date(year, month + 1, i);
+            days.push({ date, isCurrentMonth: false });
+        }
+
+        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+        let html = `
+            <div class="calendar-header">
+                <div class="calendar-month-year">${monthNames[month]} ${year}</div>
+                <div class="calendar-nav">
+                    <span class="calendar-prev"><i class="fas fa-chevron-left"></i></span>
+                    <span class="calendar-next"><i class="fas fa-chevron-right"></i></span>
+                </div>
+            </div>
+            <div class="calendar-weekdays">
+                ${weekdays.map(day => `<div>${day}</div>`).join('')}
+            </div>
+            <div class="calendar-days">
+        `;
+
+        days.forEach(({ date, isCurrentMonth }) => {
+            const dateStr = formatDate(date);
+
+            // Нормализуем дату для сравнения (UTC)
+            const dateUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const minDateUTC = minDate ? new Date(Date.UTC(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())) : null;
+            const maxDateUTC = maxDate ? new Date(Date.UTC(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())) : null;
+
+            const isOutOfRange = (minDateUTC && dateUTC.getTime() < minDateUTC.getTime()) ||
+                                (maxDateUTC && dateUTC.getTime() > maxDateUTC.getTime());
+
+            // Проверяем статусы с выводом в консоль
+            const isConfirmed = isDateConfirmed(dateUTC);
+            const isPending = !isConfirmed && isDatePending(dateUTC);
+
+            // ДОБАВЬТЕ ЭТОТ ВЫВОД ДЛЯ ОТЛАДКИ
+            if (dateUTC.getDate() === 27 && dateUTC.getMonth() === 4) { // 27 мая
+                console.log(`=== РЕНДЕР ДАТЫ 27 МАЯ ===`);
+                console.log(`dateUTC: ${dateUTC.toISOString()}`);
+                console.log(`isConfirmed: ${isConfirmed}`);
+                console.log(`isPending: ${isPending}`);
+                console.log(`isOutOfRange: ${isOutOfRange}`);
+                console.log(`isCurrentMonth: ${isCurrentMonth}`);
+            }
+
+            const isOccupied = isConfirmed || isPending;
+            const isSelectable = !isOutOfRange && !isOccupied;
+            const isSelected = targetDateObj && formatDate(targetDateObj) === dateStr;
+
+            let classes = 'calendar-day';
+            if (!isCurrentMonth) classes += ' other-month';
+            if (isOutOfRange) classes += ' disabled';
+            if (isConfirmed && !isOutOfRange) classes += ' confirmed-occupied';
+            if (isPending && !isOutOfRange && !isConfirmed) classes += ' pending-occupied';
+            if (!isSelectable && !isConfirmed && !isPending && !isOutOfRange) classes += ' disabled';
+            if (isSelected) classes += ' selected';
+
+            // ДОБАВЬТЕ ВЫВОД КЛАССОВ
+            if (dateUTC.getDate() === 27 && dateUTC.getMonth() === 4) {
+                console.log(`classes: ${classes}`);
+            }
+
+            html += `<div class="${classes}" data-date="${dateStr}" data-selectable="${isSelectable}" data-current-month="${isCurrentMonth}">${date.getDate()}</div>`;
+        });
+
+        html += `
+            </div>
+            <div class="calendar-footer">
+                <button class="calendar-today-btn">Сегодня</button>
+            </div>
+        `;
+
+        calendar.innerHTML = html;
+
+        // Добавляем обработчики ТОЛЬКО для кликабельных дат
+        calendar.querySelectorAll('.calendar-day').forEach(day => {
+            const isSelectable = day.dataset.selectable === 'true';
+
+            if (isSelectable) {
+                day.style.cursor = 'pointer';
+                day.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dateStr = day.dataset.date;
+                    onSelect(dateStr, isStartPicker);
+                    calendar.classList.remove('active');
+                    activeCalendar = null;
+                });
+            } else {
+                day.style.cursor = 'not-allowed';
+            }
+        });
+
+        calendar.querySelector('.calendar-prev')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newDate = new Date(year, month - 1, 1);
+            renderCalendar(calendarId, newDate, onSelect, minDate, maxDate, isStartPicker);
+        });
+
+        calendar.querySelector('.calendar-next')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const newDate = new Date(year, month + 1, 1);
+            renderCalendar(calendarId, newDate, onSelect, minDate, maxDate, isStartPicker);
+        });
+
+        calendar.querySelector('.calendar-today-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const todayDate = new Date();
+            const todayUTC = new Date(Date.UTC(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate()));
+            const minDateUTC = minDate ? new Date(Date.UTC(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())) : null;
+            const maxDateUTC = maxDate ? new Date(Date.UTC(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())) : null;
+
+            const isOutOfRange = (minDateUTC && todayUTC.getTime() < minDateUTC.getTime()) ||
+                                (maxDateUTC && todayUTC.getTime() > maxDateUTC.getTime());
+            const isOccupied = isDateConfirmed(todayUTC) || isDatePending(todayUTC);
+
+            if (!isOutOfRange && !isOccupied) {
+                onSelect(formatDate(todayUTC), isStartPicker);
+                calendar.classList.remove('active');
+                activeCalendar = null;
+            }
+        });
+    }
+
+    function initBookingCalendars() {
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        const startCalendar = document.getElementById('calendarStart');
+        const endCalendar = document.getElementById('calendarEnd');
+        const startIcon = document.querySelector('.calendar-icon[data-target="start"]');
+        const endIcon = document.querySelector('.calendar-icon[data-target="end"]');
+
+        function onSelectStart(dateStr, isStart) {
+            const selectedDate = parseDate(dateStr);
+            if (selectedDate) {
+                currentStartDate = selectedDate;
+                startInput.value = dateStr;
+                updateEndCalendar();
+                syncDates();
+            }
+        }
+
+        function onSelectEnd(dateStr, isStart) {
+            const selectedDate = parseDate(dateStr);
+            if (selectedDate) {
+                currentEndDate = selectedDate;
+                endInput.value = dateStr;
+                updateStartCalendar();
+                syncDates();
+            }
+        }
+
+        function updateStartCalendar() {
+            const startDateValue = startInput.value;
+            const startDate = startDateValue ? parseDate(startDateValue) : null;
+            const minDate = getMinDateForBooking();
+            let maxDate = getMaxDateForBooking();
+            if (currentEndDate) {
+                maxDate = currentEndDate;
+            }
+            renderCalendar('calendarStart', startDate, onSelectStart, minDate, maxDate, true);
+        }
+
+        function updateEndCalendar() {
+            const endDateValue = endInput.value;
+            const endDate = endDateValue ? parseDate(endDateValue) : null;
+            let minDate = getMinDateForBooking();
+            if (currentStartDate) {
+                minDate = currentStartDate;
+            }
+            const maxDate = getMaxDateForBooking();
+            renderCalendar('calendarEnd', endDate, onSelectEnd, minDate, maxDate, false);
+        }
+
+        startIcon?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeCalendar && activeCalendar !== startCalendar) {
+                activeCalendar.classList.remove('active');
+            }
+            startCalendar.classList.toggle('active');
+            activeCalendar = startCalendar.classList.contains('active') ? startCalendar : null;
+            updateStartCalendar();
+        });
+
+        endIcon?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeCalendar && activeCalendar !== endCalendar) {
+                activeCalendar.classList.remove('active');
+            }
+            endCalendar.classList.toggle('active');
+            activeCalendar = endCalendar.classList.contains('active') ? endCalendar : null;
+            updateEndCalendar();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.date-picker-wrapper')) {
+                startCalendar.classList.remove('active');
+                endCalendar.classList.remove('active');
+                activeCalendar = null;
+            }
+        });
     }
 
     async function processRequest(bookingId, action) {
@@ -2487,6 +3302,7 @@
         document.getElementById('bookingModal').style.display = 'none';
         document.body.style.overflow = 'auto';
     }
+
 
     window.goToProfile = goToProfile;
     window.openFullscreen = openFullscreen;
@@ -2560,6 +3376,7 @@
         await loadBookedRanges();
         initPremiseSlider();
         if (isOwner) await loadPendingRequests();
+        initBookingCalendars();
     });
 
     window.addEventListener('beforeunload', () => {

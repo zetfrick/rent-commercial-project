@@ -80,14 +80,17 @@ public class NotificationService {
                 return;
             }
 
-            // ПРОВЕРЯЕМ: если пользователь онлайн - НЕ ОТПРАВЛЯЕМ email
-            if (WebSocketConfig.onlineUsers.containsKey(user.getLogin())) {
-                System.out.println("📱 Пользователь " + user.getLogin() + " онлайн, email не отправлен (тип: " + type + ")");
-                return;
+            // ПРОВЕРЯЕМ: ТОЛЬКО ДЛЯ СООБЩЕНИЙ проверяем онлайн-статус
+            if ("MESSAGE".equals(type)) {
+                if (WebSocketConfig.onlineUsers.containsKey(user.getLogin())) {
+                    System.out.println("📱 Пользователь " + user.getLogin() + " онлайн, email о сообщении не отправлен");
+                    return;
+                }
+                System.out.println("📧 Пользователь " + user.getLogin() + " оффлайн, отправляем email о сообщении");
+            } else {
+                // Все остальные типы уведомлений (бронирования, комментарии и т.д.) отправляем ВСЕГДА
+                System.out.println("📧 Отправляем email уведомление (тип: " + type + ") пользователю " + user.getLogin());
             }
-
-            // Только если оффлайн - отправляем email
-            System.out.println("📧 Пользователь " + user.getLogin() + " оффлайн, отправляем email уведомление (тип: " + type + ")");
 
             String fromFullName = null;
             if (fromUserId != null) {
@@ -174,8 +177,8 @@ public class NotificationService {
             }
         }
 
-        // Используем декодированную версию для отображения
-        String displayContent = decodedContent != null ? decodedContent : "";
+        // ========== ВАЖНО: удаляем HTML-теги для ВСЕХ типов уведомлений ==========
+        String plainContent = decodedContent != null ? decodedContent.replaceAll("<[^>]*>", "").trim() : "";
 
         // Используем отображаемое имя (если есть полное имя, иначе логин)
         String displayName = (fromFullName != null && !fromFullName.trim().isEmpty())
@@ -197,7 +200,7 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Подробнее: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayContent, baseUrl, link
+                        plainContent, baseUrl, link
                 );
             case "BOOKING_REQUEST":
                 return String.format(
@@ -206,7 +209,7 @@ public class NotificationService {
                                 "Подробности: %s\n\n" +
                                 "Перейти к чату: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, displayContent, baseUrl, link
+                        displayName, plainContent, baseUrl, link
                 );
             case "BOOKING_APPROVED":
                 return String.format(
@@ -215,7 +218,7 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Перейти к чату: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, displayContent, baseUrl, link
+                        displayName, plainContent, baseUrl, link
                 );
             case "BOOKING_REJECTED":
                 return String.format(
@@ -233,7 +236,20 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Подробнее: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, displayContent, baseUrl, link
+                        displayName, plainContent, baseUrl, link
+                );
+            case "BOOKING_STARTS_IN_3_DAYS":
+            case "BOOKING_STARTS_IN_1_DAY":
+            case "BOOKING_STARTS_TODAY":
+            case "BOOKING_ENDS_IN_3_DAYS":
+            case "BOOKING_ENDS_IN_1_DAY":
+            case "BOOKING_ENDS_TODAY":
+                return String.format(
+                        "Здравствуйте!\n\n" +
+                                "%s\n\n" +
+                                "Подробнее: %s%s\n\n" +
+                                "С уважением,\nКоманда Аренда помещений",
+                        plainContent, baseUrl, link
                 );
             case "COMMENT":
                 return String.format(
@@ -242,7 +258,7 @@ public class NotificationService {
                                 "«%s»\n\n" +
                                 "Перейти к объявлению: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, displayContent, baseUrl, link
+                        displayName, plainContent, baseUrl, link
                 );
             case "COMMENT_REPLY":
                 // Извлекаем ID помещения из ссылки (убираем параметр commentId)
@@ -254,14 +270,11 @@ public class NotificationService {
                         "Здравствуйте!\n\n" +
                                 "Пользователь %s ответил на ваш комментарий:\n\n" +
                                 "«%s»\n\n" +
-                                "Перейти к объявлению: %s%s\n\n" +  // ← ссылка на помещение
+                                "Перейти к объявлению: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayName, displayContent, baseUrl, premiseLink
+                        displayName, plainContent, baseUrl, premiseLink
                 );
             case "AVAILABILITY_FREE":
-                // Удаляем HTML-теги из content для email (на случай если они есть)
-                String plainContent = displayContent.replaceAll("<[^>]*>", "").trim();
-
                 return String.format(
                         "Здравствуйте!\n\n" +
                                 "%s\n\n" +
@@ -274,14 +287,14 @@ public class NotificationService {
                         "Здравствуйте!\n\n" +
                                 "%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayContent
+                        plainContent
                 );
             case "USER_UNBANNED":
                 return String.format(
                         "Здравствуйте!\n\n" +
                                 "%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayContent
+                        plainContent
                 );
             default:
                 return String.format(
@@ -289,7 +302,7 @@ public class NotificationService {
                                 "%s\n\n" +
                                 "Подробнее: %s%s\n\n" +
                                 "С уважением,\nКоманда Аренда помещений",
-                        displayContent, baseUrl, link
+                        plainContent, baseUrl, link
                 );
         }
     }

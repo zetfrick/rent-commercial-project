@@ -1261,6 +1261,61 @@
         .calendar-today-btn:hover {
             background: #e3f2fd;
         }
+
+        /* Подтверждённые даты (APPROVED) - красные */
+    .calendar-day.confirmed-occupied {
+        background: #ffebee !important;
+        color: #f44336 !important;
+        text-decoration: none !important;
+        position: relative;
+    }
+
+    .calendar-day.confirmed-occupied:hover {
+        background: #ffcdd2 !important;
+        transform: scale(1.05);
+    }
+
+    .calendar-day.confirmed-occupied::after {
+        content: "✓";
+        font-size: 8px;
+        position: absolute;
+        bottom: 0;
+        right: 2px;
+        opacity: 0.8;
+    }
+
+    /* Ожидающие даты (PENDING) - жёлтые/оранжевые */
+    .calendar-day.pending-occupied {
+        background: #fff8e1 !important;
+        color: #ff9800 !important;
+        text-decoration: none !important;
+        position: relative;
+    }
+
+    .calendar-day.pending-occupied:hover {
+        background: #ffe0b2 !important;
+        transform: scale(1.05);
+    }
+
+    .calendar-day.pending-occupied::after {
+        content: "⏳";
+        font-size: 8px;
+        position: absolute;
+        bottom: 0;
+        right: 2px;
+        opacity: 0.8;
+    }
+
+    /* Если дата одновременно и подтверждена, и ожидает - приоритет у подтверждённой */
+    .calendar-day.confirmed-occupied.pending-occupied {
+        background: #ffebee !important;
+        color: #f44336 !important;
+    }
+
+    .calendar-day.confirmed-occupied.pending-occupied::after {
+        content: "✓";
+    }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -2786,6 +2841,14 @@
 
     // ======================== ФУНКЦИИ ДЛЯ УВЕДОМЛЕНИЯ О СВОБОДНЫХ ДАТАХ ========================
 
+    // Хранилища для разных типов занятых дат
+    let allConfirmedDatesISO = new Set();     // APPROVED (красные)
+    let allPendingDatesISO = new Set();       // PENDING (жёлтые)
+
+    let notifyCurrentStartDate = null;
+    let notifyCurrentEndDate = null;
+    let notifyActiveCalendar = null;
+
     function formatDate(date) {
         if (!date) return '';
         const day = String(date.getDate()).padStart(2, '0');
@@ -2825,14 +2888,15 @@
         return new Date(Date.UTC(year, month, day));
     }
 
-    let allOccupiedDatesISO = new Set();
-    let notifyCurrentStartDate = null;
-    let notifyCurrentEndDate = null;
-    let notifyActiveCalendar = null;
-
     function buildOccupiedDatesSet() {
-        allOccupiedDatesISO.clear();
+        allConfirmedDatesISO.clear();
+        allPendingDatesISO.clear();
 
+        console.log('=== buildOccupiedDatesSet ===');
+        console.log('bookedDateRanges:', bookedDateRanges);
+        console.log('pendingDateRanges:', pendingDateRanges);
+
+        // Добавляем APPROVED даты (подтверждённые) - красные
         if (bookedDateRanges && bookedDateRanges.length > 0) {
             for (const range of bookedDateRanges) {
                 const startStr = range.start;
@@ -2844,7 +2908,8 @@
                         const current = new Date(start);
                         while (current <= end) {
                             const isoDate = current.toISOString().split('T')[0];
-                            allOccupiedDatesISO.add(isoDate);
+                            allConfirmedDatesISO.add(isoDate);
+                            console.log('Добавлена APPROVED дата:', isoDate);
                             current.setUTCDate(current.getUTCDate() + 1);
                         }
                     }
@@ -2852,6 +2917,7 @@
             }
         }
 
+        // Добавляем PENDING даты (ожидающие подтверждения) - жёлтые
         if (pendingDateRanges && pendingDateRanges.length > 0) {
             for (const range of pendingDateRanges) {
                 const startStr = range.start;
@@ -2863,13 +2929,17 @@
                         const current = new Date(start);
                         while (current <= end) {
                             const isoDate = current.toISOString().split('T')[0];
-                            allOccupiedDatesISO.add(isoDate);
+                            allPendingDatesISO.add(isoDate);
+                            console.log('Добавлена PENDING дата:', isoDate);
                             current.setUTCDate(current.getUTCDate() + 1);
                         }
                     }
                 }
             }
         }
+
+        console.log('Всего подтверждённых дат:', allConfirmedDatesISO.size);
+        console.log('Всего ожидающих дат:', allPendingDatesISO.size);
     }
 
     function getMinDateForNotify() {
@@ -2899,10 +2969,20 @@
         return (minUTC && dateUTC < minUTC) || (maxUTC && dateUTC > maxUTC);
     }
 
-    function isDateOccupied(date) {
+    function isDateConfirmed(date) {
         if (!date) return false;
         const isoDate = date.toISOString().split('T')[0];
-        return allOccupiedDatesISO.has(isoDate);
+        return allConfirmedDatesISO.has(isoDate);
+    }
+
+    function isDatePending(date) {
+        if (!date) return false;
+        const isoDate = date.toISOString().split('T')[0];
+        return allPendingDatesISO.has(isoDate);
+    }
+
+    function isDateOccupied(date) {
+        return isDateConfirmed(date) || isDatePending(date);
     }
 
     function renderNotifyCalendar(calendarId, targetDate, onSelect, minDate, maxDate, isStartPicker) {
@@ -2970,13 +3050,15 @@
 
         days.forEach(({ date, isCurrentMonth }) => {
             const isOutOfRange = isDateOutOfRange(date, minDate, maxDate);
-            const isOccupied = isDateOccupied(date);
+            const isConfirmed = isDateConfirmed(date) && !isOutOfRange;
+            const isPending = isDatePending(date) && !isOutOfRange && !isConfirmed;
             const isSelected = targetDateObj && formatDate(targetDateObj) === formatDate(date);
 
             let classes = 'calendar-day';
             if (!isCurrentMonth) classes += ' other-month';
             if (isOutOfRange) classes += ' disabled';
-            if (isOccupied && !isOutOfRange) classes += ' occupied';
+            if (isConfirmed) classes += ' confirmed-occupied';  // ← новый класс для подтверждённых
+            if (isPending) classes += ' pending-occupied';      // ← новый класс для ожидающих
             if (isSelected) classes += ' selected';
 
             html += `<div class="${classes}" data-date="${formatDate(date)}">${date.getUTCDate()}</div>`;
