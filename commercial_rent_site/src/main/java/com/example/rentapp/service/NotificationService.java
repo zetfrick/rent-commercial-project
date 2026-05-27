@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@EnableAsync
 @RequiredArgsConstructor
 public class NotificationService {
 
