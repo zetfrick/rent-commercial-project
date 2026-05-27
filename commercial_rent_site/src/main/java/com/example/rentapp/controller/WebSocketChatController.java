@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -289,6 +291,7 @@ public class WebSocketChatController {
 
         Map<String, Object> response = new HashMap<>();
 
+        // 1. Проверка авторизации
         if (principal == null) {
             response.put("success", false);
             response.put("message", "Не авторизован");
@@ -302,24 +305,46 @@ public class WebSocketChatController {
             return response;
         }
 
+        // 2. Валидация файла
         if (file == null || file.isEmpty()) {
             response.put("success", false);
             response.put("message", "Файл не выбран");
             return response;
         }
 
-        long maxSize = 10 * 1024 * 1024;
+        long maxSize = 10 * 1024 * 1024; // 10 MB
         if (file.getSize() > maxSize) {
             response.put("success", false);
             response.put("message", "Файл слишком большой (макс. 10 МБ)");
             return response;
         }
 
+        // 3. Проверка типа файла
+        String contentType = file.getContentType();
+        List<String> allowedTypes = Arrays.asList(
+                "image/jpeg", "image/png", "image/gif", "image/webp",
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "text/plain",
+                "application/zip", "application/x-rar-compressed"
+        );
+
+        if (!allowedTypes.contains(contentType) && !contentType.startsWith("image/")) {
+            response.put("success", false);
+            response.put("message", "Тип файла не поддерживается");
+            return response;
+        }
+
         try {
+            // 4. Сохраняем файл на диск
             String fileName = fileStorageService.saveChatFile(file);
             String fileUrl = "/chat-uploads/" + fileName;
             String fileHtml = generateFileHtml(fileName, fileUrl, file.getContentType(), file.getSize());
 
+            // 5. Сохраняем сообщение в БД
             ChatMessage savedMessage;
             if (premiseId != null && premiseId > 0) {
                 savedMessage = chatService.sendMessageWithFile(
@@ -345,56 +370,113 @@ public class WebSocketChatController {
                 );
             }
 
+            // 6. Получаем информацию о получателе
             User receiver = userService.findById(receiverId).orElse(null);
+
+            // 7. Подготавливаем WebSocket сообщение
+            WebSocketMessageDto wsMessage = new WebSocketMessageDto(
+                    savedMessage.getId(),
+                    savedMessage.getSenderId(),
+                    savedMessage.getReceiverId(),
+                    savedMessage.getSenderLogin(),
+                    savedMessage.getText(),
+                    savedMessage.getSentAt(),
+                    savedMessage.getPremiseId(),
+                    "FILE",
+                    fileName,
+                    fileUrl,
+                    file.getContentType(),
+                    file.getSize()
+            );
+
+            // 8. Проверяем, онлайн ли получатель
             boolean isReceiverOnline = receiver != null && WebSocketConfig.onlineUsers.containsKey(receiver.getLogin());
 
-            if (receiver != null && isReceiverOnline) {
+            if (isReceiverOnline && receiver != null) {
+                // Получатель онлайн - отправляем через WebSocket
                 try {
-                    WebSocketMessageDto wsMessage = new WebSocketMessageDto(
-                            savedMessage.getId(),
-                            savedMessage.getSenderId(),
-                            savedMessage.getReceiverId(),
-                            savedMessage.getSenderLogin(),
-                            savedMessage.getText(),
-                            savedMessage.getSentAt(),
-                            savedMessage.getPremiseId(),
-                            "FILE",
-                            fileName,
-                            fileUrl,
-                            file.getContentType(),
-                            file.getSize()
-                    );
-                    wsMessage.setDeliveryStatus(savedMessage.getDeliveryStatus());
-
                     messagingTemplate.convertAndSendToUser(
                             receiver.getLogin(),
                             "/queue/messages",
                             wsMessage
                     );
 
-                    // Обновляем статус доставки
+                    // Обновляем статус доставки на RECEIVED
                     chatService.updateMessageDeliveryStatus(savedMessage.getId(), "RECEIVED");
                     wsMessage.setDeliveryStatus("RECEIVED");
 
-                    messagingTemplate.convertAndSendToUser(
-                            sender.getLogin(),
-                            "/queue/messages",
-                            wsMessage
-                    );
+                    System.out.println("✅ Файл доставлен онлайн-получателю: " + receiver.getLogin());
+
                 } catch (Exception e) {
-                    System.err.println("WebSocket send error: " + e.getMessage());
+                    System.err.println("WebSocket send error to receiver: " + e.getMessage());
+                    wsMessage.setDeliveryStatus("DELIVERED");
+                }
+            } else {
+                // Получатель оффлайн - оставляем статус DELIVERED
+                System.out.println("📁 Получатель оффлайн: " + (receiver != null ? receiver.getLogin() : "unknown") +
+                        ", файл сохранён в БД, будет доставлен при входе");
+                wsMessage.setDeliveryStatus("DELIVERED");
+            }
+
+            // 9. ВАЖНО: ВСЕГДА отправляем ФИНАЛЬНОЕ подтверждение отправителю
+            // Это заменит временное сообщение на постоянное с правильным статусом
+            try {
+                messagingTemplate.convertAndSendToUser(
+                        sender.getLogin(),
+                        "/queue/messages",
+                        wsMessage
+                );
+                System.out.println("✅ Подтверждение отправлено отправителю: " + sender.getLogin() +
+                        " (статус: " + wsMessage.getDeliveryStatus() + ")");
+            } catch (Exception e) {
+                System.err.println("WebSocket send error to sender: " + e.getMessage());
+            }
+
+            // 10. Отправляем уведомление (если получатель есть)
+            if (receiver != null) {
+                try {
+                    String chatLink = (premiseId != null && premiseId > 0)
+                            ? "/chats/with/" + sender.getLogin() + "/premise/" + premiseId
+                            : "/chats/with/" + sender.getLogin();
+
+                    if (!isReceiverOnline || !notificationService.hasUnreadMessageNotification(receiverId, sender.getId(), premiseId)) {
+                        notificationService.createNotification(
+                                receiverId,
+                                "MESSAGE",
+                                premiseId,
+                                sender.getId(),
+                                sender.getLogin(),
+                                "📎 Отправлен файл: " + fileName,
+                                chatLink
+                        );
+                        System.out.println("🔔 Уведомление о файле отправлено получателю");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to send notification: " + e.getMessage());
                 }
             }
 
+            // 11. Формируем успешный ответ
             response.put("success", true);
             response.put("messageId", savedMessage.getId());
             response.put("fileHtml", fileHtml);
             response.put("fileName", fileName);
             response.put("fileUrl", fileUrl);
+            response.put("deliveryStatus", wsMessage.getDeliveryStatus());
+
+            if (!isReceiverOnline && receiver != null) {
+                response.put("message", "Файл отправлен. Получатель увидит его при следующем входе.");
+            } else if (isReceiverOnline) {
+                response.put("message", "Файл успешно отправлен и доставлен");
+            }
+
         } catch (Exception e) {
+            System.err.println("Error saving file: " + e.getMessage());
+            e.printStackTrace();
             response.put("success", false);
             response.put("message", "Ошибка сохранения файла: " + e.getMessage());
         }
+
         return response;
     }
 

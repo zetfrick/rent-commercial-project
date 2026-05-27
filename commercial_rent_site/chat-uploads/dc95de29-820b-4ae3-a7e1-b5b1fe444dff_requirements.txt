@@ -1,0 +1,12 @@
+feedparser
+beautifulsoup4
+requests
+vk-api
+python-dotenv
+python-telegram-bot
+cerebras-cloud-sdk
+icrawler
+nest_asyncio
+tzdata
+pillow>=10.0.0
+gitpython

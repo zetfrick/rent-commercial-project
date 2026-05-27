@@ -963,170 +963,49 @@
         /* Обёртка для полей с датой - позиционирование для календаря */
         .date-picker-wrapper {
             position: relative;
+            /* Важно: не обрезаем выпадающий календарь */
+            overflow: visible !important;
         }
 
+        .calendar-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #ff5722;
+            font-size: 20px;
+            z-index: 10;
+            background: transparent;
+        }
+
+        /* Стили для выпадающего календаря - позиционируется относительно .date-picker-wrapper */
         .custom-calendar {
-            position: fixed !important;
+            position: absolute;
+            top: 100%;
+            left: 0;
             background: white;
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-            z-index: 100000 !important; /* Очень высокий z-index, чтобы быть поверх всего */
+            z-index: 10050 !important; /* Выше, чем у модального окна */
             display: none;
             width: 300px;
+            margin-top: 5px;
             animation: fadeIn 0.2s ease;
+        }
+
+        /* Если календарь не помещается снизу - показываем сверху */
+        @media (max-height: 600px) {
+            .custom-calendar {
+                top: auto;
+                bottom: 100%;
+                margin-top: 0;
+                margin-bottom: 5px;
+            }
         }
 
         .custom-calendar.active {
             display: block;
-        }
-
-        /* Стили для календаря */
-        .custom-calendar .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #ff5722, #ff9800);
-            color: white;
-            border-radius: 16px 16px 0 0;
-        }
-
-        .custom-calendar .calendar-month-year {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .custom-calendar .calendar-nav {
-            display: flex;
-            gap: 16px;
-        }
-
-        .custom-calendar .calendar-nav span {
-            cursor: pointer;
-            font-size: 18px;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .custom-calendar .calendar-nav span:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .custom-calendar .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            text-align: center;
-            padding: 10px 0;
-            background: #f8f9fa;
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-        }
-
-        .custom-calendar .calendar-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            padding: 8px;
-            gap: 4px;
-        }
-
-        .custom-calendar .calendar-day {
-            text-align: center;
-            padding: 8px 4px;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 13px;
-            transition: all 0.2s;
-            background: white;
-            color: #333;
-        }
-
-        .custom-calendar .calendar-day:hover:not(.disabled):not(.confirmed-occupied):not(.pending-occupied) {
-            background: #fff0e8 !important;
-            transform: scale(1.05);
-        }
-
-        .custom-calendar .calendar-day.selected {
-            background: #ff5722 !important;
-            color: white !important;
-        }
-
-        /* Дата вне доступного диапазона */
-        .custom-calendar .calendar-day.disabled {
-            color: #bbb !important;
-            background: #f5f5f5 !important;
-            cursor: not-allowed;
-            text-decoration: none;
-            opacity: 0.6;
-        }
-
-        /* Подтверждённые даты (APPROVED) - красные */
-        .custom-calendar .calendar-day.confirmed-occupied {
-            background: #ffebee !important;
-            color: #f44336 !important;
-            cursor: not-allowed;
-            text-decoration: none;
-            position: relative;
-        }
-
-        .custom-calendar .calendar-day.confirmed-occupied::after {
-            content: "✓";
-            font-size: 8px;
-            position: absolute;
-            bottom: 0;
-            right: 2px;
-            opacity: 0.8;
-        }
-
-        /* Ожидающие даты (PENDING) - жёлтые */
-        .custom-calendar .calendar-day.pending-occupied {
-            background: #fff8e1 !important;
-            color: #ff9800 !important;
-            cursor: not-allowed;
-            text-decoration: none;
-            position: relative;
-        }
-
-        .custom-calendar .calendar-day.pending-occupied::after {
-            content: "⏳";
-            font-size: 8px;
-            position: absolute;
-            bottom: 0;
-            right: 2px;
-            opacity: 0.8;
-        }
-
-        .custom-calendar .calendar-day.other-month {
-            color: #aaa !important;
-            background: #fafafa !important;
-            opacity: 0.8;
-        }
-
-        .custom-calendar .calendar-footer {
-            padding: 10px 16px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .custom-calendar .calendar-today-btn {
-            background: none;
-            border: none;
-            color: #ff5722;
-            cursor: pointer;
-            font-size: 12px;
-            padding: 5px 10px;
-            border-radius: 20px;
-            transition: background 0.2s;
-        }
-
-        .custom-calendar .calendar-today-btn:hover {
-            background: #fff0e8;
         }
 
         .modal-header {
@@ -2351,11 +2230,21 @@
             if (response.ok) {
                 const messages = await response.json();
                 renderMessages(messages);
-                setTimeout(() => {
-                    sendInitialReadReceipt();
-                }, 300);
+
+                // Добавляем обработчики для скачивания файлов
+                attachFileDownloadHandlers();
             }
         } catch(e) { console.error(e); }
+    }
+
+    function attachFileDownloadHandlers() {
+        document.querySelectorAll('.file-download-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = btn.getAttribute('href');
+                window.open(url, '_blank');
+            });
+        });
     }
 
     function updateFilePreview() {
@@ -3183,6 +3072,7 @@
         days.forEach(({ date, isCurrentMonth }) => {
             const dateStr = formatDate(date);
 
+            // Нормализуем дату для сравнения (UTC)
             const dateUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const minDateUTC = minDate ? new Date(Date.UTC(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())) : null;
             const maxDateUTC = maxDate ? new Date(Date.UTC(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())) : null;
@@ -3190,8 +3080,19 @@
             const isOutOfRange = (minDateUTC && dateUTC.getTime() < minDateUTC.getTime()) ||
                                 (maxDateUTC && dateUTC.getTime() > maxDateUTC.getTime());
 
+            // Проверяем статусы с выводом в консоль
             const isConfirmed = isDateConfirmed(dateUTC);
             const isPending = !isConfirmed && isDatePending(dateUTC);
+
+            // ДОБАВЬТЕ ЭТОТ ВЫВОД ДЛЯ ОТЛАДКИ
+            if (dateUTC.getDate() === 27 && dateUTC.getMonth() === 4) { // 27 мая
+                console.log(`=== РЕНДЕР ДАТЫ 27 МАЯ ===`);
+                console.log(`dateUTC: ${dateUTC.toISOString()}`);
+                console.log(`isConfirmed: ${isConfirmed}`);
+                console.log(`isPending: ${isPending}`);
+                console.log(`isOutOfRange: ${isOutOfRange}`);
+                console.log(`isCurrentMonth: ${isCurrentMonth}`);
+            }
 
             const isOccupied = isConfirmed || isPending;
             const isSelectable = !isOutOfRange && !isOccupied;
@@ -3205,6 +3106,11 @@
             if (!isSelectable && !isConfirmed && !isPending && !isOutOfRange) classes += ' disabled';
             if (isSelected) classes += ' selected';
 
+            // ДОБАВЬТЕ ВЫВОД КЛАССОВ
+            if (dateUTC.getDate() === 27 && dateUTC.getMonth() === 4) {
+                console.log(`classes: ${classes}`);
+            }
+
             html += `<div class="${classes}" data-date="${dateStr}" data-selectable="${isSelectable}" data-current-month="${isCurrentMonth}">${date.getDate()}</div>`;
         });
 
@@ -3217,7 +3123,7 @@
 
         calendar.innerHTML = html;
 
-        // Добавляем обработчики для кликабельных дат
+        // Добавляем обработчики ТОЛЬКО для кликабельных дат
         calendar.querySelectorAll('.calendar-day').forEach(day => {
             const isSelectable = day.dataset.selectable === 'true';
 
@@ -3235,7 +3141,6 @@
             }
         });
 
-        // Обработчики навигации
         calendar.querySelector('.calendar-prev')?.addEventListener('click', (e) => {
             e.stopPropagation();
             const newDate = new Date(year, month - 1, 1);
@@ -3274,44 +3179,6 @@
         const endCalendar = document.getElementById('calendarEnd');
         const startIcon = document.querySelector('.calendar-icon[data-target="start"]');
         const endIcon = document.querySelector('.calendar-icon[data-target="end"]');
-
-        // Функция для вычисления и установки позиции календаря
-        function positionCalendar(calendar, inputElement) {
-            if (!calendar || !inputElement) return;
-
-            const rect = inputElement.getBoundingClientRect();
-            const calendarHeight = 350; // примерная высота календаря
-            const spaceBelow = window.innerHeight - rect.bottom;
-            const spaceAbove = rect.top;
-
-            // Определяем, где лучше показать календарь
-            let top, left;
-
-            if (spaceBelow >= calendarHeight || spaceBelow > spaceAbove) {
-                // Показываем снизу
-                top = rect.bottom + 5;
-            } else {
-                // Показываем сверху
-                top = rect.top - calendarHeight - 5;
-            }
-
-            left = rect.left;
-
-            // Проверяем, не выходит ли календарь за правый край
-            if (left + 300 > window.innerWidth) {
-                left = window.innerWidth - 310;
-            }
-
-            // Проверяем, не выходит ли за левый край
-            if (left < 5) {
-                left = 5;
-            }
-
-            calendar.style.position = 'fixed';
-            calendar.style.top = top + 'px';
-            calendar.style.left = left + 'px';
-            calendar.style.margin = '0';
-        }
 
         function onSelectStart(dateStr, isStart) {
             const selectedDate = parseDate(dateStr);
@@ -3363,12 +3230,6 @@
             startCalendar.classList.toggle('active');
             activeCalendar = startCalendar.classList.contains('active') ? startCalendar : null;
             updateStartCalendar();
-
-            if (startCalendar.classList.contains('active')) {
-                setTimeout(() => {
-                    positionCalendar(startCalendar, startInput);
-                }, 10);
-            }
         });
 
         endIcon?.addEventListener('click', (e) => {
@@ -3379,28 +3240,10 @@
             endCalendar.classList.toggle('active');
             activeCalendar = endCalendar.classList.contains('active') ? endCalendar : null;
             updateEndCalendar();
-
-            if (endCalendar.classList.contains('active')) {
-                setTimeout(() => {
-                    positionCalendar(endCalendar, endInput);
-                }, 10);
-            }
-        });
-
-        // При изменении размера окна перепозиционируем активный календарь
-        window.addEventListener('resize', () => {
-            if (startCalendar.classList.contains('active')) {
-                positionCalendar(startCalendar, startInput);
-            }
-            if (endCalendar.classList.contains('active')) {
-                positionCalendar(endCalendar, endInput);
-            }
         });
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.date-picker-wrapper') &&
-                !e.target.closest('.custom-calendar') &&
-                !e.target.closest('.calendar-icon')) {
+            if (!e.target.closest('.date-picker-wrapper')) {
                 startCalendar.classList.remove('active');
                 endCalendar.classList.remove('active');
                 activeCalendar = null;

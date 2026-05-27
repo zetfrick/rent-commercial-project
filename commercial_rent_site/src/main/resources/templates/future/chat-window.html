@@ -2230,11 +2230,21 @@
             if (response.ok) {
                 const messages = await response.json();
                 renderMessages(messages);
-                setTimeout(() => {
-                    sendInitialReadReceipt();
-                }, 300);
+
+                // Добавляем обработчики для скачивания файлов
+                attachFileDownloadHandlers();
             }
         } catch(e) { console.error(e); }
+    }
+
+    function attachFileDownloadHandlers() {
+        document.querySelectorAll('.file-download-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = btn.getAttribute('href');
+                window.open(url, '_blank');
+            });
+        });
     }
 
     function updateFilePreview() {

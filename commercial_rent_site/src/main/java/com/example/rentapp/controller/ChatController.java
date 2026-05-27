@@ -309,22 +309,34 @@ public class ChatController {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
 
         List<ChatMessage> messages;
+        List<ChatMessage> fileMessages;
+
         if (premiseId != null) {
             messages = chatService.getChatBetweenByPremise(currentUser.getId(), with, premiseId);
+            fileMessages = chatService.getFileMessagesBetween(currentUser.getId(), with, premiseId);
         } else {
             messages = chatService.getChatBetween(currentUser.getId(), with);
+            fileMessages = chatService.getFileMessagesBetween(currentUser.getId(), with, null);
         }
 
-        return messages.stream().map(msg -> new ChatMessageDto(
-                msg.getId(),
-                msg.getSenderId(),
-                msg.getReceiverId(),
-                msg.getSenderLogin(),
-                msg.getText(),
-                msg.getSentAt(),
-                msg.isRead(),
-                msg.getDeliveryStatus()  // Добавляем статус доставки
-        )).collect(Collectors.toList());
+        // Объединяем и сортируем
+        List<ChatMessage> allMessages = new ArrayList<>();
+        allMessages.addAll(messages);
+        allMessages.addAll(fileMessages);
+        allMessages.sort((a, b) -> a.getSentAt().compareTo(b.getSentAt()));
+
+        return allMessages.stream()
+                .map(msg -> new ChatMessageDto(
+                        msg.getId(),
+                        msg.getSenderId(),
+                        msg.getReceiverId(),
+                        msg.getSenderLogin(),
+                        msg.getText(), // Уже содержит HTML для файлов
+                        msg.getSentAt(),
+                        msg.isRead(),
+                        msg.getDeliveryStatus()
+                ))
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/api/messages/mark-read")

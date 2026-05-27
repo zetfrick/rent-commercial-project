@@ -207,4 +207,14 @@ public class ChatService {
 
         notificationService.deleteNotificationsForChat(currentUserId, otherUserId, premiseId);
     }
+
+    /**
+     * Получить все файловые сообщения в чате
+     */
+    public List<ChatMessage> getFileMessagesBetween(Long userId1, Long userId2, Long premiseId) {
+        if (premiseId != null) {
+            return chatMessageRepository.findFileMessagesBetweenUsersByPremise(userId1, userId2, premiseId);
+        }
+        return chatMessageRepository.findFileMessagesBetweenUsers(userId1, userId2);
+    }
 }

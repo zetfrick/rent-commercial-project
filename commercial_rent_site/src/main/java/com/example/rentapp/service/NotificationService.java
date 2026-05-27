@@ -12,6 +12,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@EnableAsync
 @RequiredArgsConstructor
 public class NotificationService {
 
@@ -33,6 +36,7 @@ public class NotificationService {
         return notificationRepository.countByUserIdAndReadFalse(userId);
     }
 
+    @Async
     @Transactional
     public void createNotification(Long userId, String type, Long relatedId,
                                    Long fromUserId, String fromUserName,
@@ -67,6 +71,7 @@ public class NotificationService {
         }
     }
 
+    @Async
     private void sendEmailNotificationIfOffline(Long userId, String type, String fromUserName,
                                                 String content, String link, Long fromUserId) {
         try {

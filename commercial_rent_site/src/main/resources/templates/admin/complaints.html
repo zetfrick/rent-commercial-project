@@ -1024,13 +1024,13 @@
         let typeIcon = '';
 
         if (complaint.type === 'PREMISE') {
-            typeDisplay = '📦 На объявление';
+            typeDisplay = ' На объявление';
             typeIcon = 'fa-building';
             if (complaint.premiseId) {
                 targetLink = `<a href="/premise/${complaint.premiseId}" target="_blank" class="detail-link">Перейти к объявлению →</a>`;
             }
         } else if (complaint.type === 'USER') {
-            typeDisplay = '👤 На пользователя';
+            typeDisplay = ' На пользователя';
             typeIcon = 'fa-user';
             if (complaint.userId) {
                 targetLink = `<a href="/profile?username=${encodeURIComponent(complaint.targetName)}" target="_blank" class="detail-link">Перейти к профилю →</a>`;
