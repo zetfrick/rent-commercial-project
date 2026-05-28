@@ -49,7 +49,7 @@ public class BookingApiController {
         return ResponseEntity.ok(bookingService.getPendingRequestsForOwner(ownerId));
     }
 
-    // НОВЫЙ ЭНДПОИНТ: получить PENDING запросы для владельца по конкретному помещению
+    // Получить PENDING запросы для владельца по конкретному помещению
     @GetMapping("/owner/{ownerId}/pending/premise/{premiseId}")
     public ResponseEntity<List<BookingDto>> getPendingRequestsForOwnerByPremise(
             @PathVariable Long ownerId,
@@ -63,7 +63,7 @@ public class BookingApiController {
         return ResponseEntity.ok(bookingService.getRequestsForRenter(renterId));
     }
 
-    // НОВЫЙ ЭНДПОИНТ: получить диапазоны ожидающих дат для помещения (только PENDING)
+    // Получить диапазоны ожидающих дат для помещения (только PENDING)
     @GetMapping("/premise/{premiseId}/pending-ranges")
     public ResponseEntity<List<Map<String, Object>>> getPendingDateRanges(@PathVariable Long premiseId) {
         return ResponseEntity.ok(bookingService.getPendingDateRanges(premiseId));

@@ -56,6 +56,4 @@ public class PremiseDto {
     private LocalDate createdAt;
 
     private LocalDateTime unpublishedAt;
-
-    // Методы перевода УДАЛЕНЫ - они должны быть только в PremiseConfig!
 }

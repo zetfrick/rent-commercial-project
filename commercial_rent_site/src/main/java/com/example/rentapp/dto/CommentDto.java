@@ -20,7 +20,7 @@ public class CommentDto {
     private String text;
     private LocalDateTime createdAt;
 
-    // НОВЫЕ ПОЛЯ ДЛЯ ОТВЕТОВ
+    // ПОЛЯ ДЛЯ ОТВЕТОВ
     private Long parentCommentId;
     private Long repliedToUserId;
     private String repliedToUserName;
@@ -35,10 +35,10 @@ public class CommentDto {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Конструктор для ответа - ИСПРАВЛЕНА ОПЕЧАТКА: premiereId -> premiseId
+    // Конструктор для ответа
     public CommentDto(Long premiseId, String authorName, String text,
                       Long parentCommentId, Long repliedToUserId, String repliedToUserName) {
-        this.premiseId = premiseId;  // ← было "premiereId", исправлено на "premiseId"
+        this.premiseId = premiseId;
         this.authorName = authorName;
         this.text = text;
         this.parentCommentId = parentCommentId;

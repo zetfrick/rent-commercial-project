@@ -47,9 +47,6 @@ public class CommentApiController {
                 currentUser.getRole() == User.Role.SUPER_ADMIN;
 
         if (!isAdmin) {
-            // Если не админ, нужно проверить, что комментарий принадлежит этому пользователю
-            // Но т.к. у нас нет прямого доступа к комментарию в rentapp,
-            // лучше разрешить удаление только админам для простоты
             response.put("success", false);
             response.put("message", "Недостаточно прав для удаления комментария");
             return ResponseEntity.status(403).body(response);

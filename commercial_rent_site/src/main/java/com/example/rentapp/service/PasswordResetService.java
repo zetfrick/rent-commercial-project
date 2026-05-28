@@ -154,8 +154,6 @@ public class PasswordResetService {
         }
     }
 
-    // ==================== ОБЩИЕ МЕТОДЫ ====================
-
     @Transactional
     public boolean verifyCode(String email, String code) {
         Optional<PasswordResetToken> tokenOpt = tokenRepository.findByEmailAndCodeAndUsedFalse(email, code);

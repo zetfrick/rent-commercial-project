@@ -63,5 +63,4 @@ public class Premise {
 
     private LocalDateTime unpublishedAt;
 
-    // Методы перевода УДАЛЕНЫ - они должны быть только в PremiseConfig!
 }

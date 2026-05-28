@@ -288,7 +288,7 @@ public class BookingService {
                         premiseId,
                         null,
                         null,
-                        contentText,  // ← чистый текст без HTML и без дублирования ссылки
+                        contentText,
                         premiseLink
                 );
 
@@ -320,8 +320,6 @@ public class BookingService {
         }
         return false;
     }
-
-    // ==================== СУЩЕСТВУЮЩИЕ МЕТОДЫ ====================
 
     public List<LocalDate> getBookedDates(Long premiseId) {
         List<Booking> bookings = bookingRepository.findByPremiseIdAndStatusIn(premiseId, List.of("APPROVED"));

@@ -18,7 +18,7 @@ public class ChatMessageDto {
     private String text;
     private LocalDateTime sentAt;
     private boolean read;
-    private String deliveryStatus;  // НОВОЕ ПОЛЕ
+    private String deliveryStatus;
 
     public ChatMessageDto(Long senderId, Long receiverId, String senderLogin, String text) {
         this.senderId = senderId;

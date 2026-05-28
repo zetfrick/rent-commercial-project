@@ -34,7 +34,7 @@ public class User {
 
     // === НАСТРОЙКИ УВЕДОМЛЕНИЙ ===
     @Column(nullable = false)
-    private boolean emailNotificationsEnabled = true;  // ← НОВОЕ ПОЛЕ, по умолчанию включено
+    private boolean emailNotificationsEnabled = true;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -61,7 +61,6 @@ public class BanController {
 
         boolean success = userBanService.banUser(admin.getId(), banRequest);
 
-        // ===== ДОБАВЬТЕ ЭТОТ БЛОК =====
         if (success) {
             try {
                 // Вызываем метод снятия объявлений через RestTemplate или Feign клиент

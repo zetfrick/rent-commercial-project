@@ -16,9 +16,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     void deleteByPremiseId(Long premiseId);
 
-    // НОВЫЕ МЕТОДЫ ДЛЯ ОТВЕТОВ
 
-    // Найти все корневые комментарии (не ответы)
     @Query("SELECT c FROM Comment c WHERE c.premiseId = :premiseId AND c.parentCommentId IS NULL ORDER BY c.createdAt DESC")
     List<Comment> findRootCommentsByPremiseId(@Param("premiseId") Long premiseId);
 

@@ -45,7 +45,6 @@ public class WebCatalogController {
     @Autowired
     private UserBanService userBanService;
 
-    // УПРОЩЁННО: types, amenities, typeInRussian, amenityInRussian добавляются автоматически через GlobalModelAdvice
     @GetMapping("/catalog")
     public String catalog(Model model) {
         List<PremiseDto> premises = catalogClient.getAllPremises();
@@ -149,12 +148,10 @@ public class WebCatalogController {
         }
         model.addAttribute("canRepublish", canRepublish);
 
-        // types, amenities и прочее уже в модели через GlobalModelAdvice
-
         return "future/premise-detail";
     }
 
-    // НОВЫЙ МЕТОД: страница редактирования помещения
+    // Страница редактирования помещения
     @GetMapping("/premise/{id}/edit")
     public String editPremiseForm(@PathVariable Long id,
                                   @AuthenticationPrincipal UserDetails userDetails,
@@ -162,7 +159,6 @@ public class WebCatalogController {
                                   @RequestParam(required = false) String city,
                                   Model model) {
 
-        // ===== ДОБАВЬТЕ ЭТУ ПРОВЕРКУ =====
         if (userDetails == null) {
             // Сохраняем URL для перенаправления после логина
             request.getSession().setAttribute("redirectAfterLogin", request.getRequestURI());
@@ -191,12 +187,11 @@ public class WebCatalogController {
         }
 
         model.addAttribute("premise", premise);
-        // types, amenities и прочее уже в модели через GlobalModelAdvice
 
         return "future/premise-edit";
     }
 
-    // НОВЫЙ МЕТОД: сохранение изменений помещения
+    // Сохранение изменений помещения
     @PostMapping("/premise/{id}/edit")
     public String updatePremise(@PathVariable Long id,
                                 @RequestParam String type,
@@ -285,13 +280,12 @@ public class WebCatalogController {
             }
         } catch (Exception e) {
             System.err.println("Failed to send notification for comment: " + e.getMessage());
-            // Не прерываем выполнение, если уведомление не отправилось
         }
 
         return saved;
     }
 
-    // НОВЫЙ МЕТОД: добавление ответа на комментарий
+    // Добавление ответа на комментарий
     @PostMapping("/api/comments/reply")
     @ResponseBody
     public CommentDto addReply(@RequestBody CommentDto commentDto,

@@ -20,7 +20,7 @@ public class WebSocketMessageDto {
     private String fileUrl;
     private String fileType;
     private Long fileSize;
-    private String deliveryStatus;  // НОВОЕ ПОЛЕ
+    private String deliveryStatus;
 
     public WebSocketMessageDto(Long id, Long senderId, Long receiverId, String senderLogin,
                                String text, LocalDateTime sentAt, Long premiseId, String type) {

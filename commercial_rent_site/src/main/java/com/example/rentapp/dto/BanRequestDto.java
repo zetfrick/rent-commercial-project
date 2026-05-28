@@ -8,6 +8,6 @@ import java.time.LocalDateTime;
 public class BanRequestDto {
     private Long userId;
     private String reason;
-    private String duration; // "1_DAY", "1_WEEK", "1_MONTH", "1_YEAR", "CUSTOM"
+    private String duration;
     private LocalDateTime customDate;
 }

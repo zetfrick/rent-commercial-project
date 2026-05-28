@@ -18,7 +18,7 @@ public class ComplaintDto {
     private String type;
     private Long premiseId;
     private Long userId;
-    private Long commentId;        // НОВОЕ ПОЛЕ: ID комментария
+    private Long commentId;
     private Long complainantId;
     private String complainantName;
     private String targetName;
@@ -30,7 +30,7 @@ public class ComplaintDto {
     private LocalDateTime createdAt;
     private List<RejectedByDto> rejectedBy;
 
-    // НОВОЕ ПОЛЕ: детали комментария для отображения в админке
+    // Детали комментария для отображения в админке
     private CommentDetails commentDetails;
 
     @Data

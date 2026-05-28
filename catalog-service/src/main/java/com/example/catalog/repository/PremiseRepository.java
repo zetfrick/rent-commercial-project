@@ -19,7 +19,6 @@ public interface PremiseRepository extends JpaRepository<Premise, Long> {
 
     List<Premise> findTop6ByActiveTrueOrderByCreatedAtDesc();
 
-    // НОВЫЕ МЕТОДЫ
     List<Premise> findByActiveTrueAndAvailableToBefore(LocalDate date);
 
     List<Premise> findByActiveFalseAndUnpublishedAtBefore(LocalDateTime date);

@@ -23,7 +23,7 @@ public class Comment {
 
     private String authorName;
 
-    private Long authorId;  // НОВОЕ ПОЛЕ
+    private Long authorId;
 
     @Column(length = 1000)
     private String text;
@@ -52,7 +52,6 @@ public class Comment {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Конструктор с authorId
     public Comment(Long premiseId, Long authorId, String authorName, String text,
                    Long parentCommentId, Long repliedToUserId, String repliedToUserName) {
         this.premiseId = premiseId;

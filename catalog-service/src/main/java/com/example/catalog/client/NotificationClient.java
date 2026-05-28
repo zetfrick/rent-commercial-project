@@ -4,7 +4,6 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-// ВРЕМЕННО используем прямой URL для теста
 @FeignClient(name = "main-service", url = "http://localhost:8080")
 public interface NotificationClient {
 

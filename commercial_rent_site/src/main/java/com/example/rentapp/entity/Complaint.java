@@ -27,7 +27,7 @@ public class Complaint {
     private String reason;
 
     @Column(nullable = false)
-    private String type;      // "PREMISE", "USER" или "COMMENT"
+    private String type;
 
     private Long premiseId;
 

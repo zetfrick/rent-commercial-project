@@ -530,9 +530,6 @@
     document.getElementById('searchLogin').addEventListener('input', filterAdmins);
     document.getElementById('searchEmail').addEventListener('input', filterAdmins);
 
-    // Модальное окно закрывается ТОЛЬКО при клике на крестик
-    // Удаляем обработчик window.onclick, который закрывал окно при клике вне его
-
     document.addEventListener('DOMContentLoaded', () => {
         checkAccess();
     });

@@ -35,7 +35,7 @@ public interface CatalogClient {
     @GetMapping("/api/comments/premise/{premiseId}")
     List<CommentDto> getCommentsByPremiseId(@PathVariable("premiseId") Long premiseId);
 
-    // НОВЫЙ МЕТОД: получение конфигурации
+    // Получение конфигурации
     @GetMapping("/api/config/all")
     Map<String, Object> getAllConfig();
 
@@ -48,7 +48,7 @@ public interface CatalogClient {
     @DeleteMapping("/api/comments/{id}")
     Map<String, Object> deleteComment(@PathVariable("id") Long id);
 
-    // НОВЫЙ МЕТОД: обновление контактных данных владельца во всех его объявлениях
+    // Обновление контактных данных владельца во всех его объявлениях
     @PutMapping("/api/premises/owner/{ownerId}/update-contacts")
     void updateOwnerContacts(@PathVariable("ownerId") Long ownerId,
                              @RequestBody Map<String, String> contacts);

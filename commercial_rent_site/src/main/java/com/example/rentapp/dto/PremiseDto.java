@@ -66,7 +66,7 @@ public class PremiseDto {
     private List<LocalDate> bookedDates = new ArrayList<>();
     private List<BookingDto> bookings = new ArrayList<>();
 
-    // НОВОЕ ПОЛЕ: ожидающие запросы на аренду
+    // Ожидающие запросы на аренду
     private List<Map<String, Object>> pendingBookings = new ArrayList<>();
 
     public static void initTranslations(Map<String, String> typeRussian, Map<String, String> amenityRussian) {

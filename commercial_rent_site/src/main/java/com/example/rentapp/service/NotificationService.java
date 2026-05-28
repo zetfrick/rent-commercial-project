@@ -181,7 +181,7 @@ public class NotificationService {
             }
         }
 
-        // ========== ВАЖНО: удаляем HTML-теги для ВСЕХ типов уведомлений ==========
+        // Удаляем HTML-теги для ВСЕХ типов уведомлений
         String plainContent = decodedContent != null ? decodedContent.replaceAll("<[^>]*>", "").trim() : "";
 
         // Используем отображаемое имя (если есть полное имя, иначе логин)
@@ -384,7 +384,7 @@ public class NotificationService {
         return notificationRepository.deleteOldReadNotifications(userId, thirtyDaysAgo);
     }
 
-    // НОВЫЙ МЕТОД: обновление настроек email-уведомлений
+    // Обновление настроек email-уведомлений
     @Transactional
     public void updateEmailNotificationsEnabled(Long userId, boolean enabled) {
         User user = userRepository.findById(userId).orElse(null);
@@ -394,7 +394,7 @@ public class NotificationService {
         }
     }
 
-    // НОВЫЙ МЕТОД: получение статуса email-уведомлений
+    // Получение статуса email-уведомлений
     public boolean isEmailNotificationsEnabled(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         return user != null && user.isEmailNotificationsEnabled();

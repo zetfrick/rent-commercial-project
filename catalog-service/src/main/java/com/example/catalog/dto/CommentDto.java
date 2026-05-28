@@ -21,15 +21,14 @@ public class CommentDto {
     private String text;
     private LocalDateTime createdAt;
 
-    // НОВЫЕ ПОЛЯ ДЛЯ ОТВЕТОВ
+    // Поля для ответов
     private Long parentCommentId;
     private Long repliedToUserId;
     private String repliedToUserName;
 
-    // ДЛЯ ВЛОЖЕННЫХ ОТВЕТОВ
+    // для вложенных ответов
     private List<CommentDto> replies = new ArrayList<>();
 
-    // Конструктор для создания комментария без ID и даты
     public CommentDto(Long premiseId, String authorName, String text) {
         this.premiseId = premiseId;
         this.authorName = authorName;

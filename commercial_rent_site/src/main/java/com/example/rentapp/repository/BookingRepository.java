@@ -49,13 +49,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("UPDATE Booking b SET b.status = :status WHERE b.id = :bookingId")
     void updateStatus(@Param("bookingId") Long bookingId, @Param("status") String status);
 
-    // НОВЫЙ МЕТОД: Найти APPROVED бронирования, которые начинаются через 3 дня, 1 день или сегодня
+    // Найти APPROVED бронирования, которые начинаются через 3 дня, 1 день или сегодня
     @Query("SELECT b FROM Booking b WHERE b.status = 'APPROVED' AND b.startDate IN (:in3Days, :in1Day, :today)")
     List<Booking> findUpcomingApprovedBookings(@Param("in3Days") LocalDate in3Days,
                                                @Param("in1Day") LocalDate in1Day,
                                                @Param("today") LocalDate today);
 
-    // НОВЫЙ МЕТОД: Найти APPROVED бронирования, которые заканчиваются через 3 дня, 1 день или сегодня
+    // Найти APPROVED бронирования, которые заканчиваются через 3 дня, 1 день или сегодня
     @Query("SELECT b FROM Booking b WHERE b.status = 'APPROVED' AND b.endDate IN (:in3Days, :in1Day, :today)")
     List<Booking> findEndingApprovedBookings(@Param("in3Days") LocalDate in3Days,
                                              @Param("in1Day") LocalDate in1Day,

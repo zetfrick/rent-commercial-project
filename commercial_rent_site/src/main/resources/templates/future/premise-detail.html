@@ -3057,8 +3057,8 @@
             let classes = 'calendar-day';
             if (!isCurrentMonth) classes += ' other-month';
             if (isOutOfRange) classes += ' disabled';
-            if (isConfirmed) classes += ' confirmed-occupied';  // ← новый класс для подтверждённых
-            if (isPending) classes += ' pending-occupied';      // ← новый класс для ожидающих
+            if (isConfirmed) classes += ' confirmed-occupied';
+            if (isPending) classes += ' pending-occupied';
             if (isSelected) classes += ' selected';
 
             html += `<div class="${classes}" data-date="${formatDate(date)}">${date.getUTCDate()}</div>`;

@@ -18,7 +18,7 @@ public class PremiseForm {
     private LocalDate availableFrom;
     private LocalDate availableTo;
 
-    private String region;        // ← ОБЯЗАТЕЛЬНОЕ
+    private String region;
     private String city;
     private String street;
     private String building;

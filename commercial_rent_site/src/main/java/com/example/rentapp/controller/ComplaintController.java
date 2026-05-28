@@ -86,7 +86,7 @@ public class ComplaintController {
         return complaintService.getComplaintById(id);
     }
 
-    // НОВЫЙ МЕТОД: статистика администратора
+    // Статистика администратора
     @GetMapping("/api/complaints/stats/{adminId}")
     @ResponseBody
     public Map<String, Object> getAdminStats(@PathVariable Long adminId) {

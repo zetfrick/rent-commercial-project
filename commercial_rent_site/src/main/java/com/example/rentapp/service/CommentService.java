@@ -24,9 +24,7 @@ public class CommentService {
         return catalogClient.addComment(commentDto);
     }
 
-    /**
-     * Добавление ответа на комментарий
-     */
+    // Добавление ответа на комментарий
     public CommentDto addReply(CommentDto commentDto) {
         if (commentDto.getText() == null || commentDto.getText().trim().isEmpty()) {
             throw new IllegalArgumentException("Текст ответа не может быть пустым");
@@ -40,23 +38,17 @@ public class CommentService {
         return catalogClient.addReply(commentDto);
     }
 
-    /**
-     * Получение комментариев с ответами (иерархически)
-     */
+    //Получение комментариев с ответами (иерархически)
     public List<CommentDto> getCommentsWithReplies(Long premiseId) {
         return catalogClient.getCommentsWithReplies(premiseId);
     }
 
-    /**
-     * Получение плоского списка комментариев (без иерархии) - для обратной совместимости
-     */
+    // Получение плоского списка комментариев (без иерархии) - для обратной совместимости
     public List<CommentDto> getCommentsByPremiseId(Long premiseId) {
         return catalogClient.getCommentsByPremiseId(premiseId);
     }
 
-    /**
-     * Удаление комментария
-     */
+    // Удаление комментария
     public boolean deleteComment(Long commentId) {
         try {
             Map<String, Object> result = catalogClient.deleteComment(commentId);

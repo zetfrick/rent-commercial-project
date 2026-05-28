@@ -22,7 +22,7 @@ public class Notification {
     private Long userId;  // Кому принадлежит уведомление
 
     @Column(nullable = false)
-    private String type;  // MESSAGE, PREMISE_EXPIRED, BOOKING_REQUEST, BOOKING_REJECTED, BOOKING_APPROVED, COMMENT
+    private String type;
 
     private Long relatedId;  // ID связанного объекта (чата, помещения, бронирования, комментария)
 

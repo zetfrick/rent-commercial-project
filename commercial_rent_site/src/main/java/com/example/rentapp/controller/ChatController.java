@@ -260,8 +260,6 @@ public class ChatController {
             message = chatService.sendMessage(sender.getId(), receiverId, text);
         }
 
-        // Статус DELIVERED уже установлен при сохранении
-
         return "ok";
     }
 
@@ -300,7 +298,7 @@ public class ChatController {
         return "ok";
     }
 
-    // ИЗМЕНЁННЫЙ МЕТОД: возвращает сообщения со статусом доставки
+    // Возвращает сообщения со статусом доставки
     @GetMapping("/api/messages")
     @ResponseBody
     public List<ChatMessageDto> getMessages(@RequestParam Long with,

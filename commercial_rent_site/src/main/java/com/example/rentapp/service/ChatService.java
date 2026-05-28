@@ -129,13 +129,13 @@ public class ChatService {
         return saved;
     }
 
-    // НОВЫЙ МЕТОД: обновление статуса доставки сообщения
+    // Обновление статуса доставки сообщения
     @Transactional
     public void updateMessageDeliveryStatus(Long messageId, String status) {
         chatMessageRepository.updateDeliveryStatus(messageId, status);
     }
 
-    // НОВЫЙ МЕТОД: обновление статусов всех сообщений в диалоге
+    // Обновление статусов всех сообщений в диалоге
     @Transactional
     public void updateMessagesStatusBetweenUsers(Long senderId, Long receiverId, Long premiseId, String status) {
         if (premiseId != null) {

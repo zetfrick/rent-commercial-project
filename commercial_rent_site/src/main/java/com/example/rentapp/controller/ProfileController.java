@@ -102,8 +102,6 @@ public class ProfileController {
         model.addAttribute("rentedInCount", rentedInCount);
         model.addAttribute("daysWithUs", daysWithUs);
 
-        // ========== ОСТАЛЬНОЙ КОД ==========
-
         // Если это свой профиль и данные в сессии устарели, обновляем сессию
         if (targetUsername.equals(currentUsername) && currentUser != null && userDetails != null) {
             boolean needsUpdate = false;
@@ -186,7 +184,6 @@ public class ProfileController {
         currentUser.setLastName(updatedUser.getLastName());
         currentUser.setMiddleName(updatedUser.getMiddleName());
         currentUser.setPhone(updatedUser.getPhone());
-        // НЕ меняем email здесь, так как есть отдельный метод для смены email
 
         userService.save(currentUser);
 
@@ -253,7 +250,7 @@ public class ProfileController {
                                  @RequestParam(required = false) String city,
                                  HttpServletRequest request,
                                  Model model) {
-        // ПРОВЕРКА: если пользователь не авторизован, перенаправляем на логин
+        // Если пользователь не авторизован, перенаправляем на логин
         if (userDetails == null) {
             return "redirect:/auth/login";
         }
@@ -287,7 +284,7 @@ public class ProfileController {
                              @RequestParam("longitude") String longitudeStr,
                              Model model) {
 
-        // ПРОВЕРКА: если пользователь не авторизован, перенаправляем на логин
+        // Если пользователь не авторизован, перенаправляем на логин
         if (userDetails == null) {
             return "redirect:/auth/login";
         }
@@ -386,8 +383,6 @@ public class ProfileController {
 
         return "future/user-premises";
     }
-
-    // ==================== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ====================
 
     private User getCurrentUser(UserDetails userDetails) {
         return userService.findByLogin(userDetails.getUsername())

@@ -46,7 +46,7 @@ public class WebSocketChatController {
     public void sendMessage(@Payload WebSocketMessageDto message, Principal principal) {
         try {
             System.out.println("========================================");
-            System.out.println("=== WebSocket收到消息 ===");
+            System.out.println("=== WebSocket ===");
             System.out.println("Отправитель ID: " + message.getSenderId());
             System.out.println("Получатель ID: " + message.getReceiverId());
             System.out.println("Текст: " + message.getText());
@@ -163,8 +163,7 @@ public class WebSocketChatController {
     @MessageMapping("/chat.read")
     public void markAsRead(@Payload WebSocketMessageDto message) {
         try {
-            // ВАЖНО: currentUserId - это получатель (кто прочитал)
-            // otherUserId - это отправитель (чей сообщения прочитаны)
+
             Long currentUserId = message.getReceiverId();  // кто прочитал
             Long otherUserId = message.getSenderId();      // чьи сообщения
 
@@ -185,7 +184,7 @@ public class WebSocketChatController {
                 );
             }
 
-            // ОТПРАВЛЯЕМ ПОДТВЕРЖДЕНИЕ ПРОЧТЕНИЯ ОТПРАВИТЕЛЮ
+            // Подтверждение прочтения
             User sender = userService.findById(otherUserId).orElse(null);
             if (sender != null && WebSocketConfig.onlineUsers.containsKey(sender.getLogin())) {
                 WebSocketMessageDto readReceipt = new WebSocketMessageDto();
@@ -261,7 +260,7 @@ public class WebSocketChatController {
         }
     }
 
-    // НОВЫЙ ЭНДПОИНТ: отслеживание подключения пользователя
+    // Отслеживание подключения пользователя
     @MessageMapping("/chat.connect")
     public void connect(Principal principal) {
         if (principal != null && principal.getName() != null) {
@@ -271,7 +270,7 @@ public class WebSocketChatController {
         }
     }
 
-    // НОВЫЙ ЭНДПОИНТ: отслеживание отключения пользователя
+    // Отслеживание отключения пользователя
     @MessageMapping("/chat.disconnect")
     public void disconnect(Principal principal) {
         if (principal != null && principal.getName() != null) {
@@ -418,7 +417,7 @@ public class WebSocketChatController {
                 wsMessage.setDeliveryStatus("DELIVERED");
             }
 
-            // 9. ВАЖНО: ВСЕГДА отправляем ФИНАЛЬНОЕ подтверждение отправителю
+            // 9. ВСЕГДА отправляем ФИНАЛЬНОЕ подтверждение отправителю
             // Это заменит временное сообщение на постоянное с правильным статусом
             try {
                 messagingTemplate.convertAndSendToUser(

@@ -8,7 +8,7 @@ import java.util.Map;
 @Component
 public class PremiseConfig {
 
-    // Все допустимые типы помещений (хранятся ТОЛЬКО здесь)
+    // Все допустимые типы помещений (хранятся только здесь)
     public static final List<String> TYPES = List.of(
             "OFFICE",
             "TRADING",
@@ -16,10 +16,10 @@ public class PremiseConfig {
             "PRODUCTION",
             "HOSPITALITY",
             "UNIVERSAL",
-            "COWORKING"      // НОВЫЙ ТИП: Коворкинг
+            "COWORKING"
     );
 
-    // Все допустимые удобства (хранятся ТОЛЬКО здесь)
+    // Все допустимые удобства (хранятся только здесь)
     public static final List<String> AMENITIES = List.of(
             "CONDITIONER",
             "WI_FI",
@@ -29,8 +29,8 @@ public class PremiseConfig {
             "ELEVATOR",
             "KITCHEN",
             "CONFERENCE",
-            "PRINTER",       // НОВАЯ УСЛУГА: Принтер/МФУ
-            "COFFEE_MACHINE" // НОВАЯ УСЛУГА: Кофемашина
+            "PRINTER",
+            "COFFEE_MACHINE"
     );
 
     // Маппинг для русских названий типов
@@ -41,7 +41,7 @@ public class PremiseConfig {
             "PRODUCTION", "Производственное",
             "HOSPITALITY", "Гостиничное",
             "UNIVERSAL", "Универсальное",
-            "COWORKING", "Коворкинг"  // НОВЫЙ ПЕРЕВОД
+            "COWORKING", "Коворкинг"
     );
 
     // Маппинг для русских названий удобств
@@ -54,8 +54,8 @@ public class PremiseConfig {
             "ELEVATOR", "Лифт",
             "KITCHEN", "Кухня",
             "CONFERENCE", "Конференц-зал",
-            "PRINTER", "Принтер / МФУ",           // НОВАЯ УСЛУГА
-            "COFFEE_MACHINE", "Кофемашина"        // НОВАЯ УСЛУГА
+            "PRINTER", "Принтер / МФУ",
+            "COFFEE_MACHINE", "Кофемашина"
     );
 
     // Геттеры для использования в контроллерах

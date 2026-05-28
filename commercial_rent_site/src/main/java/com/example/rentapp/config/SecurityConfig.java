@@ -128,7 +128,6 @@ public class SecurityConfig {
                         .requestMatchers("/notifications/api/create").permitAll()
                         .requestMatchers("/notifications/api/**").permitAll()
 
-                        // ========== WEBSOCKET ENDPOINTS ==========
                         // Разрешаем WebSocket соединения без авторизации (авторизация внутри)
                         .requestMatchers("/ws-chat", "/ws-chat/**", "/ws-chat/info/**", "/ws-chat/info")
                         .permitAll()

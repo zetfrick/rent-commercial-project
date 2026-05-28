@@ -560,7 +560,7 @@ public class CatalogController {
 
         Comment parentComment = parentOpt.get();
 
-        // ВАЖНО: определяем repliedToUserId из родительского комментария, если не передан
+        // Определяем repliedToUserId из родительского комментария, если не передан
         Long repliedToUserId = commentDto.getRepliedToUserId();
         String repliedToUserName = commentDto.getRepliedToUserName();
 
