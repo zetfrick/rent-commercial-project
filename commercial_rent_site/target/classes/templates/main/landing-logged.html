@@ -553,7 +553,6 @@
                 });
             }
 
-            // Drag & drop для слайдера
             let isDragging = false;
             let startX = 0;
             let startTranslate = 0;
@@ -605,7 +604,6 @@
                 }, 350);
             });
 
-            // Запрещаем drag изображений
             images.forEach(img => {
                 img.addEventListener('dragstart', (e) => e.preventDefault());
             });

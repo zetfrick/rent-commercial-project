@@ -529,7 +529,7 @@
         const originalText = statusSpan.textContent;
         const originalClass = statusSpan.className;
 
-        // Меняем UI мгновенно для отзывчивости (оптимистичное обновление)
+        // Меняем UI мгновенно для отзывчивости
         statusSpan.textContent = enabled ? 'Включены' : 'Отключены';
         statusSpan.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
 
@@ -549,7 +549,7 @@
             const data = await response.json();
             console.log('Response data:', data);
 
-            // ИСПРАВЛЕНО: проверяем наличие emailNotificationsEnabled вместо success
+            // Проверяем наличие emailNotificationsEnabled вместо success
             if (data.emailNotificationsEnabled !== undefined) {
                 // Успех - оставляем обновлённый UI
                 showNotification(enabled ? '✅ Email-уведомления включены' : '🔕 Email-уведомления отключены');
@@ -573,7 +573,6 @@
         }
     }
 
-    // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
     async function loadNotifications() {
         const url = `/notifications/api/list?type=${currentTab === 'read' ? 'read' : 'unread'}`;
 
@@ -1012,7 +1011,6 @@
     loadNotificationSettings();
     loadNotifications();
 
-    // Добавляем стиль анимации, если его нет
     if (!document.querySelector('#notificationStyle')) {
         const style = document.createElement('style');
         style.id = 'notificationStyle';
