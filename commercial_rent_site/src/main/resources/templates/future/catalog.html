@@ -731,17 +731,10 @@
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-    let availableTypes = ['OFFICE', 'TRADING', 'WAREHOUSE', 'PRODUCTION', 'HOSPITALITY', 'UNIVERSAL'];
-    let availableAmenities = ['CONDITIONER', 'WI_FI', 'FURNITURE', 'PARKING', 'SECURITY', 'ELEVATOR', 'KITCHEN', 'CONFERENCE'];
-    let typeInRussianMap = {
-        'OFFICE': 'Офисное', 'TRADING': 'Торговое', 'WAREHOUSE': 'Складское',
-        'PRODUCTION': 'Производственное', 'HOSPITALITY': 'Гостиничное', 'UNIVERSAL': 'Универсальное'
-    };
-    let amenityInRussianMap = {
-        'CONDITIONER': 'Кондиционер', 'WI_FI': 'Wi-Fi', 'FURNITURE': 'Мебель',
-        'PARKING': 'Парковка', 'SECURITY': 'Охрана', 'ELEVATOR': 'Лифт',
-        'KITCHEN': 'Кухня', 'CONFERENCE': 'Конференц-зал'
-    };
+    let availableTypes = [];
+    let availableAmenities = [];
+    let typeInRussianMap = {};
+    let amenityInRussianMap = {};
 
     const serverTypesRaw = /*[[${types}]]*/ null;
     const serverAmenitiesRaw = /*[[${amenities}]]*/ null;
@@ -749,16 +742,16 @@
     const serverAmenityInRussianRaw = /*[[${amenityInRussian}]]*/ null;
 
     if (serverTypesRaw && Array.isArray(serverTypesRaw) && serverTypesRaw.length > 0) {
-        availableTypes = serverTypesRaw;
-        if (serverTypeInRussianRaw && typeof serverTypeInRussianRaw === 'object') {
-            typeInRussianMap = serverTypeInRussianRaw;
-        }
+    availableTypes = serverTypesRaw;
     }
     if (serverAmenitiesRaw && Array.isArray(serverAmenitiesRaw) && serverAmenitiesRaw.length > 0) {
         availableAmenities = serverAmenitiesRaw;
-        if (serverAmenityInRussianRaw && typeof serverAmenityInRussianRaw === 'object') {
-            amenityInRussianMap = serverAmenityInRussianRaw;
-        }
+    }
+    if (serverTypeInRussianRaw && typeof serverTypeInRussianRaw === 'object') {
+        typeInRussianMap = serverTypeInRussianRaw;
+    }
+    if (serverAmenityInRussianRaw && typeof serverAmenityInRussianRaw === 'object') {
+        amenityInRussianMap = serverAmenityInRussianRaw;
     }
 
     // Хранилище занятых дат для каждого помещения (загружается асинхронно)

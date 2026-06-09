@@ -1,8 +1,8 @@
 package com.example.rentapp.controller.api;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.RegisterRequest;
 import com.example.rentapp.entity.User;
+import com.example.rentapp.service.CatalogServiceWrapper;
 import com.example.rentapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -29,7 +29,7 @@ public class ApiAuthController {
     private BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
@@ -178,7 +178,7 @@ public class ApiAuthController {
         try {
             Map<String, String> contacts = new HashMap<>();
             contacts.put("email", newEmail);
-            catalogClient.updateOwnerContacts(user.getId(), contacts);
+            catalogService.updateOwnerContacts(user.getId(), contacts);
             System.out.println("✅ Email синхронизирован с catalog-service для пользователя #" + user.getId());
         } catch (Exception e) {
             System.err.println("❌ Ошибка синхронизации email: " + e.getMessage());

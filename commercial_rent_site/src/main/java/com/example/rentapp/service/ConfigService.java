@@ -1,8 +1,8 @@
 package com.example.rentapp.service;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.PremiseDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -13,7 +13,7 @@ import java.util.Map;
 public class ConfigService {
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     // Кэшируем конфигурацию
     private List<String> types = List.of();
@@ -21,14 +21,27 @@ public class ConfigService {
     private List<String> amenities = List.of();
     private Map<String, String> amenityRussian = Map.of();
 
+    // Флаг, была ли успешная загрузка конфигурации
+    private boolean configLoaded = false;
+
     @PostConstruct
     public void loadConfig() {
         refreshConfig();
     }
 
+    @Scheduled(fixedDelay = 30000)  // 30 секунд
+    public void scheduledRefreshConfig() {
+        // Проверяем только если конфигурация ещё не загружена
+        if (!configLoaded) {
+            if (catalogService.isServiceAvailable()) {
+                refreshConfig();
+            }
+        }
+    }
+
     public void refreshConfig() {
         try {
-            Map<String, Object> config = catalogClient.getAllConfig();
+            Map<String, Object> config = catalogService.getAllConfig();
             this.types = (List<String>) config.get("types");
             this.typeRussian = (Map<String, String>) config.get("typeRussian");
             this.amenities = (List<String>) config.get("amenities");
@@ -37,37 +50,14 @@ public class ConfigService {
             // ВАЖНО: передаём переводы в PremiseDto
             PremiseDto.initTranslations(this.typeRussian, this.amenityRussian);
 
-            System.out.println("Config loaded successfully from catalog-service");
+            configLoaded = true;  // ← Отмечаем, что конфигурация загружена
+
+            System.out.println("✅ Config loaded successfully from catalog-service");
             System.out.println("Types: " + this.types);
             System.out.println("TypeRussian: " + this.typeRussian);
-            System.out.println("Amenities: " + this.amenities);
-            System.out.println("AmenityRussian: " + this.amenityRussian);
         } catch (Exception e) {
-            // Fallback на случай недоступности catalog-service
-            System.err.println("Failed to load config from catalog-service, using defaults: " + e.getMessage());
-            this.types = List.of("OFFICE", "TRADING", "WAREHOUSE", "PRODUCTION", "HOSPITALITY", "UNIVERSAL");
-            this.typeRussian = Map.of(
-                    "OFFICE", "Офисное",
-                    "TRADING", "Торговое",
-                    "WAREHOUSE", "Складское",
-                    "PRODUCTION", "Производственное",
-                    "HOSPITALITY", "Гостиничное",
-                    "UNIVERSAL", "Универсальное"
-            );
-            this.amenities = List.of("CONDITIONER", "WI_FI", "FURNITURE", "PARKING", "SECURITY", "ELEVATOR", "KITCHEN", "CONFERENCE");
-            this.amenityRussian = Map.of(
-                    "CONDITIONER", "Кондиционер",
-                    "WI_FI", "Wi-Fi",
-                    "FURNITURE", "Мебель",
-                    "PARKING", "Парковка",
-                    "SECURITY", "Охрана",
-                    "ELEVATOR", "Лифт",
-                    "KITCHEN", "Кухня",
-                    "CONFERENCE", "Конференц-зал"
-            );
-
-            // ВАЖНО: даже при fallback передаём переводы в PremiseDto
-            PremiseDto.initTranslations(this.typeRussian, this.amenityRussian);
+            configLoaded = false;  // ← Загрузка не удалась
+            System.err.println("⚠️ Failed to load config from catalog-service: " + e.getMessage());
         }
     }
 

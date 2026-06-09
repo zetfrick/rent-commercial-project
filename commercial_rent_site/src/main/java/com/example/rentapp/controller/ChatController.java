@@ -1,16 +1,12 @@
 package com.example.rentapp.controller;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.ChatMessageDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.ChatMessage;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.entity.UserBan;
-import com.example.rentapp.service.BookingService;
-import com.example.rentapp.service.ChatService;
-import com.example.rentapp.service.UserBanService;
-import com.example.rentapp.service.UserService;
+import com.example.rentapp.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,7 +32,7 @@ public class ChatController {
     private UserService userService;
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     @Autowired
     private BookingService bookingService;
@@ -110,7 +106,7 @@ public class ChatController {
 
                     if (premiseIdObj != null) {
                         try {
-                            info.premise = catalogClient.getPremiseById(premiseIdObj);
+                            info.premise = catalogService.getPremiseById(premiseIdObj);
                         } catch (Exception e) {
                             System.err.println("Error loading premise: " + e.getMessage());
                         }
@@ -180,7 +176,7 @@ public class ChatController {
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
         User otherUser = userService.findByLogin(username).orElseThrow();
 
-        PremiseDto premise = catalogClient.getPremiseById(premiseId);
+        PremiseDto premise = catalogService.getPremiseById(premiseId);
 
         chatService.markMessagesAsReadByPremise(currentUser.getId(), otherUser.getId(), premiseId);
 
@@ -211,7 +207,7 @@ public class ChatController {
                                        Model model) {
 
         User currentUser = userService.findByLogin(userDetails.getUsername()).orElseThrow();
-        PremiseDto premise = catalogClient.getPremiseById(premiseId);
+        PremiseDto premise = catalogService.getPremiseById(premiseId);
 
         if (premise == null) {
             return "redirect:/catalog?error=premise_not_found";
@@ -379,7 +375,7 @@ public class ChatController {
 
                     if (premiseIdObj != null) {
                         try {
-                            info.premise = catalogClient.getPremiseById(premiseIdObj);
+                            info.premise = catalogService.getPremiseById(premiseIdObj);
                         } catch (Exception e) {
                             System.err.println("Error loading premise: " + e.getMessage());
                         }

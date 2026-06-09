@@ -1,14 +1,10 @@
 package com.example.rentapp.controller;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.dto.PremiseForm;
 import com.example.rentapp.entity.User;
-import com.example.rentapp.service.BookingService;
-import com.example.rentapp.service.FileStorageService;
-import com.example.rentapp.service.UserBanService;
-import com.example.rentapp.service.UserService;
+import com.example.rentapp.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,7 +33,7 @@ public class ProfileController {
     private FileStorageService fileStorageService;
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     @Autowired
     private BookingService bookingService;
@@ -80,7 +76,7 @@ public class ProfileController {
         // ========== СТАТИСТИКА ДЛЯ ПРОФИЛЯ ==========
 
         // 1. Количество активных объявлений (Сдаётся)
-        List<PremiseDto> userPremises = catalogClient.getPremisesByOwnerId(profileUser.getId());
+        List<PremiseDto> userPremises = catalogService.getPremisesByOwnerId(profileUser.getId());
         long rentedOutCount = userPremises.stream()
                 .filter(PremiseDto::isActive)
                 .count();
@@ -211,7 +207,7 @@ public class ProfileController {
         // Если контакты изменились, обновляем их в catalog-service
         if (contactsChanged) {
             try {
-                catalogClient.updateOwnerContacts(currentUser.getId(), contacts);
+                catalogService.updateOwnerContacts(currentUser.getId(), contacts);
                 System.out.println("✅ Контакты владельца #" + currentUser.getId() + " синхронизированы с catalog-service");
             } catch (Exception e) {
                 System.err.println("❌ Ошибка синхронизации контактов: " + e.getMessage());
@@ -250,6 +246,14 @@ public class ProfileController {
                                  @RequestParam(required = false) String city,
                                  HttpServletRequest request,
                                  Model model) {
+        // ===== ПРОВЕРКА ДОСТУПНОСТИ CATALOG-SERVICE =====
+        if (!catalogService.isServiceAvailable()) {
+            model.addAttribute("error", "Сервис временно недоступен. Пожалуйста, попробуйте позже.");
+            model.addAttribute("currentCity", city != null ? city : "Нижний Новгород");
+            model.addAttribute("currentUri", request.getRequestURI());
+            return "error/service-unavailable"; // нужно создать эту страницу
+        }
+
         // Если пользователь не авторизован, перенаправляем на логин
         if (userDetails == null) {
             return "redirect:/auth/login";
@@ -344,7 +348,7 @@ public class ProfileController {
         premiseDto.setLatitude(lat);
         premiseDto.setLongitude(lng);
 
-        catalogClient.addPremise(premiseDto);
+        catalogService.addPremise(premiseDto);
 
         return "redirect:/premise/add?success";
     }
@@ -361,7 +365,7 @@ public class ProfileController {
         User profileUser = userService.findByLogin(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
 
-        List<PremiseDto> userPremises = catalogClient.getPremisesByOwnerId(profileUser.getId());
+        List<PremiseDto> userPremises = catalogService.getPremisesByOwnerId(profileUser.getId());
 
         // Загружаем аренды для каждого помещения
         for (PremiseDto premise : userPremises) {

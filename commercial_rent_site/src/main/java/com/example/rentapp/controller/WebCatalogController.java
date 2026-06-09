@@ -1,16 +1,11 @@
 package com.example.rentapp.controller;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.CommentDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.entity.UserBan;
-import com.example.rentapp.service.BookingService;
-import com.example.rentapp.service.CommentService;
-import com.example.rentapp.service.NotificationService;
-import com.example.rentapp.service.UserBanService;
-import com.example.rentapp.service.UserService;
+import com.example.rentapp.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,7 +23,7 @@ import java.util.stream.Collectors;
 public class WebCatalogController {
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     @Autowired
     private CommentService commentService;
@@ -47,7 +42,12 @@ public class WebCatalogController {
 
     @GetMapping("/catalog")
     public String catalog(Model model) {
-        List<PremiseDto> premises = catalogClient.getAllPremises();
+        // ===== ПРОВЕРКА ДОСТУПНОСТИ CATALOG-SERVICE =====
+        if (!catalogService.isServiceAvailable()) {
+            return "error/service-unavailable";
+        }
+
+        List<PremiseDto> premises = catalogService.getAllPremises();
         model.addAttribute("premises", premises);
         return "future/catalog";
     }
@@ -58,7 +58,12 @@ public class WebCatalogController {
                                 jakarta.servlet.http.HttpServletRequest request,
                                 @RequestParam(required = false) String city,
                                 Model model) {
-        PremiseDto premise = catalogClient.getPremiseById(id);
+        // Проверяем доступность сервиса
+        if (!catalogService.isServiceAvailable()) {
+            return "error/service-unavailable";
+        }
+
+        PremiseDto premise = catalogService.getPremiseById(id);
 
         if (premise == null) {
             return "redirect:/catalog";
@@ -165,7 +170,7 @@ public class WebCatalogController {
             return "redirect:/auth/login";
         }
 
-        PremiseDto premise = catalogClient.getPremiseById(id);
+        PremiseDto premise = catalogService.getPremiseById(id);
 
         if (premise == null) {
             return "redirect:/catalog";
@@ -207,7 +212,7 @@ public class WebCatalogController {
             return "redirect:/auth/login";
         }
 
-        PremiseDto premise = catalogClient.getPremiseById(id);
+        PremiseDto premise = catalogService.getPremiseById(id);
 
         if (premise == null) {
             return "redirect:/catalog";
@@ -234,7 +239,7 @@ public class WebCatalogController {
         premise.setImportantInfo(importantInfo);
 
         // Отправляем обновление через Feign клиент
-        catalogClient.updatePremise(id, premise);
+        catalogService.updatePremise(id, premise);
 
         return "redirect:/premise/" + id + "?updated=true";
     }
@@ -260,7 +265,7 @@ public class WebCatalogController {
         // ===== СОЗДАЁМ УВЕДОМЛЕНИЕ ВЛАДЕЛЬЦУ ПОМЕЩЕНИЯ =====
         try {
             // Получаем информацию о помещении, чтобы узнать владельца
-            PremiseDto premise = catalogClient.getPremiseById(commentDto.getPremiseId());
+            PremiseDto premise = catalogService.getPremiseById(commentDto.getPremiseId());
 
             if (premise != null && userDetails != null) {
                 User currentUser = userService.findByLogin(userDetails.getUsername()).orElse(null);
@@ -317,7 +322,7 @@ public class WebCatalogController {
         if (commentDto.getRepliedToUserId() != null &&
                 !commentDto.getRepliedToUserId().equals(currentUser.getId())) {
             try {
-                PremiseDto premise = catalogClient.getPremiseById(commentDto.getPremiseId());
+                PremiseDto premise = catalogService.getPremiseById(commentDto.getPremiseId());
                 String premiseTitle = "";
                 if (premise != null) {
                     premiseTitle = premise.getTypeInRussian() + " в " + premise.getCity();

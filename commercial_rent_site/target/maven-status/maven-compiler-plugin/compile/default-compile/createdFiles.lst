@@ -46,6 +46,7 @@ com\example\rentapp\repository\UserBanRepository.class
 com\example\rentapp\dto\ComplaintDto$CommentDetails.class
 com\example\rentapp\dto\NewPasswordRequest.class
 com\example\rentapp\dto\ComplaintDto.class
+com\example\rentapp\service\CatalogServiceWrapper.class
 com\example\rentapp\controller\ConfigController.class
 com\example\rentapp\controller\PremiseApiController.class
 com\example\rentapp\service\NotificationService.class

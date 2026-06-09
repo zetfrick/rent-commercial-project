@@ -68,6 +68,7 @@ D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentap
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\config\WebConfig.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\UserService.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\entity\Favorite.java
+D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\CatalogServiceWrapper.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\config\DataInitializer.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\CustomUserDetailsService.java
 D:\rent-commercial-project\commercial_rent_site\src\main\java\com\example\rentapp\service\ComplaintService.java

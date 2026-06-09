@@ -1,10 +1,10 @@
 package com.example.rentapp.controller;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.service.BookingService;
+import com.example.rentapp.service.CatalogServiceWrapper;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,7 +29,7 @@ public class BookingApiController {
     private UserService userService;
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     // Получить все занятые даты для помещения (только APPROVED)
     @GetMapping("/premise/{premiseId}/booked-dates")
@@ -138,7 +138,7 @@ public class BookingApiController {
             return ResponseEntity.status(404).body(response);
         }
 
-        PremiseDto premise = catalogClient.getPremiseById(premiseId);
+        PremiseDto premise = catalogService.getPremiseById(premiseId);
         if (premise == null) {
             response.put("success", false);
             response.put("message", "Помещение не найдено");
@@ -333,7 +333,7 @@ public class BookingApiController {
 
         Map<String, Object> response = new HashMap<>();
 
-        PremiseDto premise = catalogClient.getPremiseById(premiseId);
+        PremiseDto premise = catalogService.getPremiseById(premiseId);
         if (premise == null) {
             response.put("available", false);
             response.put("message", "Помещение не найдено");

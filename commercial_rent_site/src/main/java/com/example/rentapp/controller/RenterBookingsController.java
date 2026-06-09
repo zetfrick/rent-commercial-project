@@ -1,10 +1,10 @@
 package com.example.rentapp.controller;
 
-import com.example.rentapp.client.CatalogClient;
 import com.example.rentapp.dto.BookingDto;
 import com.example.rentapp.dto.PremiseDto;
 import com.example.rentapp.entity.User;
 import com.example.rentapp.service.BookingService;
+import com.example.rentapp.service.CatalogServiceWrapper;
 import com.example.rentapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +31,7 @@ public class RenterBookingsController {
     private UserService userService;
 
     @Autowired
-    private CatalogClient catalogClient;
+    private CatalogServiceWrapper catalogService;
 
     @GetMapping
     public String myRentals(@AuthenticationPrincipal UserDetails userDetails,
@@ -51,7 +51,7 @@ public class RenterBookingsController {
         // Группируем по помещениям и загружаем детали
         List<Map<String, Object>> rentals = new ArrayList<>();
         for (BookingDto booking : bookings) {
-            PremiseDto premise = catalogClient.getPremiseById(booking.getPremiseId());
+            PremiseDto premise = catalogService.getPremiseById(booking.getPremiseId());
             if (premise != null) {
                 Map<String, Object> rental = new HashMap<>();
                 rental.put("booking", booking);
