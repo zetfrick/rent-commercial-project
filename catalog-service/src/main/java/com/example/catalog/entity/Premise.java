@@ -40,8 +40,13 @@ public class Premise {
     private String floor;
     private String apartment;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(columnDefinition = "TEXT")
     private String extraFees;
+
+    @Column(columnDefinition = "TEXT")
     private String importantInfo;
 
     private String contactFirstName;

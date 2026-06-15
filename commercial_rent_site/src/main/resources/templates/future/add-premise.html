@@ -844,42 +844,38 @@
 
     function updatePhotoPreview() {
         const previewContainer = document.getElementById('photosPreview');
+        if (!previewContainer) return;
         previewContainer.innerHTML = '';
 
-        selectedFiles.forEach((file, index) => {
+        selectedFiles.forEach((file, idx) => {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const previewDiv = document.createElement('div');
                 previewDiv.className = 'photo-preview-item';
+                previewDiv.setAttribute('data-idx', idx);
                 previewDiv.innerHTML = `
-                    <img src="${e.target.result}" alt="Preview">
-                    <button type="button" class="remove-photo-btn" data-index="${index}" data-filename="${file.name}">×</button>
+                    <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">
+                    <button type="button" class="remove-photo-btn" onclick="removePhoto(${idx})" style="position:absolute;top:5px;right:5px;width:24px;height:24px;background:rgba(255,87,34,0.8);color:white;border:none;border-radius:50%;cursor:pointer;z-index:10;">×</button>
                 `;
                 previewContainer.appendChild(previewDiv);
             };
             reader.readAsDataURL(file);
         });
-
-        document.querySelectorAll('.remove-photo-btn').forEach(btn => {
-            btn.removeEventListener('click', handleRemoveClick);
-            btn.addEventListener('click', handleRemoveClick);
-        });
     }
 
-    function handleRemoveClick(e) {
-        const index = parseInt(e.target.getAttribute('data-index'));
-        if (!isNaN(index) && index >= 0 && index < selectedFiles.length) {
+    window.removePhoto = function(index) {
+        console.log('Удаляем фото с индексом:', index);
+        if (index >= 0 && index < selectedFiles.length) {
             selectedFiles.splice(index, 1);
             updatePhotoPreview();
-            updateFileInput();
-        }
-    }
 
-    function updateFileInput() {
-        const dataTransfer = new DataTransfer();
-        selectedFiles.forEach(file => dataTransfer.items.add(file));
-        document.getElementById('photos').files = dataTransfer.files;
-    }
+            // Обновляем input files
+            const dt = new DataTransfer();
+            selectedFiles.forEach(f => dt.items.add(f));
+            const fileInput = document.getElementById('photos');
+            if (fileInput) fileInput.files = dt.files;
+        }
+    };
 
     document.getElementById('photos').addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
@@ -893,7 +889,6 @@
 
         selectedFiles.push(...files);
         updatePhotoPreview();
-        updateFileInput();
     });
 
     // ==================== МАСКА ДЛЯ ТЕЛЕФОНА ====================
